@@ -17,8 +17,10 @@ export default function PresetDetailPage() {
   const [preset, setPreset] = useState<Preset | null>(null);
   const [editPlot, setEditPlot] = useState('');
   const [editMemory, setEditMemory] = useState('');
+  const [editGreeting, setEditGreeting] = useState('');
   const [isEditingPlot, setIsEditingPlot] = useState(false);
   const [isEditingMemory, setIsEditingMemory] = useState(false);
+  const [isEditingGreeting, setIsEditingGreeting] = useState(false);
 
   const loadPreset = useCallback(() => {
     const p = getPreset(presetId);
@@ -26,6 +28,7 @@ export default function PresetDetailPage() {
       setPreset(p);
       setEditPlot(p.plotDirection);
       setEditMemory(p.longTermMemory);
+      setEditGreeting(p.greeting);
     }
   }, [presetId]);
 
@@ -59,6 +62,15 @@ export default function PresetDetailPage() {
     }
   };
 
+  const handleSaveGreeting = () => {
+    if (preset) {
+      const updated = { ...preset, greeting: editGreeting };
+      savePreset(updated);
+      setPreset(updated);
+      setIsEditingGreeting(false);
+    }
+  };
+
   const handleStartSession = () => {
     const existingSessions = getSessionsByPreset(presetId);
     const sessionName = `${preset.name} - 会话 ${existingSessions.length + 1}`;
@@ -86,9 +98,10 @@ export default function PresetDetailPage() {
       </Button>
 
       <Tabs defaultValue="char" className="w-full">
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="char">Char</TabsTrigger>
           <TabsTrigger value="user">User</TabsTrigger>
+          <TabsTrigger value="greeting">开场白</TabsTrigger>
           <TabsTrigger value="plot">剧情</TabsTrigger>
           <TabsTrigger value="memory">记忆</TabsTrigger>
         </TabsList>
@@ -123,6 +136,61 @@ export default function PresetDetailPage() {
               >
                 复制 User 卡
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="greeting">
+          <Card className="border-pink-100">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">开场白 (Greeting)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {isEditingGreeting ? (
+                <>
+                  <Textarea
+                    value={editGreeting}
+                    onChange={(e) => setEditGreeting(e.target.value)}
+                    className="min-h-[120px] text-sm"
+                    placeholder="输入开场白，用于设定角色初次登场场景..."
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveGreeting} size="sm">
+                      保存
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setEditGreeting(preset.greeting);
+                        setIsEditingGreeting(false);
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      取消
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap min-h-[60px]">
+                    {preset.greeting || '暂无开场白，点击编辑添加'}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setIsEditingGreeting(true)} variant="outline" size="sm">
+                      编辑
+                    </Button>
+                    {preset.greeting && (
+                      <Button
+                        onClick={() => navigator.clipboard.writeText(preset.greeting)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        复制
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

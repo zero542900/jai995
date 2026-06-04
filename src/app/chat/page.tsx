@@ -93,7 +93,7 @@ ${currentPreset.charInfo}
 USER PERSONA:
 ${currentPreset.userCard}
 
-${currentPreset.longTermMemory ? `LONG-TERM MEMORY:\n${currentPreset.longTermMemory}\n` : ''}
+${currentPreset.greeting ? `OPENING GREETING:\n${currentPreset.greeting}\n` : ''}${currentPreset.longTermMemory ? `LONG-TERM MEMORY:\n${currentPreset.longTermMemory}\n` : ''}
 ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDirection}\n` : ''}`;
   }, [currentPreset]);
 

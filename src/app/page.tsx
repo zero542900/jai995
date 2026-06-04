@@ -11,6 +11,7 @@ export default function GeneratePage() {
   const router = useRouter();
   const [charInfo, setCharInfo] = useState('');
   const [userPersonality, setUserPersonality] = useState('');
+  const [greeting, setGreeting] = useState('');
   const [generatedCard, setGeneratedCard] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
@@ -42,6 +43,7 @@ export default function GeneratePage() {
         body: JSON.stringify({
           charInfo: charInfo.trim(),
           userPersonality: userPersonality.trim(),
+          greeting: greeting.trim(),
           apiKey,
         }),
         signal: abortRef.current.signal,
@@ -91,7 +93,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [charInfo, userPersonality, router]);
+  }, [charInfo, userPersonality, greeting, router]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -103,10 +105,10 @@ export default function GeneratePage() {
       alert('请输入预设名称');
       return;
     }
-    const preset = createPreset(presetName.trim(), charInfo.trim(), generatedCard, userPersonality.trim());
+    const preset = createPreset(presetName.trim(), charInfo.trim(), generatedCard, userPersonality.trim(), greeting.trim());
     savePreset(preset);
     router.push('/presets');
-  }, [presetName, charInfo, generatedCard, userPersonality, router]);
+  }, [presetName, charInfo, generatedCard, userPersonality, greeting, router]);
 
   return (
     <div className="page-enter space-y-6">
@@ -137,6 +139,20 @@ export default function GeneratePage() {
             placeholder="描述你希望 User 具备的性格、背景等要求..."
             value={userPersonality}
             onChange={(e) => setUserPersonality(e.target.value)}
+            className="min-h-[100px] resize-y text-sm"
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="border-pink-100">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">开场白 (Greeting)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="输入你希望的开场白内容，AI 将据此生成符合世界观的 User 开场白。留空则由 AI 自行创作。"
+            value={greeting}
+            onChange={(e) => setGreeting(e.target.value)}
             className="min-h-[100px] resize-y text-sm"
           />
         </CardContent>

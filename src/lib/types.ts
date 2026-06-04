@@ -6,6 +6,7 @@ export interface Preset {
   charInfo: string;
   userCard: string;
   userPersonality: string;
+  greeting: string;
   plotDirection: string;
   longTermMemory: string;
   createdAt: number;
@@ -33,6 +34,7 @@ export interface ChatMessage {
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;
+  greeting: string;
   apiKey: string;
 }
 

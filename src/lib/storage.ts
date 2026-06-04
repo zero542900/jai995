@@ -123,6 +123,7 @@ export function createPreset(
   charInfo: string,
   userCard: string,
   userPersonality: string,
+  greeting: string,
 ): Preset {
   return {
     id: generateId(),
@@ -130,6 +131,7 @@ export function createPreset(
     charInfo,
     userCard,
     userPersonality,
+    greeting,
     plotDirection: '',
     longTermMemory: '',
     createdAt: Date.now(),

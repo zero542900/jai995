@@ -61,6 +61,8 @@ export default function GeneratePage() {
   const [lockedFields, setLockedFields] = useState<Record<string, string>>({});
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [presetName, setPresetName] = useState('');
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const [thinkingContent, setThinkingContent] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
   const parsedFields = useMemo(() => parseFields(englishCard), [englishCard]);
@@ -95,17 +97,19 @@ export default function GeneratePage() {
     setIsGenerating(true);
     setEnglishCard('');
     setChineseCard('');
+    setThinkingContent('');
     setShowFront(true);
     setShowSaveDialog(false);
 
     abortRef.current = new AbortController();
 
     try {
-      const body: Record<string, string | Record<string, string>> = {
+      const body: Record<string, string | Record<string, string> | boolean> = {
         charInfo: charInfo.trim(),
         userPersonality: userPersonality.trim(),
         greeting: greeting.trim(),
         apiKey,
+        thinkingEnabled,
       };
       if (withLocked && Object.keys(lockedFields).length > 0) {
         body.lockedFields = lockedFields;
@@ -155,6 +159,9 @@ export default function GeneratePage() {
                 setEnglishCard(fullText);
                 setChineseCard('');
               }
+            }
+            if (json.reasoning) {
+              setThinkingContent(prev => prev + json.reasoning);
             }
           } catch (e) {
             if (e instanceof Error && !e.message.includes('JSON')) throw e;
@@ -256,7 +263,7 @@ export default function GeneratePage() {
         </CardContent>
       </Card>
 
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
         {!isGenerating ? (
           <Button onClick={() => handleGenerate(false)} className="flex-1" size="lg">
             生成 User 卡
@@ -266,6 +273,20 @@ export default function GeneratePage() {
             停止生成
           </Button>
         )}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">思考模式</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={thinkingEnabled}
+            onClick={() => setThinkingEnabled(v => !v)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${thinkingEnabled ? 'translate-x-5' : 'translate-x-0'}`}
+            />
+          </button>
+        </div>
       </div>
 
       {englishCard && (
@@ -287,6 +308,16 @@ export default function GeneratePage() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Thinking content */}
+            {thinkingContent && (
+              <div className="mb-3 border border-violet-200 bg-violet-50/50 rounded-lg p-3">
+                <div className="text-xs font-medium text-violet-500 mb-1.5 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M12 2a7 7 0 0 1 7 7c0 2.6-1.4 4.8-3.5 6v1.5a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5V15C6.4 13.8 5 11.6 5 9a7 7 0 0 1 7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg>
+                  思考过程
+                </div>
+                <div className="text-xs text-violet-600/80 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto">{thinkingContent}</div>
+              </div>
+            )}
             {/* Card content area */}
             <div className="bg-muted/50 p-4 rounded-lg max-h-[500px] overflow-y-auto">
               {showFront ? (

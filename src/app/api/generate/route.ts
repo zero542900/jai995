@@ -4,7 +4,7 @@ import { callDeepSeek, createSSEStream, handleAPIError, validateApiKey, streamRe
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userPersonality, greeting, apiKey, lockedFields } = body;
+    const { charInfo, userPersonality, greeting, apiKey, lockedFields, thinkingEnabled } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -111,7 +111,10 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: userMessage },
     ];
 
-    const response = await callDeepSeek({ apiKey, messages, temperature: 0.9 });
+    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const temperature = thinkingEnabled ? undefined : 0.9;
+
+    const response = await callDeepSeek({ apiKey, messages, model, temperature });
     return streamResponse(createSSEStream(response));
   } catch (error) {
     return handleAPIError(error);

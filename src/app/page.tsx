@@ -1,24 +1,84 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiKey, createPreset, savePreset } from '@/lib/storage';
 
+/** 解析 User 卡文本为字段列表 */
+function parseFields(text: string): { key: string; value: string }[] {
+  const fields: { key: string; value: string }[] = [];
+  const regex = /\*\*([^*]+)\*\*:\s*([\s\S]*?)(?=\n\*\*|$)/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    fields.push({ key: match[1].trim(), value: match[2].trim() });
+  }
+  return fields;
+}
+
+/** 从字段列表还原完整文本 */
+function buildCardText(fields: { key: string; value: string }[], sectionHeaders: string[]): string {
+  let result = '[System Note: This card defines the user\'s persona. Do not break character. Keep responses grounded in the events and details below.]\n\n';
+  let fieldIdx = 0;
+  for (const header of sectionHeaders) {
+    result += header + '\n';
+    // count fields under this header - approximate by known template
+    const fieldsPerSection: Record<string, number> = {
+      '# Basic Information': 6,
+      '# Appearance & Physical Traits': 5,
+      '# Personality & Psychological Profile': 5,
+      '# Background & History (Short Bio)': 2,
+      '# Interaction & Dialogue Rules': 3,
+    };
+    const count = fieldsPerSection[header] || 0;
+    for (let i = 0; i < count && fieldIdx < fields.length; i++) {
+      const f = fields[fieldIdx];
+      if (header === '# Interaction & Dialogue Rules' && f.key === 'Style guideline') {
+        result += `*[Style guideline: Keep it realistic, no godmodding]*\n`;
+        fieldIdx++;
+        continue;
+      }
+      result += `**${f.key}**: ${f.value}\n`;
+      fieldIdx++;
+    }
+    result += '\n';
+  }
+  return result.trim();
+}
+
 export default function GeneratePage() {
   const router = useRouter();
   const [charInfo, setCharInfo] = useState('');
   const [userPersonality, setUserPersonality] = useState('');
   const [greeting, setGreeting] = useState('');
-  const [generatedCard, setGeneratedCard] = useState('');
+  const [englishCard, setEnglishCard] = useState('');
+  const [chineseCard, setChineseCard] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showFront, setShowFront] = useState(true);
+  const [lockedFields, setLockedFields] = useState<Record<string, string>>({});
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [presetName, setPresetName] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
-  const handleGenerate = useCallback(async () => {
+  const parsedFields = useMemo(() => parseFields(englishCard), [englishCard]);
+
+  const isFieldLocked = useCallback((key: string) => key in lockedFields, [lockedFields]);
+
+  const toggleFieldLock = useCallback((key: string, value: string) => {
+    setLockedFields(prev => {
+      const next = { ...prev };
+      if (key in next) {
+        delete next[key];
+      } else {
+        next[key] = value;
+      }
+      return next;
+    });
+  }, []);
+
+  const handleGenerate = useCallback(async (withLocked = false) => {
     const apiKey = getApiKey();
     if (!apiKey) {
       alert('请先在设置页面配置 DeepSeek API Key');
@@ -31,21 +91,28 @@ export default function GeneratePage() {
     }
 
     setIsGenerating(true);
-    setGeneratedCard('');
+    setEnglishCard('');
+    setChineseCard('');
+    setShowFront(true);
     setShowSaveDialog(false);
 
     abortRef.current = new AbortController();
 
     try {
+      const body: Record<string, string | Record<string, string>> = {
+        charInfo: charInfo.trim(),
+        userPersonality: userPersonality.trim(),
+        greeting: greeting.trim(),
+        apiKey,
+      };
+      if (withLocked && Object.keys(lockedFields).length > 0) {
+        body.lockedFields = lockedFields;
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          charInfo: charInfo.trim(),
-          userPersonality: userPersonality.trim(),
-          greeting: greeting.trim(),
-          apiKey,
-        }),
+        body: JSON.stringify(body),
         signal: abortRef.current.signal,
       });
 
@@ -77,7 +144,15 @@ export default function GeneratePage() {
             if (json.error) throw new Error(json.error);
             if (json.content) {
               fullText += json.content;
-              setGeneratedCard(fullText);
+              // Split on separator
+              const sepIdx = fullText.indexOf('===CHINESE===');
+              if (sepIdx !== -1) {
+                setEnglishCard(fullText.slice(0, sepIdx).trim());
+                setChineseCard(fullText.slice(sepIdx + '===CHINESE==='.length).trim());
+              } else {
+                setEnglishCard(fullText);
+                setChineseCard('');
+              }
             }
           } catch (e) {
             if (e instanceof Error && !e.message.includes('JSON')) throw e;
@@ -85,6 +160,16 @@ export default function GeneratePage() {
         }
       }
 
+      // Final split
+      const sepIdx = fullText.indexOf('===CHINESE===');
+      if (sepIdx !== -1) {
+        setEnglishCard(fullText.slice(0, sepIdx).trim());
+        setChineseCard(fullText.slice(sepIdx + '===CHINESE==='.length).trim());
+      }
+
+      if (!withLocked) {
+        setLockedFields({});
+      }
       setShowSaveDialog(true);
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
@@ -93,26 +178,33 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [charInfo, userPersonality, greeting, router]);
+  }, [charInfo, userPersonality, greeting, lockedFields, router]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
     setIsGenerating(false);
   }, []);
 
+  const handleRefresh = useCallback(() => {
+    const hasLocked = Object.keys(lockedFields).length > 0;
+    handleGenerate(hasLocked);
+  }, [handleGenerate, lockedFields]);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(englishCard);
+  }, [englishCard]);
+
   const handleSavePreset = useCallback(() => {
     if (!presetName.trim()) {
       alert('请输入预设名称');
       return;
     }
-    const preset = createPreset(presetName.trim(), charInfo.trim(), generatedCard, userPersonality.trim(), greeting.trim());
+    const preset = createPreset(presetName.trim(), charInfo.trim(), englishCard, userPersonality.trim(), greeting.trim());
     savePreset(preset);
     router.push('/presets');
-  }, [presetName, charInfo, generatedCard, userPersonality, greeting, router]);
+  }, [presetName, charInfo, englishCard, userPersonality, greeting, router]);
 
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(generatedCard);
-  }, [generatedCard]);
+  const hasLocked = Object.keys(lockedFields).length > 0;
 
   return (
     <div className="page-enter space-y-6">
@@ -164,7 +256,7 @@ export default function GeneratePage() {
 
       <div className="flex gap-3">
         {!isGenerating ? (
-          <Button onClick={handleGenerate} className="flex-1" size="lg">
+          <Button onClick={() => handleGenerate(false)} className="flex-1" size="lg">
             生成 User 卡
           </Button>
         ) : (
@@ -174,27 +266,82 @@ export default function GeneratePage() {
         )}
       </div>
 
-      {generatedCard && (
-        <Card className="border-pink-200">
+      {englishCard && (
+        <Card className="border-pink-200 overflow-hidden">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              生成的 User 卡
-              {isGenerating && (
-                <span className="typing-cursor text-sm text-muted-foreground">生成中</span>
-              )}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                {showFront ? 'English' : '中文翻译'}
+                {isGenerating && (
+                  <span className="typing-cursor text-sm text-muted-foreground">生成中</span>
+                )}
+              </CardTitle>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground mr-1">
+                  {showFront ? '正面' : '背面'}
+                </span>
+                <div className={`w-2 h-2 rounded-full ${showFront ? 'bg-pink-500' : 'bg-violet-400'}`} />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg font-mono leading-relaxed max-h-[500px] overflow-y-auto">
-              {generatedCard}
-            </pre>
+            {/* Card content area */}
+            <div className="bg-muted/50 p-4 rounded-lg max-h-[500px] overflow-y-auto">
+              {showFront ? (
+                <div className="text-sm font-mono leading-relaxed whitespace-pre-wrap">{englishCard}</div>
+              ) : (
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">{chineseCard || '翻译生成中...'}</div>
+              )}
+            </div>
+
+            {/* Field locking - only on front side and when not generating */}
+            {showFront && !isGenerating && parsedFields.length > 0 && (
+              <div className="mt-3 space-y-1">
+                <p className="text-xs text-muted-foreground mb-2">
+                  点击字段右侧 🔒 标记满意的内容，刷新时标记字段将保留不变
+                  {hasLocked && <span className="text-pink-500 ml-1">（已标记 {Object.keys(lockedFields).length} 项）</span>}
+                </p>
+                <div className="grid gap-1">
+                  {parsedFields.map((field, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-start gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
+                        isFieldLocked(field.key)
+                          ? 'bg-pink-50 border border-pink-200'
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <span className="font-mono text-muted-foreground min-w-0 shrink-0">**{field.key}**:</span>
+                      <span className="flex-1 truncate text-foreground">{field.value}</span>
+                      <button
+                        onClick={() => toggleFieldLock(field.key, field.value)}
+                        className={`shrink-0 text-base leading-none transition-transform hover:scale-110 ${
+                          isFieldLocked(field.key) ? 'opacity-100' : 'opacity-30 hover:opacity-60'
+                        }`}
+                        title={isFieldLocked(field.key) ? '取消锁定' : '锁定此字段'}
+                      >
+                        {isFieldLocked(field.key) ? '🔒' : '🔓'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons */}
             {!isGenerating && (
-              <div className="mt-3 flex gap-2">
-                <Button onClick={handleCopy} variant="outline" size="sm">
-                  复制
+              <div className="mt-4 flex gap-2 flex-wrap">
+                <Button onClick={handleCopy} variant="outline" size="sm" title="复制英文全文">
+                  📋 复制
+                </Button>
+                <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片">
+                  🔄 {showFront ? '中文翻译' : 'English'}
+                </Button>
+                <Button onClick={handleRefresh} variant="outline" size="sm" title={hasLocked ? '保留标记项，重新生成其余' : '重新生成整卡'}>
+                  🔁 {hasLocked ? '局部刷新' : '刷新'}
                 </Button>
                 <Button onClick={() => setShowSaveDialog(true)} size="sm">
-                  保存为预设
+                  💾 保存预设
                 </Button>
               </div>
             )}

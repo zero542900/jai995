@@ -63,6 +63,7 @@ export default function GeneratePage() {
   const abortRef = useRef<AbortController | null>(null);
 
   const parsedFields = useMemo(() => parseFields(englishCard), [englishCard]);
+  const parsedChineseFields = useMemo(() => parseFields(chineseCard), [chineseCard]);
 
   const isFieldLocked = useCallback((key: string) => key in lockedFields, [lockedFields]);
 
@@ -294,36 +295,41 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* Field locking - only on front side and when not generating */}
-            {showFront && !isGenerating && parsedFields.length > 0 && (
+            {/* Field locking - both sides, when not generating */}
+            {!isGenerating && (showFront ? parsedFields : parsedChineseFields).length > 0 && (
               <div className="mt-3 space-y-1">
                 <p className="text-xs text-muted-foreground mb-2">
-                  点击字段右侧 🔒 标记满意的内容，刷新时标记字段将保留不变
+                  点击 🔒 标记满意的内容，刷新时标记字段将保留不变
                   {hasLocked && <span className="text-pink-500 ml-1">（已标记 {Object.keys(lockedFields).length} 项）</span>}
                 </p>
                 <div className="grid gap-1">
-                  {parsedFields.map((field, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-start gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
-                        isFieldLocked(field.key)
-                          ? 'bg-pink-50 border border-pink-200'
-                          : 'hover:bg-muted/50'
-                      }`}
-                    >
-                      <span className="font-mono text-muted-foreground min-w-0 shrink-0">**{field.key}**:</span>
-                      <span className="flex-1 truncate text-foreground">{field.value}</span>
-                      <button
-                        onClick={() => toggleFieldLock(field.key, field.value)}
-                        className={`shrink-0 text-base leading-none transition-transform hover:scale-110 ${
-                          isFieldLocked(field.key) ? 'opacity-100' : 'opacity-30 hover:opacity-60'
+                  {(showFront ? parsedFields : parsedChineseFields).map((field, idx) => {
+                    // Use English key as lock identifier (same index maps between EN/CN)
+                    const lockKey = parsedFields[idx]?.key || field.key;
+                    const locked = isFieldLocked(lockKey);
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex items-start gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
+                          locked
+                            ? 'bg-pink-50 border border-pink-200'
+                            : 'hover:bg-muted/50'
                         }`}
-                        title={isFieldLocked(field.key) ? '取消锁定' : '锁定此字段'}
                       >
-                        {isFieldLocked(field.key) ? '🔒' : '🔓'}
-                      </button>
-                    </div>
-                  ))}
+                        <span className="font-mono text-muted-foreground min-w-0 shrink-0">**{field.key}**:</span>
+                        <span className="flex-1 truncate text-foreground">{field.value}</span>
+                        <button
+                          onClick={() => toggleFieldLock(lockKey, parsedFields[idx]?.value || field.value)}
+                          className={`shrink-0 text-base leading-none transition-transform hover:scale-110 ${
+                            locked ? 'opacity-100' : 'opacity-30 hover:opacity-60'
+                          }`}
+                          title={locked ? '取消锁定' : '锁定此字段（锁定对应英文字段）'}
+                        >
+                          {locked ? '🔒' : '🔓'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

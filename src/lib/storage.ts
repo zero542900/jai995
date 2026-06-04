@@ -65,6 +65,15 @@ export function savePreset(preset: Preset): void {
   localStorage.setItem(KEYS.PRESETS, JSON.stringify(presets));
 }
 
+
+
+export function updatePreset(id: string, updates: Partial<Preset>): void {
+  const preset = getPreset(id);
+  if (preset) {
+    savePreset({ ...preset, ...updates });
+  }
+}
+
 export function deletePreset(id: string): void {
   if (typeof window === 'undefined') return;
   const presets = getPresets().filter((p) => p.id !== id);
@@ -104,6 +113,15 @@ export function saveSession(session: Session): void {
     sessions.push(session);
   }
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+}
+
+
+
+export function updateSession(id: string, updates: Partial<Session>): void {
+  const session = getSession(id);
+  if (session) {
+    saveSession({ ...session, ...updates });
+  }
 }
 
 export function deleteSession(id: string): void {

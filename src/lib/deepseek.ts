@@ -181,3 +181,22 @@ export function streamResponse(stream: ReadableStream): Response {
     },
   });
 }
+
+// Shared translation instruction for dual-language output
+export const TRANSLATION_INSTRUCTION = `
+
+After generating the English content above, you MUST also provide a Chinese translation. Format:
+1. First output all English content.
+2. Then output exactly "===CHINESE===" on its own line.
+3. Then output the Chinese translation of ALL the English content above.
+
+TRANSLATION RULES (strictly follow):
+- You are a bilingual translator expert in AO3 fanfiction culture.
+- Preserve the original tone — casual stays casual, poetic stays poetic.
+- Use established fandom terminology (AU, Canon Divergence etc.), keep English on first mention.
+- NO AI translationese: avoid "极其", "缓慢地", "不是…而是…" etc.
+- BANNED patterns: "不是……而是……", "在……的过程中", "总而言之", "不仅……更……", any "不是" opening, parallel/rhetorical repetition, "不x不y就z" format, "这就够了".
+- BANNED words: "兜住", "接住", "稳", "守", "极其".
+- Each observation must be followed by a sensory detail (sight, sound, smell, touch).
+- If you catch yourself using banned patterns, delete the sentence and replace with a concrete action/image description.
+- Output ONLY the translation, no explanations.`;

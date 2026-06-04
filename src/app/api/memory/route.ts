@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, createSimpleSSEStream, handleAPIError, validateApiKey, streamResponse } from '@/lib/deepseek';
+import { callDeepSeek, createSimpleSSEStream, handleAPIError, validateApiKey, streamResponse, TRANSLATION_INSTRUCTION } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,8 @@ RULES:
 3. Be concise but comprehensive — each point should be a single sentence.
 4. Write in English.
 5. Preserve any existing memory points and update/add new ones.
-6. Use this exact format:
+6. Always read the recent 5-10 messages for context before generating.
+7. Use this exact format:
 
 <Memory_LTM>
 - [Key event or fact 1]
@@ -30,7 +31,7 @@ WORLD & CHARACTER CONTEXT:
 ${charInfo}
 
 USER PERSONA:
-${userCard}`;
+${userCard}${TRANSLATION_INSTRUCTION}`;
 
     const userMessage = `Based on the conversation below, generate or update the long-term memory entry.
 
@@ -46,7 +47,7 @@ Generate the <Memory_LTM> entry:`;
       { role: 'user', content: userMessage },
     ];
 
-    const response = await callDeepSeek({ apiKey, messages, temperature: 0.5, maxTokens: 2048 });
+    const response = await callDeepSeek({ apiKey, messages, temperature: 0.5, maxTokens: 3000 });
     return streamResponse(createSimpleSSEStream(response));
   } catch (error) {
     return handleAPIError(error);

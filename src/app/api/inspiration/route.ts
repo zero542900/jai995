@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, createSimpleSSEStream, handleAPIError, validateApiKey, streamResponse } from '@/lib/deepseek';
+import { callDeepSeek, createSimpleSSEStream, handleAPIError, validateApiKey, streamResponse, TRANSLATION_INSTRUCTION } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +17,8 @@ RULES:
 3. Consider the world setting, character dynamics, and User's personality.
 4. Make each direction distinct and interesting — different tones (tense, emotional, mysterious, etc.).
 5. Format as numbered list (1. 2. 3.).
+6. Always read the recent 5-10 messages for context before generating.
+7. If there is a "Latest JAI Reply" in the context, use it as the primary scene reference.
 
 WORLD & CHARACTER CONTEXT:
 ${charInfo}
@@ -27,7 +29,7 @@ ${userCard}
 User personality preferences: ${userPersonality}
 
 ${longTermMemory ? `LONG-TERM MEMORY:\n${longTermMemory}\n` : ''}
-${plotDirection ? `CURRENT PLOT DIRECTION:\n${plotDirection}\n` : ''}`;
+${plotDirection ? `CURRENT PLOT DIRECTION:\n${plotDirection}\n` : ''}${TRANSLATION_INSTRUCTION}`;
 
     const userMessage = `Based on the current conversation and context, suggest 3 new plot directions for the User to pursue.
 
@@ -41,7 +43,7 @@ Generate 3 distinct, compelling plot directions:`;
       { role: 'user', content: userMessage },
     ];
 
-    const response = await callDeepSeek({ apiKey, messages, temperature: 1.0, maxTokens: 2048 });
+    const response = await callDeepSeek({ apiKey, messages, temperature: 1.0, maxTokens: 3000 });
     return streamResponse(createSimpleSSEStream(response));
   } catch (error) {
     return handleAPIError(error);

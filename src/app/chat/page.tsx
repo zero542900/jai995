@@ -1,807 +1,779 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { IconSend, IconStop, IconSparkle, IconPen, IconBrain, IconRefresh, IconCopy, IconSave, IconFlip, IconBack } from '@/components/icons';
-import {
-  getApiKey,
-  getPreset,
-  getSession,
-  saveSession,
-  savePreset,
-  getPresets,
-  getSessionsByPreset,
-  createSession,
-  createMessage,
-  deleteSession,
-} from '@/lib/storage';
-import type { Session, ChatMessage, Preset } from '@/lib/types';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { IconSend, IconStop, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconBack } from '@/components/icons';
+import { getPresets, getPreset, updatePreset, getSessions, getSession, createSession, updateSession, getApiKey } from '@/lib/storage';
+import type { Preset, Session, ChatMessage } from '@/lib/types';
 
-function ChatContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const urlSessionId = searchParams.get('sessionId');
-  const urlPresetId = searchParams.get('presetId');
+// Parse dual-language content (English + Chinese separated by ===CHINESE===)
+function parseDualContent(raw: string): { english: string; chinese: string } {
+  const separator = '===CHINESE===';
+  const idx = raw.indexOf(separator);
+  if (idx === -1) {
+    return { english: raw.trim(), chinese: '' };
+  }
+  return {
+    english: raw.substring(0, idx).trim(),
+    chinese: raw.substring(idx + separator.length).trim(),
+  };
+}
 
-  const [currentSession, setCurrentSession] = useState<Session | null>(null);
-  const [currentPreset, setCurrentPreset] = useState<Preset | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [thinkingEnabled, setThinkingEnabled] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [showSessionList, setShowSessionList] = useState(false);
-  const [showInspiration, setShowInspiration] = useState(false);
-  const [inspirationText, setInspirationText] = useState('');
-  const [showExpand, setShowExpand] = useState(false);
-  const [expandBrief, setExpandBrief] = useState('');
-  const [showMemory, setShowMemory] = useState(false);
-  const [memoryText, setMemoryText] = useState('');
-  const [showPresetSelect, setShowPresetSelect] = useState(false);
+// Flip Card Component for inspiration/expand/memory outputs
+function FlipCard({ title, icon, rawContent, isLoading, onInsert }: {
+  title: string;
+  icon: React.ReactNode;
+  rawContent: string;
+  isLoading: boolean;
+  onInsert: (text: string) => void;
+}) {
+  const [flipped, setFlipped] = useState(false);
+  const { english, chinese } = parseDualContent(rawContent);
+  const [copied, setCopied] = useState(false);
 
-  // Translation panel state
-  const [translationEnglish, setTranslationEnglish] = useState('');
-  const [translationChinese, setTranslationChinese] = useState('');
-  const [translationFlipped, setTranslationFlipped] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
-  const [saveToast, setSaveToast] = useState('');
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(english);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
-  // First-time usage hint
-  const [showHint, setShowHint] = useState(false);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const translationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  const loadSessions = useCallback(() => {
-    if (currentPreset) {
-      const s = getSessionsByPreset(currentPreset.id);
-      setSessions(s);
-    }
-  }, [currentPreset]);
-
-  useEffect(() => {
-    if (urlPresetId) {
-      const preset = getPreset(urlPresetId);
-      if (preset) {
-        setCurrentPreset(preset);
-        if (urlSessionId) {
-          const session = getSession(urlSessionId);
-          if (session) {
-            setCurrentSession(session);
-          }
-        } else {
-          // Auto-create or load the single session for this preset
-          const existing = getSessionsByPreset(preset.id);
-          if (existing.length > 0) {
-            setCurrentSession(existing[0]);
-          } else {
-            const newSess = createSession(preset.id, `${preset.name} - 会话`);
-            saveSession(newSess);
-            setCurrentSession(newSess);
-          }
-        }
-      }
-    }
-  }, [urlPresetId, urlSessionId]);
-
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [currentSession?.messages, scrollToBottom]);
-
-  // Show first-time hint
-  useEffect(() => {
-    const seen = localStorage.getItem('jai_chat_hint_seen');
-    if (!seen && currentPreset) {
-      setShowHint(true);
-    }
-  }, [currentPreset]);
-
-  // Auto-save long-term memory when switching/closing
-  const autoSaveMemory = useCallback(() => {
-    if (!currentPreset || !currentSession) return;
-    const updatedPreset = {
-      ...currentPreset,
-      longTermMemory: currentSession.longTermMemory || currentPreset.longTermMemory,
-      plotDirection: currentPreset.plotDirection,
-      updatedAt: Date.now(),
-    };
-    savePreset(updatedPreset);
-    setCurrentPreset(updatedPreset);
-    setSaveToast('记忆已自动保存');
-    setTimeout(() => setSaveToast(''), 2000);
-  }, [currentPreset, currentSession]);
-
-  // Translation with debounce
-  const doTranslate = useCallback(async (text: string) => {
-    if (!text.trim()) {
-      setTranslationChinese('');
-      return;
-    }
-    const apiKey = getApiKey();
-    if (!apiKey) return;
-
-    setIsTranslating(true);
-    abortRef.current = new AbortController();
-
-    try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, apiKey }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || '翻译失败');
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('无法读取响应流');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let result = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data: ')) continue;
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            if (json.content) {
-              result += json.content;
-              setTranslationChinese(result);
-            }
-          } catch { /* skip */ }
-        }
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Translation error:', error.message);
-      }
-    } finally {
-      setIsTranslating(false);
-    }
-  }, []);
-
-  const handleTranslationInput = useCallback((value: string) => {
-    setTranslationEnglish(value);
-    setTranslationFlipped(false); // Reset to Chinese view on new input
-
-    if (translationTimerRef.current) {
-      clearTimeout(translationTimerRef.current);
-    }
-    translationTimerRef.current = setTimeout(() => {
-      doTranslate(value);
-    }, 1500);
-  }, [doTranslate]);
-
-  const buildSystemPrompt = useCallback(() => {
-    if (!currentPreset) return '';
-    const translationContext = translationEnglish.trim()
-      ? `\n\nLATEST JAI REPLY (English, for context):\n${translationEnglish.trim()}\n`
-      : '';
-    return `You are an immersive roleplay partner. Follow these rules:
-
-1. Write in a cinematic, Western-narrative style (like an American TV show or novel). NOT anime or Chinese classical style.
-2. Stay in character at all times. React based on the Character's personality, background, and the world setting.
-3. Write the Character's actions in *asterisks* and dialogue in "quotes".
-4. Advance the story naturally based on the User's input. Don't control the User's actions.
-5. Be descriptive, atmospheric, and emotionally engaging.
-6. Always read the recent 5-10 messages for context before generating.
-
-WORLD & CHARACTER:
-${currentPreset.charInfo}
-
-USER PERSONA:
-${currentPreset.userCard}
-
-${currentPreset.greeting ? `OPENING GREETING:\n${currentPreset.greeting}\n` : ''}${currentPreset.longTermMemory ? `LONG-TERM MEMORY:\n${currentPreset.longTermMemory}\n` : ''}
-${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDirection}\n` : ''}${translationContext}`;
-  }, [currentPreset, translationEnglish]);
-
-  const streamChat = useCallback(
-    async (messages: { role: string; content: string }[]) => {
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        alert('请先在设置页面配置 DeepSeek API Key');
-        return;
-      }
-
-      setIsStreaming(true);
-      abortRef.current = new AbortController();
-
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages,
-            apiKey,
-            thinkingEnabled,
-            systemPrompt: buildSystemPrompt(),
-          }),
-          signal: abortRef.current.signal,
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error || '请求失败');
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('无法读取响应流');
-
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let contentText = '';
-        let reasoningText = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            try {
-              const json = JSON.parse(trimmed.slice(6));
-              if (json.error) throw new Error(json.error);
-              if (json.content) contentText += json.content;
-              if (json.reasoning) reasoningText += json.reasoning;
-
-              setCurrentSession((prev) => {
-                if (!prev) return prev;
-                const msgs = [...prev.messages];
-                if (msgs.length > 0 && msgs[msgs.length - 1].role === 'assistant') {
-                  msgs[msgs.length - 1] = {
-                    ...msgs[msgs.length - 1],
-                    content: contentText,
-                    thinking: reasoningText || undefined,
-                  };
-                }
-                return { ...prev, messages: msgs };
-              });
-            } catch (e) {
-              if (e instanceof Error && !e.message.includes('JSON')) throw e;
-            }
-          }
-        }
-
-        setCurrentSession((prev) => {
-          if (!prev) return prev;
-          const msgs = [...prev.messages];
-          if (msgs.length > 0 && msgs[msgs.length - 1].role === 'assistant') {
-            msgs[msgs.length - 1] = {
-              ...msgs[msgs.length - 1],
-              content: contentText,
-              thinking: reasoningText || undefined,
-            };
-          }
-          const updated = { ...prev, messages: msgs, updatedAt: Date.now() };
-          saveSession(updated);
-          return updated;
-        });
-      } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
-          alert(error.message);
-        }
-      } finally {
-        setIsStreaming(false);
-      }
-    },
-    [thinkingEnabled, buildSystemPrompt],
-  );
-
-  const handleSend = useCallback(async () => {
-    if (!inputText.trim() || !currentSession || isStreaming) return;
-
-    const userMsg = createMessage('user', inputText.trim());
-    const updatedMessages = [...currentSession.messages, userMsg];
-    const updatedSession = { ...currentSession, messages: updatedMessages };
-
-    setCurrentSession(updatedSession);
-    saveSession(updatedSession);
-    setInputText('');
-
-    const assistantMsg = createMessage('assistant', '');
-    const withAssistant = { ...updatedSession, messages: [...updatedMessages, assistantMsg] };
-    setCurrentSession(withAssistant);
-
-    const apiMessages = updatedMessages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    await streamChat(apiMessages);
-  }, [inputText, currentSession, isStreaming, streamChat]);
-
-  const handleStop = useCallback(() => {
-    abortRef.current?.abort();
-    setIsStreaming(false);
-  }, []);
-
-  const streamSSE = useCallback(async (url: string, body: Record<string, string>, onChunk: (text: string) => void) => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      alert('请先在设置页面配置 DeepSeek API Key');
-      return false;
-    }
-
-    setIsStreaming(true);
-    abortRef.current = new AbortController();
-
-    try {
-      // Include translation context in the chat history for all features
-      const chatHistory = currentSession
-        ? currentSession.messages.slice(-20).map((m) => `${m.role}: ${m.content}`).join('\n')
-        : '';
-      const translationContext = translationEnglish.trim()
-        ? `\n\n[Latest JAI Reply for context]:\n${translationEnglish.trim()}\n`
-        : '';
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, apiKey, chatHistory: chatHistory + translationContext }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || '请求失败');
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('无法读取响应流');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let text = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data: ')) continue;
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            if (json.error) throw new Error(json.error);
-            if (json.content) {
-              text += json.content;
-              onChunk(text);
-            }
-          } catch (e) {
-            if (e instanceof Error && !e.message.includes('JSON')) throw e;
-          }
-        }
-      }
-      return true;
-    } catch (error) {
-      if (error instanceof Error && error.name !== 'AbortError') {
-        alert(error.message);
-      }
-      return false;
-    } finally {
-      setIsStreaming(false);
-    }
-  }, [currentSession, translationEnglish]);
-
-  const handleInspiration = useCallback(async () => {
-    if (!currentPreset || !currentSession || isStreaming) return;
-    setShowInspiration(true);
-    setInspirationText('');
-
-    await streamSSE(
-      '/api/inspiration',
-      {
-        charInfo: currentPreset.charInfo,
-        userCard: currentPreset.userCard,
-        userPersonality: currentPreset.userPersonality,
-        plotDirection: currentPreset.plotDirection,
-        longTermMemory: currentPreset.longTermMemory,
-        chatHistory: '',
-      },
-      (text) => setInspirationText(text),
+  if (isLoading && !rawContent) {
+    return (
+      <div className="bg-white rounded-xl border border-pink-100 p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          {icon}
+          <span className="font-medium text-sm text-gray-700">{title}</span>
+          <span className="text-xs text-pink-400 animate-pulse">生成中...</span>
+        </div>
+        <div className="flex items-center gap-1 py-8 justify-center">
+          <div className="w-2 h-2 bg-pink-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 bg-pink-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 bg-pink-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+      </div>
     );
-  }, [currentPreset, currentSession, isStreaming, streamSSE]);
+  }
 
-  const handleExpand = useCallback(async () => {
-    if (!expandBrief.trim() || !currentPreset || !currentSession || isStreaming) return;
+  if (!rawContent) return null;
 
-    const ok = await streamSSE(
-      '/api/expand',
-      {
-        brief: expandBrief.trim(),
-        charInfo: currentPreset.charInfo,
-        userCard: currentPreset.userCard,
-        userPersonality: currentPreset.userPersonality,
-        plotDirection: currentPreset.plotDirection,
-        longTermMemory: currentPreset.longTermMemory,
-        chatHistory: '',
-      },
-      (text) => setInputText(text),
-    );
-    if (ok) {
-      setShowExpand(false);
-      setExpandBrief('');
-    }
-  }, [expandBrief, currentPreset, currentSession, isStreaming, streamSSE]);
-
-  const handleMemory = useCallback(async () => {
-    if (!currentPreset || !currentSession || isStreaming) return;
-    setShowMemory(true);
-    setMemoryText('');
-
-    await streamSSE(
-      '/api/memory',
-      {
-        charInfo: currentPreset.charInfo,
-        userCard: currentPreset.userCard,
-        chatHistory: '',
-        longTermMemory: currentPreset.longTermMemory,
-      },
-      (text) => setMemoryText(text),
-    );
-  }, [currentPreset, currentSession, isStreaming, streamSSE]);
-
-  const handleSaveMemory = useCallback(() => {
-    if (!currentPreset || !memoryText || !currentSession) return;
-    const updatedPreset = { ...currentPreset, longTermMemory: memoryText, updatedAt: Date.now() };
-    savePreset(updatedPreset);
-    setCurrentPreset(updatedPreset);
-    const updatedSession = { ...currentSession, longTermMemory: memoryText, updatedAt: Date.now() };
-    saveSession(updatedSession);
-    setCurrentSession(updatedSession);
-    setShowMemory(false);
-  }, [currentPreset, currentSession, memoryText]);
-
-  // 1:1 binding: only one session per preset
-  const selectPreset = useCallback((preset: Preset) => {
-    // Auto-save current session memory before switching
-    if (currentPreset && currentSession) {
-      autoSaveMemory();
-    }
-
-    setCurrentPreset(preset);
-    setShowPresetSelect(false);
-    const presetSessions = getSessionsByPreset(preset.id);
-    setSessions(presetSessions);
-
-    if (presetSessions.length > 0) {
-      setCurrentSession(presetSessions[0]);
-    } else {
-      const newSess = createSession(preset.id, `${preset.name} - 会话`);
-      saveSession(newSess);
-      setCurrentSession(newSess);
-      setSessions([newSess]);
-    }
-
-    // Clear translation panel
-    setTranslationEnglish('');
-    setTranslationChinese('');
-    setTranslationFlipped(false);
-  }, [currentPreset, currentSession, autoSaveMemory]);
-
-  const handleBackToPresets = useCallback(() => {
-    if (currentPreset && currentSession) {
-      autoSaveMemory();
-    }
-    router.push('/presets');
-  }, [currentPreset, currentSession, autoSaveMemory, router]);
-
-  const handleDeleteSession = useCallback(
-    (id: string) => {
-      if (confirm('确定删除此会话吗？聊天记录将丢失。')) {
-        deleteSession(id);
-        if (currentSession?.id === id) {
-          const remaining = getSessionsByPreset(currentPreset!.id);
-          setSessions(remaining);
-          if (remaining.length > 0) {
-            setCurrentSession(remaining[0]);
-          } else {
-            setCurrentSession(null);
-          }
-        } else {
-          loadSessions();
-        }
-      }
-    },
-    [currentSession, currentPreset, loadSessions],
-  );
-
-  const allPresets = getPresets();
+  const displayContent = flipped ? english : (chinese || english);
+  const label = flipped ? 'English' : (chinese ? '中文翻译' : 'English');
 
   return (
-    <div className="page-enter flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)]">
-      {/* Toast notification */}
-      {saveToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg animate-in fade-in slide-in-from-top-2">
-          {saveToast}
+    <div className="bg-white rounded-xl border border-pink-100 p-4 shadow-sm transition-all hover:shadow-md">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="font-medium text-sm text-gray-700">{title}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-pink-50 text-pink-400">{label}</span>
         </div>
-      )}
-
-      {/* First-time hint */}
-      {showHint && (
-        <div className="flex-shrink-0 bg-pink-50 border border-pink-100 rounded-lg px-4 py-3 mb-3 flex items-start gap-2">
-          <p className="text-xs text-pink-700 flex-1">每个预设只允许一个会话。切换预设时，当前会话的长期记忆会自动保存。</p>
-          <button
-            onClick={() => { setShowHint(false); localStorage.setItem('jai_chat_hint_seen', '1'); }}
-            className="text-pink-400 hover:text-pink-600 text-sm flex-shrink-0"
-          >
-            知道了
+        <div className="flex items-center gap-1">
+          <button onClick={handleCopy} className="p-1.5 rounded-lg hover:bg-pink-50 text-pink-400 transition-colors" title="复制英文">
+            <IconCopy className="w-3.5 h-3.5" />
           </button>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3 flex-shrink-0">
-        <Button variant="ghost" size="sm" onClick={handleBackToPresets} className="gap-1 text-xs">
-          <IconBack className="w-3.5 h-3.5" /> 返回
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setShowPresetSelect(true)} className="text-xs">
-          {currentPreset ? currentPreset.name : '选择预设'}
-        </Button>
-        {currentPreset && (
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-emerald-500">会话进行中</span>
-            <Button variant="ghost" size="sm" onClick={() => setShowTranslation(!showTranslation)} className="text-xs gap-1">
-              <IconCopy className="w-3.5 h-3.5" /> 翻译
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Preset selector modal */}
-      {showPresetSelect && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onClick={() => setShowPresetSelect(false)}>
-          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">选择预设</CardTitle>
-            </CardHeader>
-            <CardContent className="max-h-[60vh] overflow-y-auto space-y-1">
-              {allPresets.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">暂无预设</p>
-              ) : (
-                allPresets.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => selectPreset(p)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${currentPreset?.id === p.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
-                  >
-                    {p.name}
-                  </button>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Translation panel */}
-      {showTranslation && currentPreset && (
-        <div className="flex-shrink-0 border border-pink-100 rounded-xl bg-white p-3 mb-3 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-pink-600">JAI 回复翻译区</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setTranslationFlipped(!translationFlipped)}
-                className="h-7 px-2 text-xs gap-1"
-                disabled={!translationChinese}
-              >
-                <IconFlip className="w-3.5 h-3.5" />
-                {translationFlipped ? '看中文' : '看英文'}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { setShowTranslation(false); }}
-                className="h-7 px-2 text-xs text-muted-foreground"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </Button>
-            </div>
-          </div>
-
-          {!translationFlipped ? (
-            // Default: Show Chinese translation (back)
-            <div>
-              {translationChinese ? (
-                <div className="bg-pink-50/60 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap">
-                  {translationChinese}
-                  {isTranslating && <span className="typing-cursor" />}
-                </div>
-              ) : isTranslating ? (
-                <div className="bg-pink-50/60 rounded-lg p-3 text-sm text-muted-foreground">
-                  <span className="typing-cursor">正在翻译...</span>
-                </div>
-              ) : (
-                <div className="bg-pink-50/60 rounded-lg p-3 text-sm text-muted-foreground text-center">
-                  在下方粘贴英文原文，翻译将自动生成
-                </div>
-              )}
-            </div>
-          ) : (
-            // Flipped: Show English original (front)
-            <div className="bg-gray-50 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap border border-gray-100">
-              {translationEnglish || <span className="text-muted-foreground">暂无英文原文</span>}
-            </div>
+          {chinese && (
+            <button onClick={() => setFlipped(!flipped)} className="p-1.5 rounded-lg hover:bg-pink-50 text-pink-400 transition-colors" title="翻转查看">
+              <IconFlip className="w-3.5 h-3.5" />
+            </button>
           )}
-
-          {/* English input area (always visible at bottom) */}
-          <Textarea
-            placeholder="粘贴 JanitorAI 的英文回复..."
-            value={translationEnglish}
-            onChange={(e) => handleTranslationInput(e.target.value)}
-            className="mt-2 min-h-[60px] max-h-[100px] resize-none text-xs"
-            rows={2}
-          />
+          {copied && <span className="text-xs text-emerald-400 ml-1">已复制</span>}
         </div>
-      )}
-
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-3 pb-2">
-        {!currentSession ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground text-sm">{currentPreset ? '正在加载会话...' : '请先选择一个预设'}</p>
-          </div>
-        ) : currentSession.messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground text-sm">开始新的对话</p>
-          </div>
-        ) : (
-          currentSession.messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-card border border-border rounded-bl-md'}`}>
-                {msg.thinking && (
-                  <div className="mb-2 p-2 bg-violet-50 border border-violet-100 rounded-lg text-xs text-violet-700 whitespace-pre-wrap font-mono max-h-[200px] overflow-y-auto">
-                    <span className="font-semibold text-violet-800">Thinking:</span><br />
-                    {msg.thinking}
-                  </div>
-                )}
-                <div className="whitespace-pre-wrap">
-                  {msg.content || (isStreaming ? '' : '...')}
-                  {isStreaming && msg.role === 'assistant' && msg.content && <span className="typing-cursor" />}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
       </div>
-
-      {/* Inspiration modal */}
-      {showInspiration && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-center justify-center p-4" onClick={() => setShowInspiration(false)}>
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-1.5"><IconSparkle className="w-4 h-4 text-pink-400" /> 灵感 - 剧情走向建议</CardTitle>
-              <Button onClick={handleInspiration} size="sm" variant="outline" disabled={isStreaming} className="gap-1"><IconRefresh className="w-3.5 h-3.5" />刷新</Button>
-            </CardHeader>
-            <CardContent className="max-h-[60vh] overflow-y-auto">
-              {inspirationText ? (
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed">{inspirationText}</pre>
-              ) : isStreaming ? (
-                <p className="text-sm text-muted-foreground typing-cursor">正在生成灵感...</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">点击刷新获取灵感</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Expand modal */}
-      {showExpand && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-center justify-center p-4" onClick={() => setShowExpand(false)}>
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-1.5"><IconPen className="w-4 h-4 text-pink-400" /> 扩写 - 从简短梗概到完整对话</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Textarea placeholder="输入简短梗概..." value={expandBrief} onChange={(e) => setExpandBrief(e.target.value)} className="text-sm" />
-              <Button onClick={handleExpand} disabled={isStreaming || !expandBrief.trim()} className="w-full">
-                {isStreaming ? '扩写中...' : '扩写'}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Memory modal */}
-      {showMemory && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-center justify-center p-4" onClick={() => setShowMemory(false)}>
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-1.5"><IconBrain className="w-4 h-4 text-pink-400" /> 长期记忆生成</CardTitle>
-              <div className="flex gap-2">
-                <Button onClick={() => navigator.clipboard.writeText(memoryText)} size="sm" variant="outline" disabled={!memoryText} className="gap-1"><IconCopy className="w-3.5 h-3.5" />复制</Button>
-                <Button onClick={handleSaveMemory} size="sm" disabled={!memoryText} className="gap-1"><IconSave className="w-3.5 h-3.5" />保存</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="max-h-[60vh] overflow-y-auto">
-              {memoryText ? (
-                <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed bg-muted/50 p-3 rounded-lg">{memoryText}</pre>
-              ) : isStreaming ? (
-                <p className="text-sm text-muted-foreground typing-cursor">正在生成长期记忆...</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">点击生成</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Input area */}
-      {currentSession && (
-        <div className="flex-shrink-0 border-t border-border bg-card/95 backdrop-blur-sm pt-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:rounded-xl md:border">
-          <div className="flex items-center gap-2 mb-2">
-            <Switch checked={thinkingEnabled} onCheckedChange={setThinkingEnabled} className="data-[state=checked]:bg-violet-500" />
-            <span className="text-xs text-muted-foreground">DS模型思考模式</span>
-          </div>
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="输入消息..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              className="min-h-[44px] max-h-[120px] resize-none text-sm flex-1"
-              rows={1}
-            />
-            {!isStreaming ? (
-              <Button onClick={handleSend} disabled={!inputText.trim()} size="icon" className="h-11 w-11 flex-shrink-0">
-                <IconSend className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleStop} variant="destructive" size="icon" className="h-11 w-11 flex-shrink-0">
-                <IconStop className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Button onClick={handleInspiration} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8 gap-1"><IconSparkle className="w-3.5 h-3.5" />灵感</Button>
-            <Button onClick={() => setShowExpand(true)} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8 gap-1"><IconPen className="w-3.5 h-3.5" />扩写</Button>
-            <Button onClick={handleMemory} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8 gap-1"><IconBrain className="w-3.5 h-3.5" />记忆</Button>
-          </div>
-        </div>
+      <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">
+        {displayContent}
+        {isLoading && <span className="inline-block w-1.5 h-4 bg-pink-400 animate-pulse ml-0.5 align-text-bottom" />}
+      </div>
+      {onInsert && english && (
+        <button
+          onClick={() => onInsert(english)}
+          className="mt-3 text-xs px-3 py-1.5 rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+        >
+          插入到对话
+        </button>
       )}
     </div>
   );
 }
 
 export default function ChatPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const presetId = searchParams.get('preset');
+
+  const [preset, setPreset] = useState<Preset | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showFirstTimeTip, setShowFirstTimeTip] = useState(false);
+
+  // JAI Translation area - always visible
+  const [jaiOriginal, setJaiOriginal] = useState('');
+  const [jaiTranslation, setJaiTranslation] = useState('');
+  const [jaiFlipped, setJaiFlipped] = useState(false);
+  const [jaiTranslating, setJaiTranslating] = useState(false);
+  const jaiDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Inspiration / Expand / Memory outputs (dual-language)
+  const [inspirationContent, setInspirationContent] = useState('');
+  const [inspirationLoading, setInspirationLoading] = useState(false);
+  const [expandBrief, setExpandBrief] = useState('');
+  const [expandContent, setExpandContent] = useState('');
+  const [expandLoading, setExpandLoading] = useState(false);
+  const [memoryContent, setMemoryContent] = useState('');
+  const [memoryLoading, setMemoryLoading] = useState(false);
+
+  // Modals
+  const [showExpandModal, setShowExpandModal] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Load preset and session
+  useEffect(() => {
+    const presets = getPresets();
+    const sessions = getSessions();
+
+    if (presetId) {
+      const p = presets.find(pr => pr.id === presetId);
+      if (p) {
+        setPreset(p);
+        const existingSession = sessions.find(s => s.presetId === p.id);
+        if (existingSession) {
+          setSession(existingSession);
+          setMessages(existingSession.messages);
+        } else {
+          const newSession = createSession(p.id, p.name);
+          setSession(newSession);
+          setMessages([]);
+        }
+      }
+    } else if (presets.length > 0) {
+      const p = presets[0];
+      setPreset(p);
+      const existingSession = sessions.find(s => s.presetId === p.id);
+      if (existingSession) {
+        setSession(existingSession);
+        setMessages(existingSession.messages);
+      } else {
+        const newSession = createSession(p.id, p.name);
+        setSession(newSession);
+        setMessages([]);
+      }
+    }
+
+    // First time tip
+    if (!localStorage.getItem('jai_chat_tip_shown')) {
+      setShowFirstTimeTip(true);
+    }
+  }, [presetId]);
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, inspirationContent, expandContent, memoryContent]);
+
+  // Auto-save on unmount / page leave
+  useEffect(() => {
+    const handleSave = () => {
+      if (session && preset) {
+        updateSession(session.id, { messages });
+        if (memoryContent) {
+          const memParsed = parseDualContent(memoryContent);
+          updatePreset(preset.id, { longTermMemory: memParsed.english });
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handleSave);
+    return () => {
+      handleSave();
+      window.removeEventListener('beforeunload', handleSave);
+    };
+  }, [session, preset, messages, memoryContent]);
+
+  // JAI Translation - debounced auto-translate
+  const translateJAI = useCallback(async (text: string) => {
+    if (!text.trim()) {
+      setJaiTranslation('');
+      return;
+    }
+    const apiKey = getApiKey();
+    if (!apiKey) return;
+
+    setJaiTranslating(true);
+    setJaiTranslation('');
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, apiKey }),
+      });
+      if (!res.ok) throw new Error('Translation failed');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                result += parsed.content;
+                setJaiTranslation(result);
+              }
+            } catch { /* skip */ }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Translation error:', e);
+    } finally {
+      setJaiTranslating(false);
+    }
+  }, []);
+
+  const handleJAIInput = (text: string) => {
+    setJaiOriginal(text);
+    setJaiFlipped(false);
+    if (jaiDebounceRef.current) clearTimeout(jaiDebounceRef.current);
+    jaiDebounceRef.current = setTimeout(() => translateJAI(text), 1500);
+  };
+
+  // Build chat history string for AI context
+  const buildChatHistory = useCallback(() => {
+    const recent = messages.slice(-10);
+    let history = recent.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n');
+    // Add JAI translation area English original as context
+    if (jaiOriginal.trim()) {
+      history += `\n\n[Latest JAI Reply - Char's response]:\n${jaiOriginal}`;
+    }
+    return history || '(This is the beginning of the story)';
+  }, [messages, jaiOriginal]);
+
+  // Send message
+  const handleSend = async () => {
+    if (!inputText.trim() || isGenerating || !preset) return;
+    const apiKey = getApiKey();
+    if (!apiKey) { alert('请先在设置页面配置 API Key'); return; }
+
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: inputText.trim(),
+      timestamp: Date.now(),
+    };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInputText('');
+    setIsGenerating(true);
+
+    const assistantMsg: ChatMessage = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+    };
+
+    abortRef.current = new AbortController();
+
+    try {
+      const systemPrompt = `You are a roleplay partner. Stay in character based on the context below.
+
+CHARACTER (Char):
+${preset.charInfo}
+
+USER PERSONA:
+${preset.userCard}
+
+${preset.greeting ? `OPENING SCENE:\n${preset.greeting}\n` : ''}
+${preset.longTermMemory ? `LONG-TERM MEMORY:\n${preset.longTermMemory}\n` : ''}
+${preset.plotDirection ? `CURRENT PLOT DIRECTION:\n${preset.plotDirection}\n` : ''}
+
+Always read the recent 5-10 messages for context before responding. If there is a "Latest JAI Reply" in the context, treat it as Char's most recent action/dialogue — respond naturally to it from the User's perspective.`;
+
+      const chatMsgs = newMessages.map(m => ({ role: m.role, content: m.content }));
+      // Add JAI reply as latest context
+      if (jaiOriginal.trim()) {
+        chatMsgs.push({ role: 'user', content: `[Latest JAI Reply - Char's response]:\n${jaiOriginal}\n\nBased on the above, respond as the User.` });
+      }
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: chatMsgs,
+          apiKey,
+          thinkingEnabled,
+          systemPrompt,
+        }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!res.ok) throw new Error('Chat request failed');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let thinkingContent = '';
+
+      setMessages([...newMessages, assistantMsg]);
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === 'thinking' && parsed.content) {
+                thinkingContent += parsed.content;
+              } else if (parsed.content) {
+                fullContent += parsed.content;
+              }
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  ...assistantMsg,
+                  content: fullContent,
+                  thinking: thinkingContent || undefined,
+                };
+                return updated;
+              });
+            } catch { /* skip */ }
+          }
+        }
+      }
+
+      // Save session
+      if (session) {
+        const finalMessages = [...newMessages, { ...assistantMsg, content: fullContent, thinking: thinkingContent || undefined }];
+        updateSession(session.id, { messages: finalMessages });
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') {
+        console.error('Chat error:', e);
+      }
+    } finally {
+      setIsGenerating(false);
+      abortRef.current = null;
+    }
+  };
+
+  // Inspiration
+  const handleInspiration = async () => {
+    if (inspirationLoading || !preset) return;
+    const apiKey = getApiKey();
+    if (!apiKey) { alert('请先在设置页面配置 API Key'); return; }
+
+    setInspirationContent('');
+    setInspirationLoading(true);
+
+    try {
+      const res = await fetch('/api/inspiration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charInfo: preset.charInfo,
+          userCard: preset.userCard,
+          userPersonality: preset.userPersonality,
+          plotDirection: preset.plotDirection,
+          chatHistory: buildChatHistory(),
+          longTermMemory: preset.longTermMemory,
+          apiKey,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Inspiration request failed');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                result += parsed.content;
+                setInspirationContent(result);
+              }
+            } catch { /* skip */ }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Inspiration error:', e);
+    } finally {
+      setInspirationLoading(false);
+    }
+  };
+
+  // Expand
+  const handleExpand = async () => {
+    if (expandLoading || !expandBrief.trim() || !preset) return;
+    const apiKey = getApiKey();
+    if (!apiKey) { alert('请先在设置页面配置 API Key'); return; }
+
+    setExpandContent('');
+    setExpandLoading(true);
+    setShowExpandModal(false);
+
+    try {
+      const res = await fetch('/api/expand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brief: expandBrief,
+          charInfo: preset.charInfo,
+          userCard: preset.userCard,
+          userPersonality: preset.userPersonality,
+          plotDirection: preset.plotDirection,
+          chatHistory: buildChatHistory(),
+          longTermMemory: preset.longTermMemory,
+          apiKey,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Expand request failed');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                result += parsed.content;
+                setExpandContent(result);
+              }
+            } catch { /* skip */ }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Expand error:', e);
+    } finally {
+      setExpandLoading(false);
+    }
+  };
+
+  // Memory
+  const handleMemory = async () => {
+    if (memoryLoading || !preset) return;
+    const apiKey = getApiKey();
+    if (!apiKey) { alert('请先在设置页面配置 API Key'); return; }
+
+    setMemoryContent('');
+    setMemoryLoading(true);
+
+    try {
+      const res = await fetch('/api/memory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charInfo: preset.charInfo,
+          userCard: preset.userCard,
+          chatHistory: buildChatHistory(),
+          longTermMemory: preset.longTermMemory,
+          apiKey,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Memory request failed');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                result += parsed.content;
+                setMemoryContent(result);
+              }
+            } catch { /* skip */ }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Memory error:', e);
+    } finally {
+      setMemoryLoading(false);
+    }
+  };
+
+  // Insert text to input
+  const handleInsert = (text: string) => {
+    setInputText(prev => prev ? prev + '\n' + text : text);
+  };
+
+  // Save memory to preset
+  const handleSaveMemory = () => {
+    if (preset && memoryContent) {
+      const memParsed = parseDualContent(memoryContent);
+      updatePreset(preset.id, { longTermMemory: memParsed.english });
+      setPreset({ ...preset, longTermMemory: memParsed.english });
+    }
+  };
+
+  // Go back to presets (auto-save)
+  const handleGoBack = () => {
+    if (session) {
+      updateSession(session.id, { messages });
+    }
+    if (preset && memoryContent) {
+      const memParsed = parseDualContent(memoryContent);
+      updatePreset(preset.id, { longTermMemory: memParsed.english });
+    }
+    router.push('/presets');
+  };
+
+  // Copy text helper
+  const copyText = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+  };
+
+  if (!preset) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">请先在预设库中创建预设</p>
+          <button onClick={() => router.push('/presets')} className="px-4 py-2 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors">
+            前往预设库
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><p className="text-muted-foreground text-sm">加载中...</p></div>}>
-      <ChatContent />
-    </Suspense>
+    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-pink-100 bg-white/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-2">
+          <button onClick={handleGoBack} className="p-1.5 rounded-lg hover:bg-pink-50 text-pink-400 transition-colors" title="返回预设库">
+            <IconBack className="w-4 h-4" />
+          </button>
+          <span className="font-medium text-sm text-gray-800 truncate max-w-[150px]">{preset.name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">思考模式</span>
+          <button
+            onClick={() => setThinkingEnabled(!thinkingEnabled)}
+            className={`relative w-10 h-5 rounded-full transition-colors ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${thinkingEnabled ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* First time tip */}
+      {showFirstTimeTip && (
+        <div className="px-4 py-2 bg-pink-50 border-b border-pink-100 text-xs text-pink-600 flex items-center justify-between shrink-0">
+          <span>每个预设只允许一个会话。切换预设时，当前会话的长期记忆会自动保存。</span>
+          <button onClick={() => { setShowFirstTimeTip(false); localStorage.setItem('jai_chat_tip_shown', '1'); }} className="text-pink-400 hover:text-pink-600 ml-2 shrink-0">知道了</button>
+        </div>
+      )}
+
+      {/* JAI Translation Area - Always visible */}
+      <div className="px-4 py-3 border-b border-pink-100 bg-gradient-to-r from-pink-50/50 to-white shrink-0">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-pink-400 flex items-center gap-1">
+            <IconFlip className="w-3.5 h-3.5" /> JAI 回复翻译区
+          </span>
+          {jaiTranslation && (
+            <button onClick={() => setJaiFlipped(!jaiFlipped)} className="text-xs text-pink-400 hover:text-pink-600 transition-colors flex items-center gap-1">
+              <IconFlip className="w-3 h-3" />
+              {jaiFlipped ? '看翻译' : '看原文'}
+            </button>
+          )}
+        </div>
+        <textarea
+          value={jaiOriginal}
+          onChange={e => handleJAIInput(e.target.value)}
+          placeholder="粘贴 Char 的英文回复，自动翻译为中文..."
+          className="w-full text-sm p-3 rounded-lg border border-pink-100 bg-white focus:border-pink-300 focus:outline-none resize-none placeholder:text-gray-300 min-h-[60px] max-h-[120px]"
+          rows={2}
+        />
+        {(jaiTranslation || jaiTranslating) && (
+          <div className="mt-2 p-3 rounded-lg bg-white border border-pink-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-[150px] overflow-y-auto">
+            {jaiFlipped ? jaiOriginal : (jaiTranslation || '翻译中...')}
+            {jaiTranslating && <span className="inline-block w-1.5 h-4 bg-pink-400 animate-pulse ml-0.5 align-text-bottom" />}
+          </div>
+        )}
+      </div>
+
+      {/* Messages + Feature Cards Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {/* Chat Messages */}
+        {messages.map(msg => (
+          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              msg.role === 'user'
+                ? 'bg-pink-500 text-white'
+                : 'bg-white border border-pink-100 text-gray-800 shadow-sm'
+            }`}>
+              {msg.thinking && (
+                <div className="mb-2 p-2 rounded-lg bg-violet-50 border border-violet-100 text-xs text-violet-600 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                  <span className="font-medium">思考过程</span>
+                  {'\n'}{msg.thinking}
+                </div>
+              )}
+              <div className="whitespace-pre-wrap">{msg.content}</div>
+              {msg.role === 'assistant' && msg.content && (
+                <button
+                  onClick={() => copyText(msg.content)}
+                  className="mt-1 text-xs text-pink-300 hover:text-pink-400 transition-colors"
+                >
+                  复制
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Inspiration Card */}
+        <FlipCard
+          title="灵感"
+          icon={<IconSparkle className="w-4 h-4 text-pink-400" />}
+          rawContent={inspirationContent}
+          isLoading={inspirationLoading}
+          onInsert={handleInsert}
+        />
+
+        {/* Expand Card */}
+        <FlipCard
+          title="扩写"
+          icon={<IconPen className="w-4 h-4 text-pink-400" />}
+          rawContent={expandContent}
+          isLoading={expandLoading}
+          onInsert={handleInsert}
+        />
+
+        {/* Memory Card */}
+        <FlipCard
+          title="长期记忆"
+          icon={<IconBrain className="w-4 h-4 text-pink-400" />}
+          rawContent={memoryContent}
+          isLoading={memoryLoading}
+          onInsert={handleInsert}
+        />
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Expand Modal */}
+      {showExpandModal && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30" onClick={() => setShowExpandModal(false)}>
+          <div className="bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-md p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+              <IconPen className="w-4 h-4 text-pink-400" /> 扩写
+            </h3>
+            <textarea
+              value={expandBrief}
+              onChange={e => setExpandBrief(e.target.value)}
+              placeholder="输入简短梗概，AI 将扩写为完整对话..."
+              className="w-full text-sm p-3 rounded-lg border border-pink-100 focus:border-pink-300 focus:outline-none resize-none min-h-[80px]"
+              rows={3}
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button onClick={() => setShowExpandModal(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">取消</button>
+              <button onClick={handleExpand} disabled={!expandBrief.trim()} className="px-4 py-2 text-sm bg-pink-500 text-white rounded-xl hover:bg-pink-600 disabled:opacity-50 transition-colors">扩写</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Input Area */}
+      <div className="shrink-0 border-t border-pink-100 bg-white/95 backdrop-blur-sm px-4 py-3">
+        {/* Feature Buttons */}
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={handleInspiration}
+            disabled={inspirationLoading}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors"
+          >
+            <IconSparkle className="w-3.5 h-3.5" /> 灵感
+          </button>
+          <button
+            onClick={() => setShowExpandModal(true)}
+            disabled={expandLoading}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors"
+          >
+            <IconPen className="w-3.5 h-3.5" /> 扩写
+          </button>
+          <button
+            onClick={handleMemory}
+            disabled={memoryLoading}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors"
+          >
+            <IconBrain className="w-3.5 h-3.5" /> 记忆
+          </button>
+          {memoryContent && (
+            <button
+              onClick={handleSaveMemory}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-emerald-50 text-emerald-500 hover:bg-emerald-100 transition-colors ml-auto"
+            >
+              保存记忆
+            </button>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="flex items-end gap-2">
+          <textarea
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="输入消息..."
+            className="flex-1 text-sm p-3 rounded-xl border border-pink-100 focus:border-pink-300 focus:outline-none resize-none min-h-[40px] max-h-[120px]"
+            rows={1}
+          />
+          <button
+            onClick={isGenerating ? () => abortRef.current?.abort() : handleSend}
+            className={`p-3 rounded-xl transition-colors shrink-0 ${isGenerating ? 'bg-red-50 text-red-400 hover:bg-red-100' : 'bg-pink-500 text-white hover:bg-pink-600'}`}
+          >
+            {isGenerating ? <IconStop className="w-4 h-4" /> : <IconSend className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, createSimpleSSEStream, handleAPIError, validateApiKey, streamResponse } from '@/lib/deepseek';
+import { callDeepSeek, createSimpleSSEStream, handleAPIError, validateApiKey, streamResponse, TRANSLATION_INSTRUCTION } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +18,8 @@ RULES:
 4. Stay consistent with the world setting, character dynamics, and User's personality.
 5. The output should be a single dialogue turn/action from the User — roughly 100-200 words.
 6. Do NOT write the Character's response — only the User's action and dialogue.
+7. Always read the recent 5-10 messages for context before generating.
+8. If there is a "Latest JAI Reply" in the context, use it as the primary scene reference.
 
 WORLD & CHARACTER CONTEXT:
 ${charInfo}
@@ -28,7 +30,7 @@ ${userCard}
 User personality preferences: ${userPersonality}
 
 ${longTermMemory ? `LONG-TERM MEMORY:\n${longTermMemory}\n` : ''}
-${plotDirection ? `CURRENT PLOT DIRECTION:\n${plotDirection}\n` : ''}`;
+${plotDirection ? `CURRENT PLOT DIRECTION:\n${plotDirection}\n` : ''}${TRANSLATION_INSTRUCTION}`;
 
     const userMessage = `Here is the brief outline to expand:
 "${brief}"
@@ -43,7 +45,7 @@ Expand this into a complete User dialogue/action turn:`;
       { role: 'user', content: userMessage },
     ];
 
-    const response = await callDeepSeek({ apiKey, messages, temperature: 0.9, maxTokens: 2048 });
+    const response = await callDeepSeek({ apiKey, messages, temperature: 0.9, maxTokens: 3000 });
     return streamResponse(createSimpleSSEStream(response));
   } catch (error) {
     return handleAPIError(error);

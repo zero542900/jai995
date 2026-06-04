@@ -297,12 +297,15 @@ export default function GeneratePage() {
 
             {/* Field locking - both sides, when not generating */}
             {!isGenerating && (showFront ? parsedFields : parsedChineseFields).length > 0 && (
-              <div className="mt-3 space-y-1">
-                <p className="text-xs text-muted-foreground mb-2">
-                  点击 🔒 标记满意的内容，刷新时标记字段将保留不变
-                  {hasLocked && <span className="text-pink-500 ml-1">（已标记 {Object.keys(lockedFields).length} 项）</span>}
-                </p>
-                <div className="grid gap-1">
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <span className="text-xs font-medium text-foreground">字段锁定</span>
+                  <span className="text-xs text-muted-foreground">
+                    — 点击右侧按钮标记满意字段，刷新时将保留
+                  </span>
+                  {hasLocked && <span className="text-xs text-pink-500 font-medium ml-1">已锁定 {Object.keys(lockedFields).length} 项</span>}
+                </div>
+                <div className="grid gap-1.5 border border-pink-100 rounded-lg p-2 bg-white/50">
                   {(showFront ? parsedFields : parsedChineseFields).map((field, idx) => {
                     // Use English key as lock identifier (same index maps between EN/CN)
                     const lockKey = parsedFields[idx]?.key || field.key;
@@ -310,20 +313,20 @@ export default function GeneratePage() {
                     return (
                       <div
                         key={idx}
-                        className={`flex items-start gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
+                        className={`flex items-start gap-2 px-2.5 py-2 rounded-md text-sm transition-colors ${
                           locked
-                            ? 'bg-pink-50 border border-pink-200'
-                            : 'hover:bg-muted/50'
+                            ? 'bg-pink-50 border border-pink-300 shadow-sm'
+                            : 'hover:bg-pink-50/40 border border-transparent'
                         }`}
                       >
-                        <span className="font-mono text-muted-foreground min-w-0 shrink-0">**{field.key}**:</span>
-                        <span className="flex-1 truncate text-foreground">{field.value}</span>
+                        <span className={`font-mono min-w-0 shrink-0 ${locked ? 'text-pink-600' : 'text-muted-foreground'}`}>**{field.key}**:</span>
+                        <span className="flex-1 text-foreground">{field.value}</span>
                         <button
                           onClick={() => toggleFieldLock(lockKey, parsedFields[idx]?.value || field.value)}
-                          className={`shrink-0 text-base leading-none transition-transform hover:scale-110 ${
-                            locked ? 'opacity-100' : 'opacity-30 hover:opacity-60'
+                          className={`shrink-0 text-lg leading-none transition-transform hover:scale-125 active:scale-95 rounded px-1 ${
+                            locked ? 'opacity-100' : 'opacity-50 hover:opacity-90'
                           }`}
-                          title={locked ? '取消锁定' : '锁定此字段（锁定对应英文字段）'}
+                          title={locked ? '点击取消锁定' : '点击锁定此字段（锁定对应英文字段）'}
                         >
                           {locked ? '🔒' : '🔓'}
                         </button>

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { IconSend, IconStop, IconSparkle, IconPen, IconBrain, IconRefresh, IconCopy, IconSave } from '@/components/icons';
+import { IconSend, IconStop, IconSparkle, IconPen, IconBrain, IconRefresh, IconCopy, IconSave, IconFlip, IconBack } from '@/components/icons';
 import {
   getApiKey,
   getPreset,
@@ -23,6 +23,7 @@ import type { Session, ChatMessage, Preset } from '@/lib/types';
 
 function ChatContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const urlSessionId = searchParams.get('sessionId');
   const urlPresetId = searchParams.get('presetId');
 
@@ -41,8 +42,20 @@ function ChatContent() {
   const [memoryText, setMemoryText] = useState('');
   const [showPresetSelect, setShowPresetSelect] = useState(false);
 
+  // Translation panel state
+  const [translationEnglish, setTranslationEnglish] = useState('');
+  const [translationChinese, setTranslationChinese] = useState('');
+  const [translationFlipped, setTranslationFlipped] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [saveToast, setSaveToast] = useState('');
+
+  // First-time usage hint
+  const [showHint, setShowHint] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const translationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,6 +78,16 @@ function ChatContent() {
           if (session) {
             setCurrentSession(session);
           }
+        } else {
+          // Auto-create or load the single session for this preset
+          const existing = getSessionsByPreset(preset.id);
+          if (existing.length > 0) {
+            setCurrentSession(existing[0]);
+          } else {
+            const newSess = createSession(preset.id, `${preset.name} - 会话`);
+            saveSession(newSess);
+            setCurrentSession(newSess);
+          }
         }
       }
     }
@@ -78,8 +101,105 @@ function ChatContent() {
     scrollToBottom();
   }, [currentSession?.messages, scrollToBottom]);
 
+  // Show first-time hint
+  useEffect(() => {
+    const seen = localStorage.getItem('jai_chat_hint_seen');
+    if (!seen && currentPreset) {
+      setShowHint(true);
+    }
+  }, [currentPreset]);
+
+  // Auto-save long-term memory when switching/closing
+  const autoSaveMemory = useCallback(() => {
+    if (!currentPreset || !currentSession) return;
+    const updatedPreset = {
+      ...currentPreset,
+      longTermMemory: currentSession.longTermMemory || currentPreset.longTermMemory,
+      plotDirection: currentPreset.plotDirection,
+      updatedAt: Date.now(),
+    };
+    savePreset(updatedPreset);
+    setCurrentPreset(updatedPreset);
+    setSaveToast('记忆已自动保存');
+    setTimeout(() => setSaveToast(''), 2000);
+  }, [currentPreset, currentSession]);
+
+  // Translation with debounce
+  const doTranslate = useCallback(async (text: string) => {
+    if (!text.trim()) {
+      setTranslationChinese('');
+      return;
+    }
+    const apiKey = getApiKey();
+    if (!apiKey) return;
+
+    setIsTranslating(true);
+    abortRef.current = new AbortController();
+
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, apiKey }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || '翻译失败');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('无法读取响应流');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            if (json.content) {
+              result += json.content;
+              setTranslationChinese(result);
+            }
+          } catch { /* skip */ }
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Translation error:', error.message);
+      }
+    } finally {
+      setIsTranslating(false);
+    }
+  }, []);
+
+  const handleTranslationInput = useCallback((value: string) => {
+    setTranslationEnglish(value);
+    setTranslationFlipped(false); // Reset to Chinese view on new input
+
+    if (translationTimerRef.current) {
+      clearTimeout(translationTimerRef.current);
+    }
+    translationTimerRef.current = setTimeout(() => {
+      doTranslate(value);
+    }, 1500);
+  }, [doTranslate]);
+
   const buildSystemPrompt = useCallback(() => {
     if (!currentPreset) return '';
+    const translationContext = translationEnglish.trim()
+      ? `\n\nLATEST JAI REPLY (English, for context):\n${translationEnglish.trim()}\n`
+      : '';
     return `You are an immersive roleplay partner. Follow these rules:
 
 1. Write in a cinematic, Western-narrative style (like an American TV show or novel). NOT anime or Chinese classical style.
@@ -87,6 +207,7 @@ function ChatContent() {
 3. Write the Character's actions in *asterisks* and dialogue in "quotes".
 4. Advance the story naturally based on the User's input. Don't control the User's actions.
 5. Be descriptive, atmospheric, and emotionally engaging.
+6. Always read the recent 5-10 messages for context before generating.
 
 WORLD & CHARACTER:
 ${currentPreset.charInfo}
@@ -95,8 +216,8 @@ USER PERSONA:
 ${currentPreset.userCard}
 
 ${currentPreset.greeting ? `OPENING GREETING:\n${currentPreset.greeting}\n` : ''}${currentPreset.longTermMemory ? `LONG-TERM MEMORY:\n${currentPreset.longTermMemory}\n` : ''}
-${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDirection}\n` : ''}`;
-  }, [currentPreset]);
+${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDirection}\n` : ''}${translationContext}`;
+  }, [currentPreset, translationEnglish]);
 
   const streamChat = useCallback(
     async (messages: { role: string; content: string }[]) => {
@@ -234,10 +355,18 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
     abortRef.current = new AbortController();
 
     try {
+      // Include translation context in the chat history for all features
+      const chatHistory = currentSession
+        ? currentSession.messages.slice(-20).map((m) => `${m.role}: ${m.content}`).join('\n')
+        : '';
+      const translationContext = translationEnglish.trim()
+        ? `\n\n[Latest JAI Reply for context]:\n${translationEnglish.trim()}\n`
+        : '';
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, apiKey }),
+        body: JSON.stringify({ ...body, apiKey, chatHistory: chatHistory + translationContext }),
         signal: abortRef.current.signal,
       });
 
@@ -283,14 +412,13 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
     } finally {
       setIsStreaming(false);
     }
-  }, []);
+  }, [currentSession, translationEnglish]);
 
   const handleInspiration = useCallback(async () => {
     if (!currentPreset || !currentSession || isStreaming) return;
     setShowInspiration(true);
     setInspirationText('');
 
-    const chatHistory = currentSession.messages.slice(-20).map((m) => `${m.role}: ${m.content}`).join('\n');
     await streamSSE(
       '/api/inspiration',
       {
@@ -298,8 +426,8 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         userCard: currentPreset.userCard,
         userPersonality: currentPreset.userPersonality,
         plotDirection: currentPreset.plotDirection,
-        chatHistory,
         longTermMemory: currentPreset.longTermMemory,
+        chatHistory: '',
       },
       (text) => setInspirationText(text),
     );
@@ -308,7 +436,6 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
   const handleExpand = useCallback(async () => {
     if (!expandBrief.trim() || !currentPreset || !currentSession || isStreaming) return;
 
-    const chatHistory = currentSession.messages.slice(-20).map((m) => `${m.role}: ${m.content}`).join('\n');
     const ok = await streamSSE(
       '/api/expand',
       {
@@ -317,8 +444,8 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         userCard: currentPreset.userCard,
         userPersonality: currentPreset.userPersonality,
         plotDirection: currentPreset.plotDirection,
-        chatHistory,
         longTermMemory: currentPreset.longTermMemory,
+        chatHistory: '',
       },
       (text) => setInputText(text),
     );
@@ -333,13 +460,12 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
     setShowMemory(true);
     setMemoryText('');
 
-    const chatHistory = currentSession.messages.slice(-40).map((m) => `${m.role}: ${m.content}`).join('\n');
     await streamSSE(
       '/api/memory',
       {
         charInfo: currentPreset.charInfo,
         userCard: currentPreset.userCard,
-        chatHistory,
+        chatHistory: '',
         longTermMemory: currentPreset.longTermMemory,
       },
       (text) => setMemoryText(text),
@@ -348,33 +474,48 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
 
   const handleSaveMemory = useCallback(() => {
     if (!currentPreset || !memoryText || !currentSession) return;
-    const updatedPreset = { ...currentPreset, longTermMemory: memoryText };
+    const updatedPreset = { ...currentPreset, longTermMemory: memoryText, updatedAt: Date.now() };
     savePreset(updatedPreset);
     setCurrentPreset(updatedPreset);
+    const updatedSession = { ...currentSession, longTermMemory: memoryText, updatedAt: Date.now() };
+    saveSession(updatedSession);
+    setCurrentSession(updatedSession);
     setShowMemory(false);
   }, [currentPreset, currentSession, memoryText]);
 
+  // 1:1 binding: only one session per preset
   const selectPreset = useCallback((preset: Preset) => {
+    // Auto-save current session memory before switching
+    if (currentPreset && currentSession) {
+      autoSaveMemory();
+    }
+
     setCurrentPreset(preset);
     setShowPresetSelect(false);
     const presetSessions = getSessionsByPreset(preset.id);
     setSessions(presetSessions);
-    setCurrentSession(presetSessions[0] || null);
-  }, []);
 
-  const selectSession = useCallback((session: Session) => {
-    setCurrentSession(session);
-    setShowSessionList(false);
-  }, []);
+    if (presetSessions.length > 0) {
+      setCurrentSession(presetSessions[0]);
+    } else {
+      const newSess = createSession(preset.id, `${preset.name} - 会话`);
+      saveSession(newSess);
+      setCurrentSession(newSess);
+      setSessions([newSess]);
+    }
 
-  const newSession = useCallback(() => {
-    if (!currentPreset) return;
-    const session = createSession(currentPreset.id, `${currentPreset.name} - 会话 ${sessions.length + 1}`);
-    saveSession(session);
-    setCurrentSession(session);
-    setSessions(getSessionsByPreset(currentPreset.id));
-    setShowSessionList(false);
-  }, [currentPreset, sessions.length]);
+    // Clear translation panel
+    setTranslationEnglish('');
+    setTranslationChinese('');
+    setTranslationFlipped(false);
+  }, [currentPreset, currentSession, autoSaveMemory]);
+
+  const handleBackToPresets = useCallback(() => {
+    if (currentPreset && currentSession) {
+      autoSaveMemory();
+    }
+    router.push('/presets');
+  }, [currentPreset, currentSession, autoSaveMemory, router]);
 
   const handleDeleteSession = useCallback(
     (id: string) => {
@@ -383,7 +524,11 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         if (currentSession?.id === id) {
           const remaining = getSessionsByPreset(currentPreset!.id);
           setSessions(remaining);
-          setCurrentSession(remaining[0] || null);
+          if (remaining.length > 0) {
+            setCurrentSession(remaining[0]);
+          } else {
+            setCurrentSession(null);
+          }
         } else {
           loadSessions();
         }
@@ -396,15 +541,41 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
 
   return (
     <div className="page-enter flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)]">
+      {/* Toast notification */}
+      {saveToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg animate-in fade-in slide-in-from-top-2">
+          {saveToast}
+        </div>
+      )}
+
+      {/* First-time hint */}
+      {showHint && (
+        <div className="flex-shrink-0 bg-pink-50 border border-pink-100 rounded-lg px-4 py-3 mb-3 flex items-start gap-2">
+          <p className="text-xs text-pink-700 flex-1">每个预设只允许一个会话。切换预设时，当前会话的长期记忆会自动保存。</p>
+          <button
+            onClick={() => { setShowHint(false); localStorage.setItem('jai_chat_hint_seen', '1'); }}
+            className="text-pink-400 hover:text-pink-600 text-sm flex-shrink-0"
+          >
+            知道了
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+        <Button variant="ghost" size="sm" onClick={handleBackToPresets} className="gap-1 text-xs">
+          <IconBack className="w-3.5 h-3.5" /> 返回
+        </Button>
         <Button variant="outline" size="sm" onClick={() => setShowPresetSelect(true)} className="text-xs">
           {currentPreset ? currentPreset.name : '选择预设'}
         </Button>
         {currentPreset && (
-          <Button variant="ghost" size="sm" onClick={() => setShowSessionList(true)} className="text-xs text-muted-foreground">
-            会话 ({sessions.length})
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-emerald-500">会话进行中</span>
+            <Button variant="ghost" size="sm" onClick={() => setShowTranslation(!showTranslation)} className="text-xs gap-1">
+              <IconCopy className="w-3.5 h-3.5" /> 翻译
+            </Button>
+          </div>
         )}
       </div>
 
@@ -434,37 +605,66 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         </div>
       )}
 
-      {/* Session list modal */}
-      {showSessionList && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onClick={() => setShowSessionList(false)}>
-          <Card className="w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm">会话列表</CardTitle>
-              <Button onClick={newSession} size="sm" variant="outline">+ 新建</Button>
-            </CardHeader>
-            <CardContent className="max-h-[60vh] overflow-y-auto space-y-1">
-              {sessions.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">暂无会话</p>
+      {/* Translation panel */}
+      {showTranslation && currentPreset && (
+        <div className="flex-shrink-0 border border-pink-100 rounded-xl bg-white p-3 mb-3 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-pink-600">JAI 回复翻译区</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTranslationFlipped(!translationFlipped)}
+                className="h-7 px-2 text-xs gap-1"
+                disabled={!translationChinese}
+              >
+                <IconFlip className="w-3.5 h-3.5" />
+                {translationFlipped ? '看中文' : '看英文'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setShowTranslation(false); }}
+                className="h-7 px-2 text-xs text-muted-foreground"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </Button>
+            </div>
+          </div>
+
+          {!translationFlipped ? (
+            // Default: Show Chinese translation (back)
+            <div>
+              {translationChinese ? (
+                <div className="bg-pink-50/60 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap">
+                  {translationChinese}
+                  {isTranslating && <span className="typing-cursor" />}
+                </div>
+              ) : isTranslating ? (
+                <div className="bg-pink-50/60 rounded-lg p-3 text-sm text-muted-foreground">
+                  <span className="typing-cursor">正在翻译...</span>
+                </div>
               ) : (
-                sessions.map((s) => (
-                  <div key={s.id} className="flex items-center gap-2">
-                    <button
-                      onClick={() => selectSession(s)}
-                      className={`flex-1 text-left px-3 py-2 rounded-lg text-sm transition-colors ${currentSession?.id === s.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
-                    >
-                      {s.name}
-                      <span className="text-xs text-muted-foreground ml-2">({s.messages.length}条)</span>
-                    </button>
-                    <button onClick={() => handleDeleteSession(s.id)} className="text-muted-foreground hover:text-destructive p-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                        <path d="M18 6 6 18M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))
+                <div className="bg-pink-50/60 rounded-lg p-3 text-sm text-muted-foreground text-center">
+                  在下方粘贴英文原文，翻译将自动生成
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          ) : (
+            // Flipped: Show English original (front)
+            <div className="bg-gray-50 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap border border-gray-100">
+              {translationEnglish || <span className="text-muted-foreground">暂无英文原文</span>}
+            </div>
+          )}
+
+          {/* English input area (always visible at bottom) */}
+          <Textarea
+            placeholder="粘贴 JanitorAI 的英文回复..."
+            value={translationEnglish}
+            onChange={(e) => handleTranslationInput(e.target.value)}
+            className="mt-2 min-h-[60px] max-h-[100px] resize-none text-xs"
+            rows={2}
+          />
         </div>
       )}
 
@@ -472,7 +672,7 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
       <div className="flex-1 overflow-y-auto space-y-3 pb-2">
         {!currentSession ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground text-sm">{currentPreset ? '选择或新建一个会话开始聊天' : '请先选择一个预设'}</p>
+            <p className="text-muted-foreground text-sm">{currentPreset ? '正在加载会话...' : '请先选择一个预设'}</p>
           </div>
         ) : currentSession.messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">

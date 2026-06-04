@@ -9,37 +9,70 @@ export async function POST(request: NextRequest) {
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
 
-    const systemPrompt = `You are an expert character card creator for JanitorAI roleplay. You create immersive, Western-cinematic-style User persona cards.
+    if (!userPersonality || !userPersonality.trim()) {
+      return new Response(JSON.stringify({ error: '用户性格要求为必填项' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-RULES:
-1. Write in the voice of an American TV show or movie narrator — NOT anime, NOT Chinese classical style.
-2. Based on the Character card's world/setting, infer a fitting identity for the User. For example:
-   - If the character is a wizard, the User could be a bard, mercenary, or alchemist — NOT a modern office worker.
-   - If the character is a sci-fi captain, the User could be a rogue engineer or alien diplomat.
-3. The User card must be written in English using the JanitorAI W++ format.
-4. Make the User's personality, background, and motivations complement and create interesting dynamics with the Character.
-5. Include: Name, Age, Gender, Species/Race, Appearance, Personality, Background, Likes, Dislikes, Speech Style, and Relationship Dynamic with the Character.
-6. Be creative, specific, and immersive. Avoid generic traits.
-7. You MUST also write an opening greeting (Greeting) — a short narrative paragraph (2-4 sentences) from the User's perspective that sets the scene for the roleplay. It should feel cinematic and immediately immerse the reader.
+    const systemPrompt = `[系统角色设定]
+你是一个专精于欧美写实风（Western RP）的角色卡撰写专家，熟悉 JanitorAI 等平台的欧美卡编写格式。
 
-OUTPUT FORMAT - Use this template:
-[Character("{{user}}")]
-[Nickname("...")]
-[Age("...")]
-[Gender("...")]
-[Species("...")]
-[Personality("...")]
-[Appearance("...")]
-[Background("...")]
-[Likes("...")]
-[Dislikes("...")]
-[Speech("...")]
-[Relationship("...")]
-[Description("A comprehensive paragraph describing who {{user}} is, their place in the world, and how they connect to the character.")]
+[任务概述]
+根据用户提供的【Char 信息】（可选）、【Jaibot 开场白】（可选）和【用户性格要求】（必填），生成一张符合欧美叙事风格的【用户卡（User Card）】。
 
-[Greeting("An opening narrative from the User's perspective that sets the scene. 2-4 cinematic sentences that draw the reader in.")]`;
+[输入字段定义]
+1. Char 信息（非必填）：用户粘贴的角色卡原始设定，用于提取世界观和身份参考。
+2. 开场白（非必填）：Jaibot 的初始场景描述或互动起点。
+3. 用户性格要求（必填）：用户对自己扮演角色的简短描述（如："冷面杀手、话少、会照顾人、童年创伤"）。
 
-    const userMessage = `Here is the Character card information:\n\n${charInfo}\n\nHere are the User personality requirements:\n\n${userPersonality}${greeting ? `\n\nHere is the desired opening greeting direction:\n\n${greeting}` : ''}\n\nGenerate a complete User persona card following the rules and template above. The User should fit naturally into the Character's world and create compelling roleplay dynamics. Make sure the Greeting feels cinematic and immersive.`;
+[处理规则 - 请严格遵循]
+1. 基于世界观：如果用户提供了"Char 信息"，你必须利用其中的世界观和角色身份来反推 User 的合理身份。例如：如果 Char 是巫师世界的猎魔人，User 应设定为吟游诗人、佣兵或旅店老板，而非现代上班族。
+2. 基于开场白：如果用户提供了"开场白"，请分析开场白中的环境、气氛、设定，确保 User 卡与其逻辑一致（如：开场白在太空站，User 就应是宇航员或工程师）。
+3. 无 Char 信息时的处理：如果用户仅提供了"用户性格要求"，则基于该性格泛生成一个通用但合理的 User 卡（不关联特定世界观，但保持写实风格）。
+4. 欧美写实风唯一准则：输出的语气像美剧设定或电影剧本，描述直白、写实、有画面感。禁止使用二次元词汇（如"萌"、"攻略"、"傲娇"），禁止中文古风（如"在下"、"妾身"）。
+5. 格式遵守：必须严格按照下方【输出模板】格式输出，使用纯文本，不要使用 YAML 或 JSON 代码块。
+
+[输出模板]
+[System Note: This card defines the user's persona. Do not break character. Keep responses grounded in the events and details below.]
+
+# Basic Information
+**Name**: 
+**Age**: 
+**Gender**: 
+**Height / Weight**: 
+**Nationality / Origin**: 
+**Current Location**: 
+
+# Appearance & Physical Traits
+**Face**: 
+**Hair**: 
+**Body**: 
+**Clothing Style**: 
+**Distinctive Features**: 
+
+# Personality & Psychological Profile
+**Core Traits**: 
+**Likes / Enjoyments**: 
+**Dislikes / Irritations**: 
+**Motivation**: 
+**Weaknesses**: 
+
+# Background & History (Short Bio)
+**Brief Bio**: 
+**Key Past Event**: 
+
+# Interaction & Dialogue Rules
+*[Style guideline: Keep it realistic, no godmodding]*
+**Speech Pattern**: 
+**Dialogue Style**:
+
+[额外指令]
+- 你只需要输出上面模板的填充结果，不要输出任何额外的解释或说明文字。
+- 不要在模板前后添加 \`\`\` 或任何代码块标记。`;
+
+    const userMessage = `${charInfo ? `【Char 信息】\n${charInfo}\n\n` : ''}${greeting ? `【Jaibot 开场白】\n${greeting}\n\n` : ''}【用户性格要求】\n${userPersonality}\n\n请根据以上信息，严格按照输出模板生成 User 卡。`;
 
     const messages = [
       { role: 'system', content: systemPrompt },

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getApiKey, createPreset, savePreset, generateId } from '@/lib/storage';
+import { getApiKey, createPreset, savePreset } from '@/lib/storage';
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function GeneratePage() {
   const [greeting, setGreeting] = useState('');
   const [generatedCard, setGeneratedCard] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [presetName, setPresetName] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
@@ -25,14 +25,14 @@ export default function GeneratePage() {
       router.push('/settings');
       return;
     }
-    if (!charInfo.trim()) {
-      alert('请输入角色卡（Char）信息');
+    if (!userPersonality.trim()) {
+      alert('请输入用户性格要求（必填）');
       return;
     }
 
     setIsGenerating(true);
     setGeneratedCard('');
-    setShowSavePrompt(false);
+    setShowSaveDialog(false);
 
     abortRef.current = new AbortController();
 
@@ -85,7 +85,7 @@ export default function GeneratePage() {
         }
       }
 
-      setShowSavePrompt(true);
+      setShowSaveDialog(true);
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
         alert(error.message);
@@ -110,6 +110,10 @@ export default function GeneratePage() {
     router.push('/presets');
   }, [presetName, charInfo, generatedCard, userPersonality, greeting, router]);
 
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(generatedCard);
+  }, [generatedCard]);
+
   return (
     <div className="page-enter space-y-6">
       <div className="flex items-center gap-3">
@@ -118,11 +122,11 @@ export default function GeneratePage() {
 
       <Card className="border-pink-100">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">角色卡信息 (Char)</CardTitle>
+          <CardTitle className="text-base">角色卡信息 (Char) <span className="text-muted-foreground font-normal text-xs">— 可选</span></CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
-            placeholder="粘贴角色卡设定内容..."
+            placeholder="粘贴角色卡设定内容。AI 将根据其世界观反推 User 合理身份..."
             value={charInfo}
             onChange={(e) => setCharInfo(e.target.value)}
             className="min-h-[160px] resize-y text-sm"
@@ -132,11 +136,11 @@ export default function GeneratePage() {
 
       <Card className="border-pink-100">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">开场白 (Greeting)</CardTitle>
+          <CardTitle className="text-base">开场白 (Greeting) <span className="text-muted-foreground font-normal text-xs">— 可选</span></CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
-            placeholder="输入你希望的开场白内容，AI 将据此生成符合世界观的 User 开场白。留空则由 AI 自行创作。"
+            placeholder="粘贴 Jaibot 的开场白，AI 将据此确保 User 卡与场景逻辑一致。留空则忽略。"
             value={greeting}
             onChange={(e) => setGreeting(e.target.value)}
             className="min-h-[100px] resize-y text-sm"
@@ -146,11 +150,11 @@ export default function GeneratePage() {
 
       <Card className="border-pink-100">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">User 性格要求</CardTitle>
+          <CardTitle className="text-base">User 性格要求 <span className="text-red-400 font-normal text-xs">— 必填</span></CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
-            placeholder="描述你希望 User 具备的性格、背景等要求..."
+            placeholder='简短描述你希望 User 具备的性格，如："冷面杀手、话少、会照顾人、童年创伤、喜欢听蓝调音乐"'
             value={userPersonality}
             onChange={(e) => setUserPersonality(e.target.value)}
             className="min-h-[100px] resize-y text-sm"
@@ -184,36 +188,54 @@ export default function GeneratePage() {
             <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg font-mono leading-relaxed max-h-[500px] overflow-y-auto">
               {generatedCard}
             </pre>
-            {showSavePrompt && !isGenerating && (
-              <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20 space-y-3">
-                <p className="text-sm font-medium text-foreground">
-                  是否与当前角色卡绑定并保存为预设？
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="输入预设名称..."
-                    value={presetName}
-                    onChange={(e) => setPresetName(e.target.value)}
-                    className="flex-1 px-3 py-2 text-sm rounded-md border border-input bg-background"
-                  />
-                  <Button onClick={handleSavePreset} size="sm">
-                    保存预设
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      navigator.clipboard.writeText(generatedCard);
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    复制
-                  </Button>
-                </div>
+            {!isGenerating && (
+              <div className="mt-3 flex gap-2">
+                <Button onClick={handleCopy} variant="outline" size="sm">
+                  复制
+                </Button>
+                <Button onClick={() => setShowSaveDialog(true)} size="sm">
+                  保存为预设
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* 保存弹窗 */}
+      {showSaveDialog && !isGenerating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-background rounded-xl shadow-xl border border-pink-100 p-6 mx-4 max-w-md w-full space-y-4">
+            <h3 className="text-base font-semibold text-foreground">
+              是否与当前 Char 信息绑定并保存为预设？
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              保存后可在预设库中查看和管理，也可直接从预设库开始会话。
+            </p>
+            <input
+              type="text"
+              placeholder="输入预设名称..."
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background"
+            />
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowSaveDialog(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                否，仅保留
+              </Button>
+              <Button
+                onClick={handleSavePreset}
+                className="flex-1"
+              >
+                是，保存预设
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

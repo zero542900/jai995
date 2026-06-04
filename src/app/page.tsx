@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { IconCopy, IconFlip, IconRefresh, IconSave, IconLock, IconUnlock } from '@/components/icons';
 import { getApiKey, createPreset, savePreset } from '@/lib/storage';
 
 /** 解析 User 卡文本为字段列表 */
@@ -323,12 +324,12 @@ export default function GeneratePage() {
                         <span className="flex-1 text-foreground">{field.value}</span>
                         <button
                           onClick={() => toggleFieldLock(lockKey, parsedFields[idx]?.value || field.value)}
-                          className={`shrink-0 text-lg leading-none transition-transform hover:scale-125 active:scale-95 rounded px-1 ${
-                            locked ? 'opacity-100' : 'opacity-50 hover:opacity-90'
+                          className={`shrink-0 transition-transform hover:scale-110 active:scale-95 rounded p-0.5 ${
+                            locked ? 'text-pink-500' : 'text-muted-foreground/40 hover:text-pink-300'
                           }`}
                           title={locked ? '点击取消锁定' : '点击锁定此字段（锁定对应英文字段）'}
                         >
-                          {locked ? '🔒' : '🔓'}
+                          {locked ? <IconLock className="w-4 h-4" /> : <IconUnlock className="w-4 h-4" />}
                         </button>
                       </div>
                     );
@@ -340,17 +341,17 @@ export default function GeneratePage() {
             {/* Action buttons */}
             {!isGenerating && (
               <div className="mt-4 flex gap-2 flex-wrap">
-                <Button onClick={handleCopy} variant="outline" size="sm" title="复制英文全文">
-                  📋 复制
+                <Button onClick={handleCopy} variant="outline" size="sm" title="复制英文全文" className="gap-1.5">
+                  <IconCopy className="w-4 h-4" /> 复制
                 </Button>
-                <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片">
-                  🔄 {showFront ? '中文翻译' : 'English'}
+                <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片" className="gap-1.5">
+                  <IconFlip className="w-4 h-4" /> {showFront ? '中文' : 'EN'}
                 </Button>
-                <Button onClick={handleRefresh} variant="outline" size="sm" title={hasLocked ? '保留标记项，重新生成其余' : '重新生成整卡'}>
-                  🔁 {hasLocked ? '局部刷新' : '刷新'}
+                <Button onClick={handleRefresh} variant="outline" size="sm" title={hasLocked ? '保留标记项，重新生成其余' : '重新生成整卡'} className="gap-1.5">
+                  <IconRefresh className="w-4 h-4" /> {hasLocked ? '局部刷新' : '刷新'}
                 </Button>
-                <Button onClick={() => setShowSaveDialog(true)} size="sm">
-                  💾 保存预设
+                <Button onClick={() => setShowSaveDialog(true)} size="sm" className="gap-1.5">
+                  <IconSave className="w-4 h-4" /> 保存预设
                 </Button>
               </div>
             )}

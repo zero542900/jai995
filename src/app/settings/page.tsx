@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { IconCheck, IconKey } from '@/components/icons';
 import { getApiKey, setApiKey } from '@/lib/storage';
 
 export default function SettingsPage() {
@@ -42,7 +43,7 @@ export default function SettingsPage() {
 
       <Card className="border-pink-100">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">DeepSeek API Key</CardTitle>
+          <CardTitle className="text-base flex items-center gap-1.5"><IconKey className="w-4 h-4 text-pink-400" /> DeepSeek API Key</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -51,9 +52,7 @@ export default function SettingsPage() {
 
           {saved && (
             <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-emerald-600">
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
+              <IconCheck className="w-4 h-4 text-emerald-600" />
               <span className="text-sm text-emerald-700">
                 已保存 Key: <code className="font-mono">{maskedKey}</code>
               </span>

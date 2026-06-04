@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { IconSend, IconStop, IconSparkle, IconPen, IconBrain, IconRefresh, IconCopy, IconSave } from '@/components/icons';
 import {
   getApiKey,
   getPreset,
@@ -455,7 +456,7 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
                       <span className="text-xs text-muted-foreground ml-2">({s.messages.length}条)</span>
                     </button>
                     <button onClick={() => handleDeleteSession(s.id)} className="text-muted-foreground hover:text-destructive p-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
                         <path d="M18 6 6 18M6 6l12 12" />
                       </svg>
                     </button>
@@ -503,8 +504,8 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         <div className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-center justify-center p-4" onClick={() => setShowInspiration(false)}>
           <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm">灵感 - 剧情走向建议</CardTitle>
-              <Button onClick={handleInspiration} size="sm" variant="outline" disabled={isStreaming}>刷新</Button>
+              <CardTitle className="text-sm flex items-center gap-1.5"><IconSparkle className="w-4 h-4 text-pink-400" /> 灵感 - 剧情走向建议</CardTitle>
+              <Button onClick={handleInspiration} size="sm" variant="outline" disabled={isStreaming} className="gap-1"><IconRefresh className="w-3.5 h-3.5" />刷新</Button>
             </CardHeader>
             <CardContent className="max-h-[60vh] overflow-y-auto">
               {inspirationText ? (
@@ -524,7 +525,7 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         <div className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-center justify-center p-4" onClick={() => setShowExpand(false)}>
           <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">扩写 - 从简短梗概到完整对话</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-1.5"><IconPen className="w-4 h-4 text-pink-400" /> 扩写 - 从简短梗概到完整对话</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Textarea placeholder="输入简短梗概..." value={expandBrief} onChange={(e) => setExpandBrief(e.target.value)} className="text-sm" />
@@ -541,10 +542,10 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
         <div className="fixed inset-0 z-50 bg-black/30 flex items-end md:items-center justify-center p-4" onClick={() => setShowMemory(false)}>
           <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm">长期记忆生成</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-1.5"><IconBrain className="w-4 h-4 text-pink-400" /> 长期记忆生成</CardTitle>
               <div className="flex gap-2">
-                <Button onClick={() => navigator.clipboard.writeText(memoryText)} size="sm" variant="outline" disabled={!memoryText}>复制</Button>
-                <Button onClick={handleSaveMemory} size="sm" disabled={!memoryText}>保存到预设</Button>
+                <Button onClick={() => navigator.clipboard.writeText(memoryText)} size="sm" variant="outline" disabled={!memoryText} className="gap-1"><IconCopy className="w-3.5 h-3.5" />复制</Button>
+                <Button onClick={handleSaveMemory} size="sm" disabled={!memoryText} className="gap-1"><IconSave className="w-3.5 h-3.5" />保存</Button>
               </div>
             </CardHeader>
             <CardContent className="max-h-[60vh] overflow-y-auto">
@@ -578,22 +579,18 @@ ${currentPreset.plotDirection ? `CURRENT PLOT DIRECTION:\n${currentPreset.plotDi
             />
             {!isStreaming ? (
               <Button onClick={handleSend} disabled={!inputText.trim()} size="icon" className="h-11 w-11 flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                </svg>
+                <IconSend className="w-4 h-4" />
               </Button>
             ) : (
               <Button onClick={handleStop} variant="destructive" size="icon" className="h-11 w-11 flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <rect x="6" y="6" width="12" height="12" rx="1" />
-                </svg>
+                <IconStop className="w-4 h-4" />
               </Button>
             )}
           </div>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleInspiration} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8">灵感</Button>
-            <Button onClick={() => setShowExpand(true)} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8">扩写</Button>
-            <Button onClick={handleMemory} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8">长期记忆</Button>
+            <Button onClick={handleInspiration} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8 gap-1"><IconSparkle className="w-3.5 h-3.5" />灵感</Button>
+            <Button onClick={() => setShowExpand(true)} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8 gap-1"><IconPen className="w-3.5 h-3.5" />扩写</Button>
+            <Button onClick={handleMemory} variant="outline" size="sm" disabled={isStreaming} className="flex-1 text-xs h-8 gap-1"><IconBrain className="w-3.5 h-3.5" />记忆</Button>
           </div>
         </div>
       )}

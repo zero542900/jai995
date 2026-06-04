@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { IconBack, IconPlay, IconSave } from '@/components/icons';
 import { getPreset, savePreset, createSession, saveSession, getSessionsByPreset } from '@/lib/storage';
 import type { Preset } from '@/lib/types';
 
@@ -86,15 +87,13 @@ export default function PresetDetailPage() {
           onClick={() => router.push('/presets')}
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <IconBack className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-semibold text-foreground">{preset.name}</h1>
       </div>
 
-      <Button onClick={handleStartSession} className="w-full" size="lg">
-        开始会话
+      <Button onClick={handleStartSession} className="w-full gap-1.5" size="lg">
+        <IconPlay className="w-4 h-4" /> 开始会话
       </Button>
 
       <Tabs defaultValue="char" className="w-full">

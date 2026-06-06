@@ -71,11 +71,21 @@ RULES:
         maxTokens: 600,
       });
 
-      const text = await response.text();
-      // Try to parse JSON from the response
-      let jsonStr = text;
+      // DeepSeek returns a full API response JSON when stream: false
+      const apiResponse = await response.json();
+      const aiContent = apiResponse?.choices?.[0]?.message?.content || '';
+
+      if (!aiContent) {
+        return new Response(JSON.stringify({ error: 'AI output empty, please retry' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Try to parse the AI content as JSON
+      let jsonStr = aiContent;
       // Strip markdown code blocks if present
-      const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const codeBlockMatch = aiContent.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeBlockMatch) {
         jsonStr = codeBlockMatch[1].trim();
       }

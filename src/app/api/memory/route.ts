@@ -10,18 +10,20 @@ export async function POST(request: NextRequest) {
     if (keyError) return keyError;
 
     const personInstruction = personMode === 'third'
-      ? 'Summarize from the THIRD PERSON perspective (he / she / they / User\'s name).'
-      : 'Summarize from the FIRST PERSON perspective (I / me / my).';
+      ? 'Summarize from the THIRD PERSON perspective using {{char}} and {{user}} as names (e.g. "{{char}} noticed that {{user}} was...").'
+      : 'Summarize from the FIRST PERSON perspective of {{char}} (e.g. "I noticed that {{user}} was...").';
 
-    const systemPrompt = `You are a roleplay memory summarization assistant for JanitorAI. Generate a long-term memory entry from the USER's perspective.
+    const systemPrompt = `You are a roleplay memory summarization assistant for JanitorAI. Generate a long-term memory entry from the CHAR's perspective — this memory will be pasted into the Bot's (Char's) long-term memory field on JanitorAI.
 
-CORE PRINCIPLE: The memory must be from the User's perspective — covering the User's personality, current state, key events, and relationship with the Char.
+CORE PRINCIPLE: The memory must be written from {{char}}'s point of view, as {{char}}'s own memory about {{user}}. It should cover what {{char}} observes, feels, and remembers about {{user}}.
+
+IMPORTANT NAMING RULE: Always use {{char}} and {{user}} as placeholders instead of any actual character names. JanitorAI will automatically replace these with the correct names at runtime. Do NOT use any specific names.
 
 ${personInstruction}
 
 CONTEXT:
-- Character (Char): ${charInfo || '(not provided)'}
-- User Persona: ${userCard || '(not provided)'}
+- Character ({{char}}): ${charInfo || '(not provided)'}
+- User Persona ({{user}}): ${userCard || '(not provided)'}
 ${longTermMemory ? `- Previous Long-term Memory: ${longTermMemory}` : ''}
 
 CURRENT SCENE:
@@ -29,25 +31,25 @@ ${chatHistory || '(This is the beginning of the story)'}
 
 INSTRUCTIONS:
 Generate a concise long-term memory summary in the <Memory_LTM> format commonly used in JanitorAI. The memory should include:
-- User's current emotional/physical state
+- {{user}}'s current emotional/physical state as observed by {{char}}
 - Key events that happened in this session
-- Important interactions with the Char
-- Any character development or changes
-- Relationship status with the Char
+- Important interactions between {{char}} and {{user}}
+- Any character development or changes in {{user}}
+- {{char}}'s relationship status with {{user}}
 
 Format:
 <Memory_LTM>
-[Concise summary of key facts, events, and states from the User's perspective]
+[Concise summary of key facts, events, and states from {{char}}'s perspective about {{user}}]
 </Memory_LTM>
 
-Keep it concise but comprehensive — this will be used as context in future conversations.
+Keep it concise but comprehensive — this will be used as context for the Bot in future conversations.
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
     const response = await callDeepSeek({
       apiKey,
       model: 'deepseek-chat',
-      messages: [{ role: 'user', content: 'Generate a long-term memory summary from the User\'s perspective based on the current conversation context.' }],
+      messages: [{ role: 'user', content: 'Generate a long-term memory summary from {{char}}\'s perspective about {{user}} based on the current conversation context.' }],
       systemPrompt,
       stream: true,
       temperature: 0.5,

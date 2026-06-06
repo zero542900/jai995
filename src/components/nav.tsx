@@ -7,6 +7,11 @@ import { IconMoon, IconGrid, IconChat, IconSettings, IconBook } from '@/componen
 
 const navItems = [
   {
+    href: '/chat',
+    label: '会话',
+    Icon: IconChat,
+  },
+  {
     href: '/',
     label: '生成',
     Icon: IconMoon,
@@ -20,11 +25,6 @@ const navItems = [
     href: '/instructions',
     label: '指令库',
     Icon: IconBook,
-  },
-  {
-    href: '/chat',
-    label: '会话',
-    Icon: IconChat,
   },
   {
     href: '/settings',

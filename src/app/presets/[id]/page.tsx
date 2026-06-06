@@ -92,6 +92,38 @@ export default function PresetDetailPage() {
         <IconPlay className="w-4 h-4" /> 开始会话
       </Button>
 
+      {/* Session Settings */}
+      <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">人称视角</span>
+          <select
+            value={preset.personMode || 'third'}
+            onChange={(e) => {
+              const updated = { ...preset, personMode: e.target.value as 'first' | 'third', updatedAt: Date.now() };
+              savePreset(updated);
+              setPreset(updated);
+            }}
+            className="border border-pink-200 rounded-md px-2 py-1 text-sm bg-white"
+          >
+            <option value="third">第三人称</option>
+            <option value="first">第一人称</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">思考模式</span>
+          <button
+            onClick={() => {
+              const updated = { ...preset, thinkingEnabled: !preset.thinkingEnabled, updatedAt: Date.now() };
+              savePreset(updated);
+              setPreset(updated);
+            }}
+            className={`relative w-10 h-5 rounded-full transition-colors ${preset.thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${preset.thinkingEnabled ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
       <Tabs defaultValue="char" className="w-full">
         <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="char">Char</TabsTrigger>

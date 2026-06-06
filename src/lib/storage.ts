@@ -152,6 +152,8 @@ export function createPreset(
     greeting,
     plotDirection: '',
     longTermMemory: '',
+    personMode: 'third',
+    thinkingEnabled: false,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };

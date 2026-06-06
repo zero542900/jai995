@@ -26,6 +26,8 @@ interface Preset {
   greeting: string;
   plotDirection: string;
   longTermMemory: string;
+  personMode: 'first' | 'third';
+  thinkingEnabled: boolean;
   createdAt: number;
 }
 
@@ -90,7 +92,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [jaiInput, setJaiInput] = useState('');
-  const [personMode, setPersonMode] = useState<'first' | 'third'>('first');
+  const [personMode, setPersonMode] = useState<'first' | 'third'>('third');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
 
   // Feature states
@@ -166,12 +168,35 @@ export default function ChatPage() {
     }
   }, [currentPresetId, presets]);
 
+  // Load personMode and thinkingEnabled from preset
+  useEffect(() => {
+    if (!currentPresetId) return;
+    const preset = presets.find(p => p.id === currentPresetId);
+    if (preset) {
+      setPersonMode(preset.personMode || 'third');
+      setThinkingEnabled(preset.thinkingEnabled || false);
+    }
+  }, [currentPresetId, presets]);
+
   // Auto-save
   useEffect(() => {
     if (!currentPresetId || messages.length === 0) return;
     const preset = presets.find(p => p.id === currentPresetId);
     saveSession(currentPresetId, messages, preset?.longTermMemory || '');
   }, [messages, currentPresetId, presets]);
+
+  // Save personMode/thinkingEnabled back to preset
+  useEffect(() => {
+    if (!currentPresetId || presets.length === 0) return;
+    const preset = presets.find(p => p.id === currentPresetId);
+    if (!preset) return;
+    if (preset.personMode !== personMode || preset.thinkingEnabled !== thinkingEnabled) {
+      const updated = { ...preset, personMode, thinkingEnabled };
+      const allPresets = presets.map(p => p.id === currentPresetId ? updated : p);
+      localStorage.setItem('jai_presets', JSON.stringify(allPresets));
+      setPresets(allPresets);
+    }
+  }, [personMode, thinkingEnabled]);
 
   // Auto-scroll
   useEffect(() => {
@@ -438,7 +463,17 @@ export default function ChatPage() {
       }
 
       const parts = fullText.split('===CHINESE===');
-      setMemoryResult({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim() });
+      const enText = (parts[0] || '').trim();
+      const cnText = (parts[1] || '').trim();
+      setMemoryResult({ en: enText, cn: cnText });
+
+      // Auto-save to preset
+      if (currentPreset && enText) {
+        const updated = { ...currentPreset, longTermMemory: enText };
+        updatePreset(updated);
+        setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
+        showNotification('记忆已自动写入预设');
+      }
     } catch {
       showNotification('记忆生成失败');
     } finally {

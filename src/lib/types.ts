@@ -9,6 +9,8 @@ export interface Preset {
   greeting: string;
   plotDirection: string;
   longTermMemory: string;
+  personMode: 'first' | 'third';
+  thinkingEnabled: boolean;
   createdAt: number;
   updatedAt: number;
 }

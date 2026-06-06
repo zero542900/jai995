@@ -35,7 +35,7 @@ Generate exactly 3 creative options for what the User could say or do next. Each
 - Consistent with the character dynamics and world
 - Fresh and interesting, not generic
 
-Output format (STRICTLY follow this, use the exact markers):
+Output format (STRICTLY follow this — DO NOT use numbered lists like "1." "2." "3.", use ONLY the markers below):
 ===ITEM===
 [First option English]
 ===ITEM===
@@ -49,6 +49,8 @@ Output format (STRICTLY follow this, use the exact markers):
 [Second option Chinese translation]
 ===ITEM===
 [Third option Chinese translation]
+
+IMPORTANT: Each option MUST be preceded by ===ITEM===. Do NOT number the options. Do NOT add any extra text, headers, or explanations outside the markers.
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 

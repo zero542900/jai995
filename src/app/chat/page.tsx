@@ -401,18 +401,36 @@ export default function ChatPage() {
         }
       }
 
-      // Parse items - split by ===ITEM===, then separate English and Chinese by ===CHINESE===
+      // Parse items - split by ===CHINESE=== first, then split each half into items
       const halves = fullText.split('===CHINESE===');
       const enPart = (halves[0] || '').trim();
       const cnPart = (halves[1] || '').trim();
       
-      const enItems = enPart.split('===ITEM===').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(s => s);
-      const cnItems = cnPart.split('===ITEM===').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(s => s);
+      // Split by ===ITEM=== marker, fallback to numbered list (1. 2. 3.)
+      const splitItems = (text: string): string[] => {
+        // Try ===ITEM=== marker first
+        const markerItems = text.split('===ITEM===').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(s => s);
+        if (markerItems.length >= 3) return markerItems.slice(0, 3);
+        
+        // Fallback: split by numbered list pattern (1. 2. 3. or 1) 2) 3))
+        const numbered = text.split(/\n(?=\d+[\.\)]\s)/).map(s => s.replace(/^\d+[\.\)]\s*/, '').trim()).filter(s => s);
+        if (numbered.length >= 3) return numbered.slice(0, 3);
+        
+        // Last resort: split by double newlines
+        const byParagraph = text.split(/\n\s*\n/).map(s => s.trim()).filter(s => s && s.length > 10);
+        if (byParagraph.length >= 3) return byParagraph.slice(0, 3);
+        
+        // If nothing works, return the whole text as one item
+        return markerItems.length > 0 ? markerItems : [text];
+      };
+      
+      const enItems = splitItems(enPart);
+      const cnItems = splitItems(cnPart);
       
       const parsed = [0, 1, 2].map(i => ({
         en: enItems[i] || '',
         cn: cnItems[i] || '',
-      }));
+      })).filter(item => item.en || item.cn);
       setInspirationItems(parsed);
     } catch {
       showNotification('灵感生成失败');

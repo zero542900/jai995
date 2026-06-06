@@ -49,9 +49,39 @@ export default function PresetDetailPage() {
     );
   }
 
+  /** Update a single translation field in preset and persist */
+  const updateTranslation = (field: string, value: string) => {
+    if (!preset) return;
+    const updated = {
+      ...preset,
+      translations: { ...preset.translations, [field]: value },
+      updatedAt: Date.now(),
+    };
+    savePreset(updated);
+    setPreset(updated);
+  };
+
+  /** Clear a single translation field (content changed) */
+  const clearTranslation = (field: string) => {
+    if (!preset?.translations?.[field as keyof typeof preset.translations]) return;
+    const updated = {
+      ...preset,
+      translations: { ...preset.translations, [field]: undefined },
+      updatedAt: Date.now(),
+    };
+    savePreset(updated);
+    setPreset(updated);
+  };
+
   const handleSave = (field: keyof Preset, value: string, setter: (v: boolean) => void) => {
     if (preset) {
-      const updated = { ...preset, [field]: value, updatedAt: Date.now() };
+      // When content changes, clear the corresponding translation cache
+      const translations = { ...preset.translations };
+      const translationField = field as string;
+      if (translations[translationField as keyof typeof translations] !== undefined) {
+        translations[translationField as keyof typeof translations] = undefined;
+      }
+      const updated = { ...preset, [field]: value, translations, updatedAt: Date.now() };
       savePreset(updated);
       setPreset(updated);
       setter(false);
@@ -147,7 +177,14 @@ export default function PresetDetailPage() {
                   </div>
                 </div>
               ) : (
-                <FlipCard content={preset.charInfo} title="角色卡" emptyText="暂无角色信息，点击编辑添加" />
+                <FlipCard
+                  content={preset.charInfo}
+                  title="角色卡"
+                  emptyText="暂无角色信息，点击编辑添加"
+                  cachedTranslation={preset.translations?.charInfo}
+                  onTranslationReady={(t) => updateTranslation('charInfo', t)}
+                  onContentChanged={() => clearTranslation('charInfo')}
+                />
               )}
             </CardContent>
           </Card>
@@ -160,7 +197,15 @@ export default function PresetDetailPage() {
               <CardTitle className="text-sm">User 卡</CardTitle>
             </CardHeader>
             <CardContent>
-              <FlipCard content={preset.userCard} title="User 卡" mono emptyText="暂无 User 卡" />
+              <FlipCard
+                content={preset.userCard}
+                title="User 卡"
+                mono
+                emptyText="暂无 User 卡"
+                cachedTranslation={preset.translations?.userCard}
+                onTranslationReady={(t) => updateTranslation('userCard', t)}
+                onContentChanged={() => clearTranslation('userCard')}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -193,7 +238,14 @@ export default function PresetDetailPage() {
                   </div>
                 </div>
               ) : (
-                <FlipCard content={preset.greeting} title="开场白" emptyText="暂无开场白，点击编辑添加" />
+                <FlipCard
+                  content={preset.greeting}
+                  title="开场白"
+                  emptyText="暂无开场白，点击编辑添加"
+                  cachedTranslation={preset.translations?.greeting}
+                  onTranslationReady={(t) => updateTranslation('greeting', t)}
+                  onContentChanged={() => clearTranslation('greeting')}
+                />
               )}
             </CardContent>
           </Card>
@@ -228,7 +280,14 @@ export default function PresetDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <FlipCard content={preset.plotDirection} title="剧情走向" emptyText="暂无剧情走向，点击编辑添加" />
+                  <FlipCard
+                    content={preset.plotDirection}
+                    title="剧情走向"
+                    emptyText="暂无剧情走向，点击编辑添加"
+                    cachedTranslation={preset.translations?.plotDirection}
+                    onTranslationReady={(t) => updateTranslation('plotDirection', t)}
+                    onContentChanged={() => clearTranslation('plotDirection')}
+                  />
                   {preset.plotData && (
                     <div className="space-y-2 text-xs text-gray-500">
                       {preset.plotData.plotStage && (
@@ -293,7 +352,15 @@ export default function PresetDetailPage() {
                   </div>
                 </div>
               ) : (
-                <FlipCard content={preset.longTermMemory} title="长期记忆" mono emptyText="暂无长期记忆，点击编辑添加" />
+                <FlipCard
+                  content={preset.longTermMemory}
+                  title="长期记忆"
+                  mono
+                  emptyText="暂无长期记忆，点击编辑添加"
+                  cachedTranslation={preset.translations?.longTermMemory}
+                  onTranslationReady={(t) => updateTranslation('longTermMemory', t)}
+                  onContentChanged={() => clearTranslation('longTermMemory')}
+                />
               )}
             </CardContent>
           </Card>

@@ -15,6 +15,12 @@ interface FlipCardProps {
   maxHeight?: string;
   /** 翻译为空时的提示 */
   emptyText?: string;
+  /** 外部缓存的翻译（如 preset.translations.charInfo），有则直接使用，不再调 API */
+  cachedTranslation?: string;
+  /** 翻译完成后的回调，用于将翻译写回持久化存储 */
+  onTranslationReady?: (translation: string) => void;
+  /** 原文变化时回调，用于清除持久化的翻译缓存 */
+  onContentChanged?: () => void;
 }
 
 export default function FlipCard({
@@ -23,19 +29,27 @@ export default function FlipCard({
   mono = false,
   maxHeight = '60vh',
   emptyText = '暂无内容',
+  cachedTranslation,
+  onTranslationReady,
+  onContentChanged,
 }: FlipCardProps) {
   const [flipped, setFlipped] = useState(false);
-  const [translation, setTranslation] = useState('');
+  // 优先使用外部缓存，否则使用内部状态
+  const [localTranslation, setLocalTranslation] = useState('');
   const [translating, setTranslating] = useState(false);
   const prevContentRef = useRef(content);
 
   // 当 content 变化时（编辑保存后），重置翻译缓存
   useEffect(() => {
     if (prevContentRef.current !== content) {
-      setTranslation('');
+      setLocalTranslation('');
       prevContentRef.current = content;
+      onContentChanged?.();
     }
-  }, [content]);
+  }, [content, onContentChanged]);
+
+  // 最终使用的翻译：外部缓存优先，否则用内部状态
+  const translation = cachedTranslation || localTranslation;
 
   const handleFlip = async () => {
     if (!flipped && !translation && content) {
@@ -50,7 +64,9 @@ export default function FlipCard({
         });
         const data = await res.json();
         if (data.translation) {
-          setTranslation(data.translation);
+          setLocalTranslation(data.translation);
+          // 回调外部持久化
+          onTranslationReady?.(data.translation);
         }
       } catch {
         // Translation failed, still flip

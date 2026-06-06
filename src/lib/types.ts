@@ -38,6 +38,15 @@ export interface PlotData {
   lastMemoryCount?: number;
 }
 
+export interface PresetTranslations {
+  charInfo?: string;
+  userCard?: string;
+  userPersonality?: string;
+  plotDirection?: string;
+  longTermMemory?: string;
+  greeting?: string;
+}
+
 export interface Preset {
   id: string;
   name: string;
@@ -50,6 +59,7 @@ export interface Preset {
   personMode: 'first' | 'third';
   thinkingEnabled: boolean;
   plotData?: PlotData;
+  translations?: PresetTranslations;
   createdAt: number;
   updatedAt: number;
 }

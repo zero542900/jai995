@@ -328,6 +328,7 @@ export function createPreset(
   userCard: string,
   userPersonality: string,
   greeting: string,
+  translations?: Record<string, string>,
 ): Preset {
   return {
     id: generateId(),
@@ -340,6 +341,7 @@ export function createPreset(
     longTermMemory: '',
     personMode: 'third',
     thinkingEnabled: false,
+    translations: translations || {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };

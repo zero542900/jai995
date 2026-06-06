@@ -209,10 +209,12 @@ export default function GeneratePage() {
       alert('请输入预设名称');
       return;
     }
-    const preset = createPreset(presetName.trim(), charInfo.trim(), englishCard, userPersonality.trim(), greeting.trim());
+    const translations: Record<string, string> = {};
+    if (chineseCard) translations.userCard = chineseCard;
+    const preset = createPreset(presetName.trim(), charInfo.trim(), englishCard, userPersonality.trim(), greeting.trim(), translations);
     savePreset(preset);
     router.push('/presets');
-  }, [presetName, charInfo, englishCard, userPersonality, greeting, router]);
+  }, [presetName, charInfo, englishCard, chineseCard, userPersonality, greeting, router]);
 
   const hasLocked = Object.keys(lockedFields).length > 0;
 

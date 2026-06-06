@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey } from '@/components/icons';
+import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook } from '@/components/icons';
 
 // ========== Types ==========
 interface ChatMessage {
@@ -31,6 +31,31 @@ interface Preset {
   createdAt: number;
 }
 
+interface Instruction {
+  id: string;
+  name: string;
+  content: string;
+  summary: string;
+}
+
+// ========== Instruction Utilities ==========
+/** Remove all 【...】 blocks from text — used for memory/inspiration/expand APIs */
+function stripInstructions(text: string): string {
+  return text.replace(/【[\s\S]*?】/g, '').trim();
+}
+
+/** Parse content into main text and instruction blocks */
+function parseContentSections(text: string): { main: string; instructions: string[] } {
+  const instructions: string[] = [];
+  const regex = /【([\s\S]*?)】/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    instructions.push(match[1].trim());
+  }
+  const main = text.replace(/【[\s\S]*?】/g, '').trim();
+  return { main, instructions };
+}
+
 // ========== Storage helpers ==========
 function getPresets(): Preset[] {
   if (typeof window === 'undefined') return [];
@@ -54,6 +79,11 @@ function updatePreset(preset: Preset) {
   const presets = getPresets();
   const idx = presets.findIndex(p => p.id === preset.id);
   if (idx >= 0) { presets[idx] = preset; localStorage.setItem('jai_presets', JSON.stringify(presets)); }
+}
+
+function getInstructionList(): Instruction[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem('jai_instructions') || '[]'); } catch { return []; }
 }
 
 // ========== Translation Instruction ==========
@@ -112,6 +142,22 @@ export default function ChatPage() {
   const [memoryFlipped, setMemoryFlipped] = useState(false);
 
   const [notification, setNotification] = useState('');
+  const [showInstructionPicker, setShowInstructionPicker] = useState(false);
+  const [instructionList, setInstructionList] = useState<Instruction[]>([]);
+  const instructionPickerRef = useRef<HTMLDivElement>(null);
+
+  // Close instruction picker on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (instructionPickerRef.current && !instructionPickerRef.current.contains(e.target as Node)) {
+        setShowInstructionPicker(false);
+      }
+    };
+    if (showInstructionPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showInstructionPicker]);
 
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -212,7 +258,13 @@ export default function ChatPage() {
   };
 
   const buildChatHistory = useCallback(() => {
+    // Chat history keeps instructions — bot needs to see them
     return messages.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${m.content}`).join('\n');
+  }, [messages]);
+
+  const buildChatHistoryForMemory = useCallback(() => {
+    // Memory/inspiration/expand strip instructions — they shouldn't affect these
+    return messages.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${stripInstructions(m.content)}`).join('\n');
   }, [messages]);
 
   // ========== Message Actions ==========
@@ -320,7 +372,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           charInfo: currentPreset.charInfo,
           userCard: currentPreset.userCard,
-          chatHistory: buildChatHistory(),
+          chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
           personMode
@@ -386,7 +438,7 @@ export default function ChatPage() {
           brief: expandBrief,
           charInfo: currentPreset.charInfo,
           userCard: currentPreset.userCard,
-          chatHistory: buildChatHistory(),
+          chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
           personMode
@@ -440,7 +492,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           charInfo: currentPreset.charInfo,
           userCard: currentPreset.userCard,
-          chatHistory: buildChatHistory(),
+          chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           apiKey
         })
@@ -536,7 +588,7 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Messages - scrollable */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3" onClick={() => setShowInstructionPicker(false)}>
         {messages.map(msg => (
           <MessageBubble
             key={msg.id}
@@ -547,6 +599,18 @@ export default function ChatPage() {
             onCancelEdit={() => cancelEditMessage(msg.id)}
             onDelete={() => deleteMessageAndAfter(msg.id)}
             onCopy={() => copyContent(msg.flipped && msg.chineseTranslation ? msg.chineseTranslation : msg.content)}
+            onMarkAsInstruction={() => {
+              setMessages(prev => prev.map(m => {
+                if (m.id !== msg.id) return m;
+                const content = m.content;
+                // Toggle: if already fully wrapped in 【】, unwrap; otherwise wrap
+                if (content.startsWith('【') && content.endsWith('】')) {
+                  return { ...m, content: content.slice(1, -1) };
+                }
+                return { ...m, content: `【${content}】` };
+              }));
+              showNotification('已标记为指令内容');
+            }}
           />
         ))}
         <div ref={messagesEndRef} />
@@ -734,7 +798,7 @@ export default function ChatPage() {
         </div>
 
         {/* Feature Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <button onClick={handleInspiration} disabled={inspirationLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
             <IconSparkle className="w-3.5 h-3.5" /> 灵感
           </button>
@@ -744,6 +808,41 @@ export default function ChatPage() {
           <button onClick={handleMemory} disabled={memoryLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
             <IconBrain className="w-3.5 h-3.5" /> 记忆
           </button>
+          <div className="relative" ref={instructionPickerRef}>
+            <button
+              onClick={() => {
+                setInstructionList(getInstructionList());
+                setShowInstructionPicker(!showInstructionPicker);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+            >
+              <IconBook className="w-3.5 h-3.5" /> 指令
+            </button>
+            {showInstructionPicker && instructionList.length > 0 && (
+              <div className="absolute bottom-full left-0 mb-1 w-56 max-h-60 overflow-y-auto bg-white rounded-xl border border-pink-100 shadow-lg z-50 py-1">
+                {instructionList.map(inst => (
+                  <button
+                    key={inst.id}
+                    onClick={() => {
+                      setUserInput(prev => (prev ? prev + '\n' : '') + `【${inst.content}】`);
+                      setShowInstructionPicker(false);
+                      showNotification(`已插入「${inst.name}」`);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-pink-50 transition-colors"
+                  >
+                    <p className="text-xs font-medium text-gray-800 truncate">{inst.name}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{inst.summary}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showInstructionPicker && instructionList.length === 0 && (
+              <div className="absolute bottom-full left-0 mb-1 w-56 bg-white rounded-xl border border-pink-100 shadow-lg z-50 py-3 px-3">
+                <p className="text-xs text-gray-400">暂无指令</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">前往指令库添加</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -758,7 +857,7 @@ export default function ChatPage() {
 }
 
 // ========== Message Bubble Component ==========
-function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDelete, onCopy }: {
+function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDelete, onCopy, onMarkAsInstruction }: {
   message: ChatMessage;
   onFlip: () => void;
   onEdit: () => void;
@@ -766,6 +865,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
   onCancelEdit: () => void;
   onDelete: () => void;
   onCopy: () => void;
+  onMarkAsInstruction: () => void;
 }) {
   const [editContent, setEditContent] = useState(message.content);
   const isUser = message.role === 'user';
@@ -773,6 +873,10 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
   useEffect(() => {
     setEditContent(message.content);
   }, [message.content]);
+
+  // Parse content into sections
+  const displayText = message.flipped && message.chineseTranslation ? message.chineseTranslation : message.content;
+  const { main, instructions } = parseContentSections(displayText);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -804,10 +908,42 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
               </div>
             </div>
           ) : (
-            <p className="text-sm whitespace-pre-wrap leading-relaxed">
-              {message.flipped && message.chineseTranslation ? message.chineseTranslation : message.content}
+            <>
+              {/* Main content */}
+              {main && (
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                  {main}
+                </p>
+              )}
+              {/* Instruction blocks */}
+              {instructions.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {instructions.map((inst, idx) => (
+                    <div
+                      key={idx}
+                      className={`rounded-lg px-2.5 py-1.5 text-[11px] leading-relaxed whitespace-pre-wrap ${
+                        isUser
+                          ? 'bg-pink-400/30 text-pink-100'
+                          : 'bg-pink-50/80 text-gray-600 border border-pink-100/50'
+                      }`}
+                    >
+                      <span className={`inline-block text-[9px] font-medium px-1 py-0.5 rounded mb-1 ${
+                        isUser ? 'bg-pink-300/30 text-pink-100' : 'bg-pink-100 text-pink-400'
+                      }`}>
+                        指令
+                      </span>
+                      <span className="ml-1">{inst}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!main && instructions.length === 0 && (
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                  {displayText}
+                </p>
+              )}
               {message.translating && <span className="text-xs opacity-60 ml-1">翻译中...</span>}
-            </p>
+            </>
           )}
         </div>
 
@@ -822,6 +958,9 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
             </button>
             <button onClick={onEdit} title="编辑" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconEdit className="w-3 h-3" />
+            </button>
+            <button onClick={onMarkAsInstruction} title="标记为指令" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+              <IconBook className="w-3 h-3" />
             </button>
             <button onClick={onDelete} title="删除此条及之后" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-red-300' : 'text-gray-400 hover:text-red-400'}`}>
               <IconTrash className="w-3 h-3" />

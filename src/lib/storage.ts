@@ -166,9 +166,9 @@ export function deleteInstruction(id: string): void {
 
 const SEED_INSTRUCTIONS: Array<{ name: string; summary: string; content: string }> = [
   {
-    name: 'OOC 设定',
-    summary: '约束 {{user}} 的性别与代词，防止 bot 用错代词',
-    content: `[System Note: OOC - {{user}}'s gender is [insert gender]. {{user}}'s pronouns are [insert pronouns]. Use only [insert pronouns again] to refer to {{user}}. Do not break this rule.]`,
+    name: 'OOC 性别代称',
+    summary: '约束 {{user}} 的性别与代词，防止 bot 用错代称',
+    content: `[System Note: OOC - {{user}}'s gender is [insert gender]. {{user}}'s pronouns are [insert pronouns]. Use only [insert pronouns again] to refer to {{user}}. Do not break this rule.]\n\n{{user}} 的性别为[insert gender in Chinese]，代词使用"[insert Chinese pronoun]"。`,
   },
   {
     name: '弹幕',

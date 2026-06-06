@@ -480,6 +480,7 @@ export default function ChatPage() {
     setMemoryLoading(true);
     setMemoryResult(null);
     setMemoryFlipped(false);
+    setShowMemoryModal(true);
 
     try {
       const res = await fetch('/api/memory', {

@@ -716,7 +716,10 @@ export default function ChatPage() {
           userCard: currentPreset.userCard,
           chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
-          apiKey
+          apiKey,
+          mainLinePrompt: buildMainLinePrompt(),
+          styleEmotion: styleEmotion || undefined,
+          stylePace: stylePace || undefined
         })
       });
 
@@ -1243,7 +1246,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-pink-400 bg-pink-50 px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1285,7 +1288,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-pink-400 bg-pink-50 px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1327,7 +1330,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-pink-400 bg-pink-50 px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1369,7 +1372,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-pink-400 bg-pink-50 px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">

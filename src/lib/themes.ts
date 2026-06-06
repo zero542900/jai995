@@ -160,10 +160,44 @@ export function getTheme(id: string): Theme {
 export function applyTheme(themeId: string): void {
   const theme = getTheme(themeId);
   const root = document.documentElement;
+  const c = theme.colors;
 
-  Object.entries(theme.colors).forEach(([key, value]) => {
+  // 更新 JAI 自定义颜色变量
+  Object.entries(c).forEach(([key, value]) => {
     root.style.setProperty(`--color-${key}`, value);
   });
+
+  // 同步更新 shadcn/ui :root 变量，确保 Button/Card/Input 等组件也跟随主题
+  root.style.setProperty('--background', c['jai-bg']);
+  root.style.setProperty('--foreground', c['jai-text']);
+  root.style.setProperty('--card', c['jai-card']);
+  root.style.setProperty('--card-foreground', c['jai-text']);
+  root.style.setProperty('--popover', c['jai-card']);
+  root.style.setProperty('--popover-foreground', c['jai-text']);
+  root.style.setProperty('--primary', c['jai-secondary']);
+  root.style.setProperty('--primary-foreground', c['jai-card']);
+  root.style.setProperty('--secondary', c['jai-accent']);
+  root.style.setProperty('--secondary-foreground', c['jai-card']);
+  root.style.setProperty('--muted', c['jai-muted']);
+  root.style.setProperty('--muted-foreground', c['jai-text-secondary']);
+  root.style.setProperty('--accent', c['jai-accent']);
+  root.style.setProperty('--accent-foreground', c['jai-card']);
+  root.style.setProperty('--border', c['jai-card-border']);
+  root.style.setProperty('--input', c['jai-secondary']);
+  root.style.setProperty('--ring', c['jai-accent']);
+  root.style.setProperty('--sidebar', c['jai-muted']);
+  root.style.setProperty('--sidebar-foreground', c['jai-text']);
+  root.style.setProperty('--sidebar-primary', c['jai-accent']);
+  root.style.setProperty('--sidebar-primary-foreground', c['jai-card']);
+  root.style.setProperty('--sidebar-accent', c['jai-secondary']);
+  root.style.setProperty('--sidebar-accent-foreground', c['jai-card']);
+  root.style.setProperty('--sidebar-border', c['jai-card-border']);
+  root.style.setProperty('--sidebar-ring', c['jai-accent']);
+  root.style.setProperty('--chart-1', c['jai-accent']);
+  root.style.setProperty('--chart-2', c['jai-secondary']);
+  root.style.setProperty('--chart-3', c['jai-card-border']);
+  root.style.setProperty('--chart-4', c['jai-muted']);
+  root.style.setProperty('--chart-5', c['jai-text-secondary']);
 
   localStorage.setItem(THEME_STORAGE_KEY, themeId);
 }

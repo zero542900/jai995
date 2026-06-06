@@ -68,46 +68,46 @@
 
 :root {
   --radius: 0.75rem;
-  /* Main background: 浅烟粉 #E8D5D5 */
-  --background: #E8D5D5;
-  --foreground: #4A3F3F;
-  /* Cards: 白色 + 淡粉边框 */
-  --card: #FFFFFF;
-  --card-foreground: #4A3F3F;
-  --popover: #FFFFFF;
-  --popover-foreground: #4A3F3F;
-  /* Primary: 柔雾粉 #D4B8B8 (buttons) */
-  --primary: #D4B8B8;
-  --primary-foreground: #FFFFFF;
-  /* Secondary: 灰粉 #C4A2A2 */
-  --secondary: #C4A2A2;
-  --secondary-foreground: #FFFFFF;
-  /* Muted: 极淡粉 #F2EBEB */
-  --muted: #F2EBEB;
-  --muted-foreground: #8A7F7F;
-  /* Accent: 灰粉 #C4A2A2 */
-  --accent: #C4A2A2;
-  --accent-foreground: #FFFFFF;
+  /* Main background: 跟随主题 */
+  --background: var(--color-jai-bg);
+  --foreground: var(--color-jai-text);
+  /* Cards: 跟随主题 */
+  --card: var(--color-jai-card);
+  --card-foreground: var(--color-jai-text);
+  --popover: var(--color-jai-card);
+  --popover-foreground: var(--color-jai-text);
+  /* Primary: 跟随主题 */
+  --primary: var(--color-jai-secondary);
+  --primary-foreground: var(--color-jai-card);
+  /* Secondary: 跟随主题 */
+  --secondary: var(--color-jai-accent);
+  --secondary-foreground: var(--color-jai-card);
+  /* Muted: 跟随主题 */
+  --muted: var(--color-jai-muted);
+  --muted-foreground: var(--color-jai-text-secondary);
+  /* Accent: 跟随主题 */
+  --accent: var(--color-jai-accent);
+  --accent-foreground: var(--color-jai-card);
   --destructive: #D47575;
-  /* Borders */
-  --border: #E0CECE;
-  --input: #D4B8B8;
-  --ring: #C4A2A2;
-  /* Charts */
-  --chart-1: #C4A2A2;
-  --chart-2: #D4B8B8;
-  --chart-3: #B89292;
-  --chart-4: #E0CECE;
-  --chart-5: #A88888;
-  /* Sidebar */
-  --sidebar: #EDE0E0;
-  --sidebar-foreground: #4A3F3F;
-  --sidebar-primary: #C4A2A2;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #D4B8B8;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #E0CECE;
-  --sidebar-ring: #C4A2A2;
+  /* Borders: 跟随主题 */
+  --border: var(--color-jai-card-border);
+  --input: var(--color-jai-secondary);
+  --ring: var(--color-jai-accent);
+  /* Charts: 跟随主题 */
+  --chart-1: var(--color-jai-accent);
+  --chart-2: var(--color-jai-secondary);
+  --chart-3: var(--color-jai-card-border);
+  --chart-4: var(--color-jai-muted);
+  --chart-5: var(--color-jai-text-secondary);
+  /* Sidebar: 跟随主题 */
+  --sidebar: var(--color-jai-muted);
+  --sidebar-foreground: var(--color-jai-text);
+  --sidebar-primary: var(--color-jai-accent);
+  --sidebar-primary-foreground: var(--color-jai-card);
+  --sidebar-accent: var(--color-jai-secondary);
+  --sidebar-accent-foreground: var(--color-jai-card);
+  --sidebar-border: var(--color-jai-card-border);
+  --sidebar-ring: var(--color-jai-accent);
 }
 
 @layer base {
@@ -120,7 +120,7 @@
   }
 }
 
-/* Custom scrollbar for desaturated pink theme */
+/* Custom scrollbar - follows theme */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -128,11 +128,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C4A2A2;
+  background: var(--color-jai-accent);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B89292;
+  background: var(--color-jai-text-secondary);
 }
 
 /* Typing cursor animation */
@@ -144,7 +144,7 @@
 .typing-cursor::after {
   content: '|';
   animation: blink 0.8s infinite;
-  color: #C4A2A2;
+  color: var(--color-jai-accent);
   font-weight: 300;
 }
 
@@ -194,28 +194,28 @@
 
 /* === JAI Card Style === */
 .jai-card {
-  background: #FFFFFF;
-  border: 1px solid #E0CECE;
+  background: var(--color-jai-card);
+  border: 1px solid var(--color-jai-card-border);
   border-radius: 12px;
-  box-shadow: 0px 4px 12px rgba(200, 170, 170, 0.15);
+  box-shadow: 0px 4px 12px var(--color-jai-shadow);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .jai-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0px 6px 16px rgba(200, 170, 170, 0.25);
+  box-shadow: 0px 6px 16px var(--color-jai-shadow-hover, var(--color-jai-shadow));
 }
 
 /* === JAI Button Style === */
 .jai-btn {
-  background: #D4B8B8;
-  color: #FFFFFF;
+  background: var(--color-jai-secondary);
+  color: var(--color-jai-card);
   border-radius: 20px;
   border: none;
   transition: background-color 0.3s ease, transform 0.15s ease;
   cursor: pointer;
 }
 .jai-btn:hover {
-  background: #C4A2A2;
+  background: var(--color-jai-accent);
 }
 .jai-btn:active {
   transform: scale(0.98);
@@ -223,33 +223,33 @@
 
 /* === JAI Input Style === */
 .jai-input {
-  background: #F2EBEB;
-  border: 1px solid #D4B8B8;
+  background: var(--color-jai-input-bg);
+  border: 1px solid var(--color-jai-secondary);
   border-radius: 12px;
-  color: #4A3F3F;
+  color: var(--color-jai-text);
   transition: border-color 0.3s ease;
 }
 .jai-input:focus {
-  border-color: #C4A2A2;
+  border-color: var(--color-jai-accent);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(196, 162, 162, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-jai-accent) 20%, transparent);
 }
 .jai-input::placeholder {
-  color: #8A7F7F;
+  color: var(--color-jai-text-secondary);
 }
 
 /* === JAI Plot Display Area === */
 .jai-plot-area {
-  background: #F2EBEB;
-  border: 1px dashed #D4B8B8;
+  background: var(--color-jai-input-bg);
+  border: 1px dashed var(--color-jai-secondary);
   border-radius: 12px;
 }
 
 /* === Copy success flash === */
 @keyframes copyFlash {
-  0% { box-shadow: 0 0 0 0 rgba(212, 184, 184, 0.4); }
-  50% { box-shadow: 0 0 12px 4px rgba(212, 184, 184, 0.3); }
-  100% { box-shadow: 0 0 0 0 rgba(212, 184, 184, 0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-jai-secondary) 40%, transparent); }
+  50% { box-shadow: 0 0 12px 4px color-mix(in srgb, var(--color-jai-secondary) 30%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-jai-secondary) 0%, transparent); }
 }
 .copy-flash {
   animation: copyFlash 0.6s ease-out;

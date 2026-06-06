@@ -56,9 +56,42 @@ const themeInitScript = `
     };
     var colors = themes[themeId] || themes.rose;
     var root = document.documentElement;
+    // Set jai-* color variables
     Object.keys(colors).forEach(function(key) {
       root.style.setProperty('--color-' + key, colors[key]);
     });
+    // Sync shadcn/ui :root variables so all components follow theme
+    var c = colors;
+    root.style.setProperty('--background', c['jai-bg']);
+    root.style.setProperty('--foreground', c['jai-text']);
+    root.style.setProperty('--card', c['jai-card']);
+    root.style.setProperty('--card-foreground', c['jai-text']);
+    root.style.setProperty('--popover', c['jai-card']);
+    root.style.setProperty('--popover-foreground', c['jai-text']);
+    root.style.setProperty('--primary', c['jai-secondary']);
+    root.style.setProperty('--primary-foreground', c['jai-card']);
+    root.style.setProperty('--secondary', c['jai-accent']);
+    root.style.setProperty('--secondary-foreground', c['jai-card']);
+    root.style.setProperty('--muted', c['jai-muted']);
+    root.style.setProperty('--muted-foreground', c['jai-text-secondary']);
+    root.style.setProperty('--accent', c['jai-accent']);
+    root.style.setProperty('--accent-foreground', c['jai-card']);
+    root.style.setProperty('--border', c['jai-card-border']);
+    root.style.setProperty('--input', c['jai-secondary']);
+    root.style.setProperty('--ring', c['jai-accent']);
+    root.style.setProperty('--sidebar', c['jai-muted']);
+    root.style.setProperty('--sidebar-foreground', c['jai-text']);
+    root.style.setProperty('--sidebar-primary', c['jai-accent']);
+    root.style.setProperty('--sidebar-primary-foreground', c['jai-card']);
+    root.style.setProperty('--sidebar-accent', c['jai-secondary']);
+    root.style.setProperty('--sidebar-accent-foreground', c['jai-card']);
+    root.style.setProperty('--sidebar-border', c['jai-card-border']);
+    root.style.setProperty('--sidebar-ring', c['jai-accent']);
+    root.style.setProperty('--chart-1', c['jai-accent']);
+    root.style.setProperty('--chart-2', c['jai-secondary']);
+    root.style.setProperty('--chart-3', c['jai-card-border']);
+    root.style.setProperty('--chart-4', c['jai-muted']);
+    root.style.setProperty('--chart-5', c['jai-text-secondary']);
   } catch(e) {}
 })();
 `;

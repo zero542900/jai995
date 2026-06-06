@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck } from '@/components/icons';
+import { copyToClipboard } from '@/lib/utils';
 
 // ========== Types ==========
 interface ChatMessage {
@@ -347,8 +348,10 @@ export default function ChatPage() {
     }
   };
 
-  const copyContent = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => showNotification('已复制'));
+  const copyContent = async (text: string) => {
+    const ok = await copyToClipboard(text);
+    if (ok) showNotification('已复制');
+    else showNotification('复制失败');
   };
 
   // ========== AI Features ==========

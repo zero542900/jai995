@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { copyToClipboard } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -156,7 +157,7 @@ export default function PresetDetailPage() {
                 {preset.userCard || '—'}
               </pre>
               <Button
-                onClick={() => navigator.clipboard.writeText(preset.userCard)}
+                onClick={() => copyToClipboard(preset.userCard)}
                 variant="outline"
                 size="sm"
                 className="mt-2"
@@ -208,7 +209,7 @@ export default function PresetDetailPage() {
                     </Button>
                     {preset.greeting && (
                       <Button
-                        onClick={() => navigator.clipboard.writeText(preset.greeting)}
+                        onClick={() => copyToClipboard(preset.greeting)}
                         variant="outline"
                         size="sm"
                       >

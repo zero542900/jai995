@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { copyToClipboard } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconCopy, IconFlip, IconRefresh, IconSave, IconLock, IconUnlock } from '@/components/icons';
@@ -200,7 +201,7 @@ export default function GeneratePage() {
   }, [handleGenerate, lockedFields]);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(englishCard);
+    copyToClipboard(englishCard);
   }, [englishCard]);
 
   const handleSavePreset = useCallback(() => {

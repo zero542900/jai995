@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconCopy, IconTrash, IconCheck, IconBook } from '@/components/icons';
-import { getInstructions, deleteInstruction, createInstruction } from '@/lib/storage';
+import { getInstructions, deleteInstruction, createInstruction, seedInstructions } from '@/lib/storage';
 import type { Instruction } from '@/lib/types';
 
 export default function InstructionsPage() {
@@ -21,6 +21,7 @@ export default function InstructionsPage() {
   }, []);
 
   useEffect(() => {
+    seedInstructions();
     loadInstructions();
   }, [loadInstructions]);
 

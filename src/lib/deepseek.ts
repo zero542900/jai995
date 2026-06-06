@@ -5,6 +5,7 @@ const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 interface DeepSeekCallOptions {
   apiKey: string;
   messages: { role: string; content: string }[];
+  systemPrompt?: string;
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -21,11 +22,17 @@ export class DeepSeekAPIError extends Error {
 }
 
 export async function callDeepSeek(options: DeepSeekCallOptions) {
-  const { apiKey, messages, model = 'deepseek-chat', temperature, maxTokens = 4096, stream = true } = options;
+  const { apiKey, messages, systemPrompt, model = 'deepseek-chat', temperature, maxTokens = 4096, stream = true } = options;
+
+  const allMessages: { role: string; content: string }[] = [];
+  if (systemPrompt) {
+    allMessages.push({ role: 'system', content: systemPrompt });
+  }
+  allMessages.push(...messages);
 
   const body: Record<string, unknown> = {
     model,
-    messages,
+    messages: allMessages,
     stream,
     max_tokens: maxTokens,
   };
@@ -161,6 +168,31 @@ export function handleAPIError(error: unknown): Response {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
+// Shared writing style instructions for Chinese translation
+export const WRITING_STYLE_INSTRUCTION = `
+[翻译/写作风格强制指令]
+- 语言自然、有共情，少用逻辑跳板句式。
+- 禁止使用以下句式：
+  - "不是……而是……"
+  - "在……的过程中"
+  - "总而言之""综上所述"
+  - "不仅……更……"
+  - "不是……是……是……"
+  - "不是……不是……是……"
+  - "是……的基石/关键/必修课"
+- 禁止使用排比句、对偶句、反复等修辞性排叠结构。
+- 禁止使用"不x，不y，不z，就"格式。
+- 禁止使用"这就够了"、"很…，但很…"等总结性短判断。
+- 禁止使用任何以"不是"开头的否定句式。
+- 每个观点后面必须跟一个画面、声音、气味或触感描写。
+- 禁用词汇："兜住"、"接住"、"稳"、"守"、"极其"。
+- 如果出现了"不是...而是..."、"在...的过程中"、"总而言之"这三种句式，请立刻删除该句，并用描写具体画面或动作的句子替换。`;
+
+export const CHINESE_OUTPUT_INSTRUCTION = `
+Output format: First output the English content, then on a new line write exactly "===CHINESE===" (this exact marker), then output the Chinese translation below.
+
+${WRITING_STYLE_INSTRUCTION}`;
 
 export function validateApiKey(apiKey: string | undefined): Response | null {
   if (!apiKey) {

@@ -85,7 +85,7 @@ export default function PresetsPage() {
                           e.stopPropagation();
                           handleDelete(preset.id, preset.name);
                         }}
-                        className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                        className="text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5"
                       >
                         <IconTrash className="w-3.5 h-3.5" />
                       </button>

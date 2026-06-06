@@ -139,6 +139,9 @@ export default function ChatPage() {
   const [expandedStyleCategory, setExpandedStyleCategory] = useState<string | null>(null);
   const [showOptionalMenu, setShowOptionalMenu] = useState(false);
 
+  // Mobile toolbar state
+  const [showMobileToolbar, setShowMobileToolbar] = useState(false);
+
   // Feature states
   const [inspirationLoading, setInspirationLoading] = useState(false);
   const [inspirationItems, setInspirationItems] = useState<Array<{ en: string; cn?: string; flipped: boolean; translating?: boolean }>>([]);
@@ -985,10 +988,10 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-pink-50/50">
+    <div className="flex flex-col h-[100dvh] bg-pink-50/50 chat-fullscreen">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-pink-100">
-        <button onClick={handleBackToPresets} className="p-1 text-pink-400 hover:text-pink-600 transition-colors">
+      <div className="shrink-0 flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 bg-white/80 backdrop-blur-sm border-b border-pink-100">
+        <button onClick={handleBackToPresets} className="p-1.5 md:p-1 text-pink-400 hover:text-pink-600 transition-colors">
           <IconBack className="w-5 h-5" />
         </button>
         <select
@@ -1001,13 +1004,13 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Messages - scrollable */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3" onClick={() => setShowInstructionPicker(false)}>
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 py-3 md:px-4 space-y-3" onClick={() => setShowInstructionPicker(false)}>
         {/* Floating direction indicator - click to see current direction */}
         {currentDirection && (
           <div className="flex justify-end mb-2">
             <button
               onClick={() => setShowDirectionCard(v => !v)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-50/90 border border-amber-200/60 text-amber-600 hover:bg-amber-100 transition-colors text-[11px] max-w-[80%]"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-50/90 border border-amber-200/60 text-amber-600 hover:bg-amber-100 transition-colors text-[11px] max-w-[90%] md:max-w-[80%]"
             >
               <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
               <span className="truncate">{currentDirection}</span>
@@ -1077,7 +1080,7 @@ export default function ChatPage() {
 
       {/* Inspiration Panel */}
       {showInspiration && (
-        <div className="shrink-0 mx-4 mb-2 bg-white rounded-xl border border-pink-100 shadow-sm p-3">
+        <div className="shrink-0 mx-3 md:mx-4 mb-2 bg-white rounded-xl border border-pink-100 shadow-sm p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-pink-500 flex items-center gap-1">
               <IconSparkle className="w-3.5 h-3.5" /> 灵感
@@ -1191,16 +1194,17 @@ export default function ChatPage() {
 
       {/* Plot Assistant Panel */}
       {showPlotPanel && (
-        <div className="shrink-0 mx-4 mb-2 bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden">
-          {/* Panel Header */}
-          <div className="flex items-center justify-between px-3 py-2 bg-amber-50/50 border-b border-amber-100">
-            <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
-              <IconPlot className="w-3.5 h-3.5" /> 剧情助手
-            </span>
-            <button onClick={() => setShowPlotPanel(false)} className="p-1 text-gray-400 hover:text-gray-600 text-xs">✕</button>
-          </div>
+        <div className="fixed inset-0 z-50 md:relative md:z-auto flex items-end md:items-start justify-center bg-black/30 md:bg-transparent" onClick={() => setShowPlotPanel(false)}>
+          <div className="bg-white md:bg-white rounded-t-2xl md:rounded-xl border-t md:border border-amber-100 md:border-amber-100 shadow-sm w-full md:mx-4 md:mb-2 max-h-[90vh] md:max-h-[55vh] overflow-hidden md:shadow-sm" onClick={e => e.stopPropagation()}>
+            {/* Panel Header */}
+            <div className="flex items-center justify-between px-3 py-2 bg-amber-50/50 border-b border-amber-100 sticky top-0 z-10">
+              <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
+                <IconPlot className="w-3.5 h-3.5" /> 剧情助手
+              </span>
+              <button onClick={() => setShowPlotPanel(false)} className="p-1 text-gray-400 hover:text-gray-600 text-xs">✕</button>
+            </div>
 
-          <div className="p-3 space-y-3 max-h-[55vh] overflow-y-auto">
+          <div className="p-3 space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 44px)' }}>
             {/* Section 0: AI Analyze Button */}
             <div className="flex items-center gap-2">
               <button
@@ -1552,6 +1556,7 @@ export default function ChatPage() {
             </div>
 
           </div>
+          </div>
         </div>
       )}
 
@@ -1642,9 +1647,37 @@ export default function ChatPage() {
       )}
 
       {/* Bottom Input Area */}
-      <div className="shrink-0 border-t border-pink-100 bg-white/90 backdrop-blur-sm px-4 py-3 space-y-2">
-        {/* Controls Row */}
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="shrink-0 border-t border-pink-100 bg-white/90 backdrop-blur-sm px-3 md:px-4 pt-2 pb-2 md:pb-3 space-y-1.5 md:space-y-2 safe-area-bottom">
+
+        {/* Memory Reminder Banner */}
+        {showMemoryReminder && !memoryAutoGenerating && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 text-xs">
+            <IconBrain className="w-3.5 h-3.5 shrink-0" />
+            <span className="flex-1 min-w-0 truncate">距上次记忆已超过 20 轮，建议更新长期记忆</span>
+            <button
+              onClick={handleMemory}
+              disabled={memoryLoading}
+              className="px-2 py-0.5 text-[10px] rounded bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors shrink-0"
+            >
+              立即更新
+            </button>
+            <button
+              onClick={() => setShowMemoryReminder(false)}
+              className="text-violet-400 hover:text-violet-600 shrink-0"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        {memoryAutoGenerating && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 border border-violet-200 text-violet-600 text-xs animate-pulse">
+            <IconBrain className="w-3.5 h-3.5 shrink-0" />
+            <span>自动更新长期记忆中...</span>
+          </div>
+        )}
+
+        {/* Controls Row - Desktop: always visible; Mobile: in expandable toolbar */}
+        <div className="hidden md:flex items-center gap-2 flex-wrap">
           <select
             value={personMode}
             onChange={e => setPersonMode(e.target.value as 'first' | 'third')}
@@ -1654,7 +1687,7 @@ export default function ChatPage() {
             <option value="third">第三人称 (He/She)</option>
           </select>
 
-          {/* Style Category Buttons */}
+          {/* Style Category Buttons - Desktop */}
           {(['tone', 'genre', 'emotion', 'pace'] as const).map(cat => {
             const labels: Record<string, string> = { tone: '剧集调性', genre: '经典类型', emotion: '情感浓度', pace: '叙事节奏' };
             const currentVal = cat === 'tone' ? styleTone : cat === 'genre' ? styleGenre : cat === 'emotion' ? styleEmotion : stylePace;
@@ -1702,7 +1735,7 @@ export default function ChatPage() {
             );
           })}
 
-          {/* Optional Styles (Multi-select) */}
+          {/* Optional Styles - Desktop */}
           <div className="relative" ref={optionalMenuRef}>
             <button
               onClick={() => setShowOptionalMenu(!showOptionalMenu)}
@@ -1733,25 +1766,6 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Mix Mode Modal */}
-          {showMixModal && styleTone === '混合模式' && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30" onClick={() => setShowMixModal(false)}>
-              <div className="bg-white rounded-xl shadow-lg p-4 w-80 space-y-3" onClick={e => e.stopPropagation()}>
-                <div className="text-sm font-medium text-gray-800">混合模式 - 请指定主基调</div>
-                <div className="text-xs text-gray-500">例：电影质感为主，但保留剧集的慢热推进感。</div>
-                <textarea
-                  value={mixModeNote}
-                  onChange={e => setMixModeNote(e.target.value)}
-                  placeholder="描述你想要的混合效果..."
-                  className="w-full text-xs border border-pink-100 rounded-lg p-2 h-20 resize-none focus:outline-none focus:border-pink-300"
-                />
-                <div className="flex gap-2 justify-end">
-                  <button onClick={() => setShowMixModal(false)} className="text-xs px-3 py-1.5 rounded-lg bg-pink-500 text-white hover:bg-pink-600">确认</button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer ml-auto">
             <span>思考</span>
             <button
@@ -1763,72 +1777,209 @@ export default function ChatPage() {
           </label>
         </div>
 
-        {/* JAI Reply Input */}
-        <div className="flex items-center gap-1.5">
-          <input
-            type="text"
-            value={jaiInput}
-            onChange={e => setJaiInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendBotMessage(); } }}
-            placeholder="粘贴 Char/Bot 回复（英文）..."
-            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-blue-100 bg-blue-50/50 focus:border-blue-300 focus:outline-none placeholder:text-blue-300"
-          />
-          <button
-            onClick={sendBotMessage}
-            disabled={!jaiInput.trim()}
-            className="px-2.5 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors shrink-0"
-          >
-            发送
-          </button>
-        </div>
+        {/* Mobile: Expandable Toolbar */}
+        {showMobileToolbar && (
+          <div className="md:hidden space-y-2 pb-1">
+            {/* Row 1: Person mode + Style buttons */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <select
+                value={personMode}
+                onChange={e => setPersonMode(e.target.value as 'first' | 'third')}
+                className="text-xs px-2 py-1.5 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
+              >
+                <option value="first">第一人称</option>
+                <option value="third">第三人称</option>
+              </select>
 
-        {/* User Chat Input */}
-        <div className="flex items-end gap-2">
-          <textarea
-            value={userInput}
-            onChange={e => setUserInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMessage(); } }}
-            placeholder="输入你的消息..."
-            className="flex-1 text-sm p-3 rounded-xl border border-pink-100 focus:border-pink-300 focus:outline-none resize-none min-h-[40px] max-h-[120px]"
-            rows={1}
-          />
-          <button
-            onClick={sendUserMessage}
-            className="p-3 rounded-xl bg-pink-500 text-white hover:bg-pink-600 transition-colors shrink-0"
-          >
-            <IconSend className="w-4 h-4" />
-          </button>
-        </div>
+              {/* Mobile style buttons - open as bottom sheet */}
+              {(['tone', 'genre', 'emotion', 'pace'] as const).map(cat => {
+                const labels: Record<string, string> = { tone: '调性', genre: '类型', emotion: '情感', pace: '节奏' };
+                const currentVal = cat === 'tone' ? styleTone : cat === 'genre' ? styleGenre : cat === 'emotion' ? styleEmotion : stylePace;
+                const isExpanded = expandedStyleCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
+                    className={`text-xs px-2 py-1.5 rounded-lg border transition-colors flex items-center gap-0.5 ${currentVal ? 'bg-pink-500 text-white border-pink-500' : 'border-pink-100 bg-pink-50/50 text-pink-600'}`}
+                  >
+                    <span>{currentVal || labels[cat]}</span>
+                    <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setShowOptionalMenu(!showOptionalMenu)}
+                className={`text-xs px-2 py-1.5 rounded-lg border transition-colors ${styleOptional.length > 0 ? 'bg-pink-500 text-white border-pink-500' : 'border-pink-100 bg-pink-50/50 text-pink-600'}`}
+              >
+                {styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选'}
+              </button>
+              <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer ml-auto">
+                <span>思考</span>
+                <button
+                  onClick={() => setThinkingEnabled(!thinkingEnabled)}
+                  className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+                >
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+                </button>
+              </label>
+            </div>
 
-        {/* Memory Reminder Banner */}
-        {showMemoryReminder && !memoryAutoGenerating && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 text-xs">
-            <IconBrain className="w-3.5 h-3.5 shrink-0" />
-            <span className="flex-1">距上次记忆已超过 20 轮，建议更新长期记忆</span>
-            <button
-              onClick={handleMemory}
-              disabled={memoryLoading}
-              className="px-2 py-0.5 text-[10px] rounded bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
-            >
-              立即更新
-            </button>
-            <button
-              onClick={() => setShowMemoryReminder(false)}
-              className="text-violet-400 hover:text-violet-600"
-            >
-              ✕
-            </button>
+            {/* Feature buttons - mobile */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button onClick={handleInspiration} disabled={inspirationLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
+                <IconSparkle className="w-3 h-3" /> 灵感
+              </button>
+              <button onClick={() => setShowExpandModal(true)} disabled={expandLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
+                <IconPen className="w-3 h-3" /> 扩写
+              </button>
+              <button onClick={handleMemory} disabled={memoryLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
+                <IconBrain className="w-3 h-3" /> 记忆
+              </button>
+              <button
+                onClick={() => setShowPlotPanel(!showPlotPanel)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-colors"
+              >
+                <IconPlot className="w-3 h-3" /> 剧情
+              </button>
+              <div className="relative" ref={instructionPickerRef}>
+                <button
+                  onClick={() => {
+                    setInstructionList(getInstructionList());
+                    setShowInstructionPicker(!showInstructionPicker);
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                >
+                  <IconBook className="w-3 h-3" /> 指令
+                </button>
+                {showInstructionPicker && instructionList.length > 0 && (
+                  <div className="absolute bottom-full right-0 mb-1 w-56 max-h-48 overflow-y-auto bg-white rounded-xl border border-pink-100 shadow-lg z-50 py-1">
+                    {instructionList.map(inst => (
+                      <button
+                        key={inst.id}
+                        onClick={() => {
+                          setUserInput(prev => (prev ? prev + '\n' : '') + `【${inst.content}】`);
+                          setShowInstructionPicker(false);
+                          showNotification(`已插入「${inst.name}」`);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-pink-50 transition-colors"
+                      >
+                        <p className="text-xs font-medium text-gray-800 truncate">{inst.name}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{inst.summary}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showInstructionPicker && instructionList.length === 0 && (
+                  <div className="absolute bottom-full right-0 mb-1 w-44 bg-white rounded-xl border border-pink-100 shadow-lg z-50 py-3 px-3">
+                    <p className="text-xs text-gray-400">暂无指令</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">前往指令库添加</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
-        {memoryAutoGenerating && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 border border-violet-200 text-violet-600 text-xs animate-pulse">
-            <IconBrain className="w-3.5 h-3.5 shrink-0" />
-            <span>自动更新长期记忆中...</span>
+
+        {/* Mobile: Style bottom sheet */}
+        {expandedStyleCategory && (
+          <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setExpandedStyleCategory(null)}>
+            <div className="bg-white rounded-t-2xl w-full max-h-[60vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white px-4 py-3 border-b border-pink-100 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-800">
+                  {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'genre' ? '经典类型' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
+                </span>
+                <button onClick={() => setExpandedStyleCategory(null)} className="p-1 text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+              <div className="p-3 space-y-1">
+                {Object.entries(STYLE_OPTIONS[expandedStyleCategory as 'tone' | 'genre' | 'emotion' | 'pace']).map(([key, desc]) => {
+                  const currentVal = expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'genre' ? styleGenre : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace;
+                  const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'genre' ? setStyleGenre : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        if (expandedStyleCategory === 'tone' && key === '混合模式') {
+                          setter(key);
+                          setShowMixModal(true);
+                        } else {
+                          setter(key);
+                        }
+                        setExpandedStyleCategory(null);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-pink-50 border border-pink-300' : 'hover:bg-pink-50/50 border border-transparent'}`}
+                    >
+                      <span className={`text-sm ${currentVal === key ? 'text-pink-600 font-medium' : 'text-gray-800'}`}>{key}</span>
+                      <span className="block text-xs text-gray-400 mt-0.5 line-clamp-2">{desc}</span>
+                    </button>
+                  );
+                })}
+                {(expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'genre' ? styleGenre : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace) && (
+                  <button
+                    onClick={() => {
+                      const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'genre' ? setStyleGenre : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
+                      setter('');
+                      setExpandedStyleCategory(null);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-50 rounded-xl"
+                  >清除选择</button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Feature Buttons */}
-        <div className="flex items-center gap-2 relative">
+        {/* Mobile: Optional styles bottom sheet */}
+        {showOptionalMenu && (
+          <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setShowOptionalMenu(false)}>
+            <div className="bg-white rounded-t-2xl w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white px-4 py-3 border-b border-pink-100 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-800">可选风格</span>
+                <button onClick={() => setShowOptionalMenu(false)} className="p-1 text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+              <div className="p-3 space-y-1">
+                {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
+                  <label key={key} className="flex items-start gap-3 py-2.5 px-3 text-sm text-gray-700 cursor-pointer hover:bg-pink-50 rounded-xl">
+                    <input
+                      type="checkbox"
+                      checked={styleOptional.includes(key)}
+                      onChange={e => {
+                        if (e.target.checked) setStyleOptional(prev => [...prev, key]);
+                        else setStyleOptional(prev => prev.filter(v => v !== key));
+                      }}
+                      className="rounded border-pink-300 text-pink-500 focus:ring-pink-300 mt-0.5 shrink-0 w-4 h-4"
+                    />
+                    <div>
+                      <span className="font-medium">{key}</span>
+                      <span className="block text-xs text-gray-400 mt-0.5">{desc}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mix Mode Modal */}
+        {showMixModal && styleTone === '混合模式' && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4" onClick={() => setShowMixModal(false)}>
+            <div className="bg-white rounded-xl shadow-lg p-4 w-full max-w-80 space-y-3" onClick={e => e.stopPropagation()}>
+              <div className="text-sm font-medium text-gray-800">混合模式 - 请指定主基调</div>
+              <div className="text-xs text-gray-500">例：电影质感为主，但保留剧集的慢热推进感。</div>
+              <textarea
+                value={mixModeNote}
+                onChange={e => setMixModeNote(e.target.value)}
+                placeholder="描述你想要的混合效果..."
+                className="w-full text-xs border border-pink-100 rounded-lg p-2 h-20 resize-none focus:outline-none focus:border-pink-300"
+              />
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setShowMixModal(false)} className="text-xs px-3 py-1.5 rounded-lg bg-pink-500 text-white hover:bg-pink-600">确认</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Feature Buttons */}
+        <div className="hidden md:flex items-center gap-2 relative">
           <button onClick={handleInspiration} disabled={inspirationLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
             <IconSparkle className="w-3.5 h-3.5" /> 灵感
           </button>
@@ -1879,6 +2030,50 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Input Row */}
+        <div className="flex items-center gap-1.5">
+          {/* Mobile toolbar toggle */}
+          <button
+            onClick={() => setShowMobileToolbar(!showMobileToolbar)}
+            className={`md:hidden shrink-0 p-2 rounded-lg border transition-colors ${showMobileToolbar ? 'bg-pink-100 border-pink-200 text-pink-600' : 'border-pink-100 bg-pink-50/50 text-pink-500'}`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+          </button>
+          <input
+            type="text"
+            value={jaiInput}
+            onChange={e => setJaiInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendBotMessage(); } }}
+            placeholder="粘贴 Char 回复..."
+            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-blue-100 bg-blue-50/50 focus:border-blue-300 focus:outline-none placeholder:text-blue-300 min-w-0"
+          />
+          <button
+            onClick={sendBotMessage}
+            disabled={!jaiInput.trim()}
+            className="px-2 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors shrink-0"
+          >
+            发送
+          </button>
+        </div>
+
+        {/* User Chat Input */}
+        <div className="flex items-end gap-2">
+          <textarea
+            value={userInput}
+            onChange={e => setUserInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMessage(); } }}
+            placeholder="输入你的消息..."
+            className="flex-1 text-sm p-2.5 md:p-3 rounded-xl border border-pink-100 focus:border-pink-300 focus:outline-none resize-none min-h-[38px] md:min-h-[40px] max-h-[100px] md:max-h-[120px]"
+            rows={1}
+          />
+          <button
+            onClick={sendUserMessage}
+            className="p-2.5 md:p-3 rounded-xl bg-pink-500 text-white hover:bg-pink-600 transition-colors shrink-0"
+          >
+            <IconSend className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -2061,7 +2256,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
         </div>
       )}
 
-      <div className={`max-w-[85%] rounded-2xl shadow-sm ${
+      <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl shadow-sm ${
         isUser
           ? 'bg-pink-500 text-white rounded-br-sm'
           : 'bg-white text-gray-800 border border-pink-100 rounded-bl-sm'
@@ -2138,20 +2333,20 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
 
         {/* Action Buttons - always visible */}
         {!message.editing && (
-          <div className={`flex items-center gap-1 px-2 pb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <button onClick={onFlip} title="翻转" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+          <div className={`flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 pb-1.5 md:pb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+            <button onClick={onFlip} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconFlip className="w-3 h-3" />
             </button>
-            <button onClick={onCopy} title="复制" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+            <button onClick={onCopy} title="复制" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconCopy className="w-3 h-3" />
             </button>
-            <button onClick={onEdit} title="编辑" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+            <button onClick={onEdit} title="编辑" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconEdit className="w-3 h-3" />
             </button>
-            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconBook className="w-3 h-3" />
             </button>
-            <button onClick={onDelete} title="删除此条及之后" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-red-300' : 'text-gray-400 hover:text-red-400'}`}>
+            <button onClick={onDelete} title="删除此条及之后" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-red-300' : 'text-gray-400 hover:text-red-400'}`}>
               <IconTrash className="w-3 h-3" />
             </button>
           </div>

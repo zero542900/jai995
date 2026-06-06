@@ -63,15 +63,15 @@ export default function PresetDetailPage() {
   };
 
   return (
-    <div className="page-enter space-y-5">
-      <div className="flex items-center gap-3">
+    <div className="page-enter space-y-4 md:space-y-5">
+      <div className="flex items-center gap-2 md:gap-3">
         <button
           onClick={() => router.push('/presets')}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="p-2 -ml-2 md:p-1 md:-ml-0 text-muted-foreground hover:text-foreground transition-colors min-w-[36px] min-h-[36px] md:min-w-0 md:min-h-0 flex items-center justify-center"
         >
           <IconBack className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-semibold text-foreground">{preset.name}</h1>
+        <h1 className="text-lg md:text-xl font-semibold text-foreground truncate">{preset.name}</h1>
       </div>
 
       <Button onClick={handleStartSession} className="w-full gap-1.5" size="lg">
@@ -79,7 +79,7 @@ export default function PresetDetailPage() {
       </Button>
 
       {/* Session Settings */}
-      <div className="flex items-center gap-4 text-sm">
+      <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm">
         <div className="flex items-center gap-2">
           <span className="text-gray-500">人称视角</span>
           <select
@@ -111,12 +111,12 @@ export default function PresetDetailPage() {
       </div>
 
       <Tabs defaultValue="char" className="w-full">
-        <TabsList className="w-full grid grid-cols-5">
-          <TabsTrigger value="char">Char</TabsTrigger>
-          <TabsTrigger value="user">User</TabsTrigger>
-          <TabsTrigger value="greeting">开场白</TabsTrigger>
-          <TabsTrigger value="plot">剧情</TabsTrigger>
-          <TabsTrigger value="memory">记忆</TabsTrigger>
+        <TabsList className="w-full flex overflow-x-auto md:grid md:grid-cols-5 text-xs gap-0.5 p-1 no-scrollbar">
+          <TabsTrigger value="char" className="text-xs px-2 md:px-1 whitespace-nowrap shrink-0">Char</TabsTrigger>
+          <TabsTrigger value="user" className="text-xs px-2 md:px-1 whitespace-nowrap shrink-0">User</TabsTrigger>
+          <TabsTrigger value="greeting" className="text-xs px-2 md:px-1 whitespace-nowrap shrink-0">开场白</TabsTrigger>
+          <TabsTrigger value="plot" className="text-xs px-2 md:px-1 whitespace-nowrap shrink-0">剧情</TabsTrigger>
+          <TabsTrigger value="memory" className="text-xs px-2 md:px-1 whitespace-nowrap shrink-0">记忆</TabsTrigger>
         </TabsList>
 
         {/* Char Tab */}

@@ -138,3 +138,37 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Safe area bottom padding for mobile */
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Bottom sheet slide-up animation */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.slide-up-enter {
+  animation: slideUp 200ms ease-out;
+}
+
+/* Chat page: counteract layout padding for fullscreen experience */
+.chat-fullscreen {
+  margin: -1rem -0.75rem -5rem -0.75rem;
+}
+@media (min-width: 768px) {
+  .chat-fullscreen {
+    margin: -1.5rem -1rem -1.5rem -1rem;
+  }
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

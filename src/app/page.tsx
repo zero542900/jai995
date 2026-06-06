@@ -217,9 +217,9 @@ export default function GeneratePage() {
   const hasLocked = Object.keys(lockedFields).length > 0;
 
   return (
-    <div className="page-enter space-y-6">
+    <div className="page-enter space-y-4 md:space-y-6">
       <div className="flex items-center gap-3">
-        <h1 className="text-xl font-semibold text-foreground">生成 User 面具</h1>
+        <h1 className="text-lg md:text-xl font-semibold text-foreground">生成 User 面具</h1>
       </div>
 
       <Card className="border-pink-100">
@@ -266,11 +266,11 @@ export default function GeneratePage() {
 
       <div className="flex items-center gap-3">
         {!isGenerating ? (
-          <Button onClick={() => handleGenerate(false)} className="flex-1" size="lg">
+          <Button onClick={() => handleGenerate(false)} className="flex-1 h-11 md:h-10" size="lg">
             生成 User 卡
           </Button>
         ) : (
-          <Button onClick={handleStop} variant="destructive" className="flex-1" size="lg">
+          <Button onClick={handleStop} variant="destructive" className="flex-1 h-11 md:h-10" size="lg">
             停止生成
           </Button>
         )}
@@ -281,10 +281,10 @@ export default function GeneratePage() {
             role="switch"
             aria-checked={thinkingEnabled}
             onClick={() => setThinkingEnabled(v => !v)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+            className={`relative inline-flex h-7 w-12 md:h-6 md:w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${thinkingEnabled ? 'translate-x-5' : 'translate-x-0'}`}
+              className={`pointer-events-none inline-block h-6 w-6 md:h-5 md:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${thinkingEnabled ? 'translate-x-5 md:translate-x-5' : 'translate-x-0'}`}
             />
           </button>
         </div>
@@ -292,74 +292,73 @@ export default function GeneratePage() {
 
       {englishCard && (
         <Card className="border-pink-200 overflow-hidden">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2 md:pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="text-sm md:text-base flex items-center gap-2">
                 {showFront ? 'English' : '中文翻译'}
                 {isGenerating && (
-                  <span className="typing-cursor text-sm text-muted-foreground">生成中</span>
+                  <span className="typing-cursor text-xs md:text-sm text-muted-foreground">生成中</span>
                 )}
               </CardTitle>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground mr-1">
+                <span className="text-[11px] md:text-xs text-muted-foreground mr-1">
                   {showFront ? '正面' : '背面'}
                 </span>
                 <div className={`w-2 h-2 rounded-full ${showFront ? 'bg-pink-500' : 'bg-violet-400'}`} />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 md:px-6 pb-3 md:pb-6">
             {/* Thinking content */}
             {thinkingContent && (
-              <div className="mb-3 border border-violet-200 bg-violet-50/50 rounded-lg p-3">
+              <div className="mb-3 border border-violet-200 bg-violet-50/50 rounded-lg p-2.5 md:p-3">
                 <div className="text-xs font-medium text-violet-500 mb-1.5 flex items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M12 2a7 7 0 0 1 7 7c0 2.6-1.4 4.8-3.5 6v1.5a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5V15C6.4 13.8 5 11.6 5 9a7 7 0 0 1 7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg>
                   思考过程
                 </div>
-                <div className="text-xs text-violet-600/80 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto">{thinkingContent}</div>
+                <div className="text-xs text-violet-600/80 leading-relaxed whitespace-pre-wrap max-h-[150px] md:max-h-[200px] overflow-y-auto">{thinkingContent}</div>
               </div>
             )}
             {/* Card content area */}
-            <div className="bg-muted/50 p-4 rounded-lg max-h-[500px] overflow-y-auto">
+            <div className="bg-muted/50 p-2.5 md:p-4 rounded-lg max-h-[50vh] md:max-h-[500px] overflow-y-auto">
               {showFront ? (
-                <div className="text-sm font-mono leading-relaxed whitespace-pre-wrap">{englishCard}</div>
+                <div className="text-xs md:text-sm font-mono leading-relaxed whitespace-pre-wrap break-words">{englishCard}</div>
               ) : (
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{chineseCard || '翻译生成中...'}</div>
+                <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap break-words">{chineseCard || '翻译生成中...'}</div>
               )}
             </div>
 
             {/* Field locking - both sides, when not generating */}
             {!isGenerating && (showFront ? parsedFields : parsedChineseFields).length > 0 && (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2 px-1">
+              <div className="mt-3 md:mt-4 space-y-2">
+                <div className="flex items-center gap-2 px-1 flex-wrap">
                   <span className="text-xs font-medium text-foreground">字段锁定</span>
-                  <span className="text-xs text-muted-foreground">
-                    — 点击右侧按钮标记满意字段，刷新时将保留
+                  <span className="text-[11px] md:text-xs text-muted-foreground">
+                    — 锁定满意字段，刷新时保留
                   </span>
                   {hasLocked && <span className="text-xs text-pink-500 font-medium ml-1">已锁定 {Object.keys(lockedFields).length} 项</span>}
                 </div>
-                <div className="grid gap-1.5 border border-pink-100 rounded-lg p-2 bg-white/50">
+                <div className="grid gap-1 border border-pink-100 rounded-lg p-1.5 md:p-2 bg-white/50">
                   {(showFront ? parsedFields : parsedChineseFields).map((field, idx) => {
-                    // Use English key as lock identifier (same index maps between EN/CN)
                     const lockKey = parsedFields[idx]?.key || field.key;
                     const locked = isFieldLocked(lockKey);
                     return (
                       <div
                         key={idx}
-                        className={`flex items-start gap-2 px-2.5 py-2 rounded-md text-sm transition-colors ${
+                        className={`flex items-start gap-1.5 md:gap-2 px-2 md:px-2.5 py-1.5 md:py-2 rounded-md text-xs md:text-sm transition-colors ${
                           locked
                             ? 'bg-pink-50 border border-pink-300 shadow-sm'
                             : 'hover:bg-pink-50/40 border border-transparent'
                         }`}
                       >
-                        <span className={`font-mono min-w-0 shrink-0 ${locked ? 'text-pink-600' : 'text-muted-foreground'}`}>**{field.key}**:</span>
-                        <span className="flex-1 text-foreground">{field.value}</span>
+                        <span className={`font-mono min-w-0 shrink-0 text-[11px] md:text-xs ${locked ? 'text-pink-600' : 'text-muted-foreground'}`}>**{field.key}**:</span>
+                        <span className="flex-1 text-foreground text-[11px] md:text-sm">{field.value}</span>
                         <button
                           onClick={() => toggleFieldLock(lockKey, parsedFields[idx]?.value || field.value)}
-                          className={`shrink-0 transition-transform hover:scale-110 active:scale-95 rounded p-0.5 ${
+                          className={`shrink-0 transition-transform hover:scale-110 active:scale-95 rounded p-1 md:p-0.5 min-w-[28px] min-h-[28px] md:min-w-0 md:min-h-0 flex items-center justify-center ${
                             locked ? 'text-pink-500' : 'text-muted-foreground/40 hover:text-pink-300'
                           }`}
-                          title={locked ? '点击取消锁定' : '点击锁定此字段（锁定对应英文字段）'}
+                          title={locked ? '点击取消锁定' : '点击锁定此字段'}
                         >
                           {locked ? <IconLock className="w-4 h-4" /> : <IconUnlock className="w-4 h-4" />}
                         </button>
@@ -372,17 +371,17 @@ export default function GeneratePage() {
 
             {/* Action buttons */}
             {!isGenerating && (
-              <div className="mt-4 flex gap-2 flex-wrap">
-                <Button onClick={handleCopy} variant="outline" size="sm" title="复制英文全文" className="gap-1.5">
+              <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
+                <Button onClick={handleCopy} variant="outline" size="sm" title="复制英文全文" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconCopy className="w-4 h-4" /> 复制
                 </Button>
-                <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片" className="gap-1.5">
+                <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconFlip className="w-4 h-4" /> {showFront ? '中文' : 'EN'}
                 </Button>
-                <Button onClick={handleRefresh} variant="outline" size="sm" title={hasLocked ? '保留标记项，重新生成其余' : '重新生成整卡'} className="gap-1.5">
+                <Button onClick={handleRefresh} variant="outline" size="sm" title={hasLocked ? '保留标记项，重新生成其余' : '重新生成整卡'} className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconRefresh className="w-4 h-4" /> {hasLocked ? '局部刷新' : '刷新'}
                 </Button>
-                <Button onClick={() => setShowSaveDialog(true)} size="sm" className="gap-1.5">
+                <Button onClick={() => setShowSaveDialog(true)} size="sm" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconSave className="w-4 h-4" /> 保存预设
                 </Button>
               </div>

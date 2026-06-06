@@ -21,7 +21,7 @@ export default function FlipCard({
   content,
   title,
   mono = false,
-  maxHeight = '500px',
+  maxHeight = '60vh',
   emptyText = '暂无内容',
 }: FlipCardProps) {
   const [flipped, setFlipped] = useState(false);

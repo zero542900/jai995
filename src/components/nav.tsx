@@ -36,8 +36,9 @@ const navItems = [
 export default function Nav() {
   const pathname = usePathname();
 
-  // Don't show nav on detail pages (they have their own back button)
+  // Don't show nav on detail pages (they have their own back button) or chat page (has its own input bar)
   const isDetailPage = pathname.match(/^\/presets\/[^/]+$/) || pathname.match(/^\/instructions\/[^/]+$/);
+  const isChatPage = pathname.startsWith('/chat');
 
   return (
     <>
@@ -70,9 +71,9 @@ export default function Nav() {
       </aside>
 
       {/* Mobile bottom tab bar */}
-      {!isDetailPage && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50 safe-area-bottom">
-          <div className="flex items-center justify-around h-14">
+      {!isDetailPage && !isChatPage && (
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
+          <div className="flex items-center justify-around h-14 pb-[env(safe-area-inset-bottom)]">
             {navItems.map((item) => {
               const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
               return (
@@ -80,7 +81,7 @@ export default function Nav() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-all',
+                    'flex flex-col items-center gap-0.5 py-1.5 px-2.5 rounded-lg transition-all min-w-[48px] min-h-[44px] justify-center',
                     isActive ? 'text-primary' : 'text-muted-foreground',
                   )}
                 >

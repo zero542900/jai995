@@ -1,5 +1,30 @@
 // JAI Assistant - Type Definitions
 
+export interface BilingualText {
+  en: string;
+  cn: string;
+}
+
+export interface PlotData {
+  currentMainLine: string;
+  currentMainLineCn: string;
+  plotStage: string;
+  plotStageCn: string;
+  progressDesc: string;
+  progressDescCn: string;
+  selectedEnding: string[];
+  selectedRelation: string[];
+  selectedScene: string[];
+  selectedStageKeyword: string[];
+  savedPlotDirections: BilingualText[];
+  suggestedKeywords: {
+    ending: BilingualText[];
+    relation: BilingualText[];
+    scene: BilingualText[];
+    stage: BilingualText[];
+  };
+}
+
 export interface Preset {
   id: string;
   name: string;
@@ -11,6 +36,7 @@ export interface Preset {
   longTermMemory: string;
   personMode: 'first' | 'third';
   thinkingEnabled: boolean;
+  plotData?: PlotData;
   createdAt: number;
   updatedAt: number;
 }

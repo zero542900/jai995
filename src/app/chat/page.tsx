@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown } from '@/components/icons';
 import { copyToClipboard } from '@/lib/utils';
+import type { PlotData } from '@/lib/types';
 
 // ========== Types ==========
 interface ChatMessage {
@@ -29,6 +30,7 @@ interface Preset {
   longTermMemory: string;
   personMode: 'first' | 'third';
   thinkingEnabled: boolean;
+  plotData?: PlotData;
   createdAt: number;
 }
 
@@ -286,23 +288,35 @@ export default function ChatPage() {
     }
   }, [currentPresetId, presets]);
 
-  // Load personMode and thinkingEnabled from preset
+  // Load personMode, thinkingEnabled, and plotData from preset
   useEffect(() => {
     if (!currentPresetId) return;
     const preset = presets.find(p => p.id === currentPresetId);
     if (preset) {
       setPersonMode(preset.personMode || 'third');
       setThinkingEnabled(preset.thinkingEnabled || false);
-      // Load plot direction from preset
-      if (preset.plotDirection) {
+      // Restore plotData from preset
+      if (preset.plotData) {
+        const pd = preset.plotData;
+        if (pd.currentMainLine) setCurrentMainLine(pd.currentMainLine);
+        if (pd.currentMainLineCn) setCurrentMainLineCn(pd.currentMainLineCn);
+        if (pd.plotStage) setPlotStage(pd.plotStage);
+        if (pd.plotStageCn) setPlotStageCn(pd.plotStageCn);
+        if (pd.progressDesc) setProgressDesc(pd.progressDesc);
+        if (pd.progressDescCn) setProgressDescCn(pd.progressDescCn);
+        if (pd.selectedEnding) setSelectedEnding(pd.selectedEnding);
+        if (pd.selectedRelation) setSelectedRelation(pd.selectedRelation);
+        if (pd.selectedScene) setSelectedScene(pd.selectedScene);
+        if (pd.selectedStageKeyword) setSelectedStageKeyword(pd.selectedStageKeyword);
+        if (pd.savedPlotDirections) setSavedPlotDirections(pd.savedPlotDirections);
+        if (pd.suggestedKeywords) setSuggestedKeywords(pd.suggestedKeywords);
+      } else if (preset.plotDirection) {
+        // Legacy: migrate from plotDirection
         setCurrentMainLine(preset.plotDirection);
-        setSavedPlotDirections(prev => {
-          if (prev.some(d => d.en === preset.plotDirection)) return prev;
-          return [...prev, { en: preset.plotDirection, cn: '' }];
-        });
+        setSavedPlotDirections([{ en: preset.plotDirection, cn: '' }]);
       }
     }
-  }, [currentPresetId, presets]);
+  }, [currentPresetId]);
 
   // Auto-save
   useEffect(() => {
@@ -756,7 +770,6 @@ export default function ChatPage() {
           if (prev.some(d => d.en === data.mainLineName)) return prev;
           return [...prev, { en: data.mainLineName, cn: data.mainLineNameCn || '', stage: data.stage, stageCn: data.stageCn }];
         });
-        autoSavePlotDirection(data.mainLineName);
       }
       if (data.stage) {
         setPlotStage(data.stage);
@@ -832,28 +845,41 @@ export default function ChatPage() {
     }
   };
 
-  // Auto-save plot direction to preset whenever it changes
-  const autoSavePlotDirection = (direction: string) => {
+  // Auto-save all plot data to preset
+  const autoSavePlotData = () => {
     if (!currentPresetId) return;
     const preset = presets.find(p => p.id === currentPresetId);
-    if (preset && preset.plotDirection !== direction) {
-      const updated = { ...preset, plotDirection: direction };
-      updatePreset(updated);
-      setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
-    }
+    if (!preset) return;
+    const plotData: PlotData = {
+      currentMainLine,
+      currentMainLineCn,
+      plotStage,
+      plotStageCn,
+      progressDesc,
+      progressDescCn,
+      selectedEnding,
+      selectedRelation,
+      selectedScene,
+      selectedStageKeyword,
+      savedPlotDirections,
+      suggestedKeywords,
+    };
+    const updated = { ...preset, plotData, plotDirection: currentMainLine };
+    updatePreset(updated);
+    setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
   };
 
-  // Also auto-save when main line fields change (for manual edits)
-  const updateMainLineField = (field: 'mainLine' | 'stage' | 'progress', value: string) => {
-    if (field === 'mainLine') {
-      setCurrentMainLine(value);
-      autoSavePlotDirection(value);
-    } else if (field === 'stage') {
-      setPlotStage(value);
-    } else if (field === 'progress') {
-      setProgressDesc(value);
-    }
-  };
+  // Debounced auto-save on any plot data change
+  useEffect(() => {
+    if (!currentPresetId) return;
+    const timer = setTimeout(() => {
+      autoSavePlotData();
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMainLine, currentMainLineCn, plotStage, plotStageCn, progressDesc, progressDescCn,
+      selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
+      savedPlotDirections, suggestedKeywords]);
 
   const selectPlotDirection = (idx: number) => {
     const pred = plotPredictions[idx];
@@ -865,7 +891,6 @@ export default function ChatPage() {
       if (prev.some(d => d.en === pred.en)) return prev;
       return [...prev, { en: pred.en, cn: pred.cn, stage: plotStage, stageCn: plotStageCn }];
     });
-    autoSavePlotDirection(pred.en);
   };
 
   const switchPlotDirection = (dir: { en: string; cn: string; stage?: string; stageCn?: string }) => {
@@ -873,7 +898,6 @@ export default function ChatPage() {
     setCurrentMainLineCn(dir.cn);
     if (dir.stage) setPlotStage(dir.stage);
     if (dir.stageCn) setPlotStageCn(dir.stageCn);
-    autoSavePlotDirection(dir.en);
     setShowDirectionDropdown(false);
   };
 
@@ -1155,7 +1179,7 @@ export default function ChatPage() {
                     <input
                       type="text"
                       value={currentMainLine}
-                      onChange={e => updateMainLineField('mainLine', e.target.value)}
+                      onChange={e => setCurrentMainLine(e.target.value)}
                       placeholder="手动输入走向，或点上方 AI 按钮自动概括"
                       className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
                     />
@@ -1446,7 +1470,6 @@ export default function ChatPage() {
                                 if (prev.some(d => d.en === plotTwist)) return prev;
                                 return [...prev, { en: plotTwist, cn: '' }];
                               });
-                              autoSavePlotDirection(plotTwist);
                               showNotification('转折已设为当前走向');
                             }
                           }}

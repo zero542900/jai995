@@ -227,7 +227,39 @@ export default function PresetDetailPage() {
                   </div>
                 </div>
               ) : (
-                <FlipCard content={preset.plotDirection} title="剧情走向" emptyText="暂无剧情走向，点击编辑添加" />
+                <div className="space-y-3">
+                  <FlipCard content={preset.plotDirection} title="剧情走向" emptyText="暂无剧情走向，点击编辑添加" />
+                  {preset.plotData && (
+                    <div className="space-y-2 text-xs text-gray-500">
+                      {preset.plotData.plotStage && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400">阶段:</span>
+                          <span>{preset.plotData.plotStage}</span>
+                          {preset.plotData.plotStageCn && <span className="text-gray-400">({preset.plotData.plotStageCn})</span>}
+                        </div>
+                      )}
+                      {preset.plotData.progressDesc && (
+                        <div>
+                          <span className="text-gray-400">进展:</span>
+                          <span className="ml-1">{preset.plotData.progressDesc}</span>
+                          {preset.plotData.progressDescCn && <span className="text-gray-400 ml-1">({preset.plotData.progressDescCn})</span>}
+                        </div>
+                      )}
+                      {preset.plotData.savedPlotDirections && preset.plotData.savedPlotDirections.length > 1 && (
+                        <div>
+                          <span className="text-gray-400">已保存走向:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {preset.plotData.savedPlotDirections.map((d, i) => (
+                              <span key={i} className={`inline-block px-2 py-0.5 rounded-full text-[10px] ${d.en === preset.plotDirection ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-500'}`}>
+                                {d.en} {d.cn && `(${d.cn})`}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

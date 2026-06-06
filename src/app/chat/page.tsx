@@ -32,26 +32,26 @@ interface Preset {
 // ========== Storage helpers ==========
 function getPresets(): Preset[] {
   if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem('jai-presets') || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('jai_presets') || '[]'); } catch { return []; }
 }
 
 function getSessions(): Record<string, { messages: ChatMessage[]; memory: string }> {
   if (typeof window === 'undefined') return {};
-  try { return JSON.parse(localStorage.getItem('jai-sessions') || '{}'); } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem('jai_chat_sessions') || '{}'); } catch { return {}; }
 }
 
 function saveSession(presetId: string, messages: ChatMessage[], memory: string) {
   if (typeof window === 'undefined') return;
   const sessions = getSessions();
   sessions[presetId] = { messages, memory };
-  localStorage.setItem('jai-sessions', JSON.stringify(sessions));
+  localStorage.setItem('jai_chat_sessions', JSON.stringify(sessions));
 }
 
 function updatePreset(preset: Preset) {
   if (typeof window === 'undefined') return;
   const presets = getPresets();
   const idx = presets.findIndex(p => p.id === preset.id);
-  if (idx >= 0) { presets[idx] = preset; localStorage.setItem('jai-presets', JSON.stringify(presets)); }
+  if (idx >= 0) { presets[idx] = preset; localStorage.setItem('jai_presets', JSON.stringify(presets)); }
 }
 
 // ========== Translation Instruction ==========

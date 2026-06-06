@@ -2066,12 +2066,12 @@ export default function ChatPage() {
             onChange={e => setJaiInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendBotMessage(); } }}
             placeholder="粘贴 Char 回复..."
-            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-blue-100 bg-blue-50/50 focus:border-blue-300 focus:outline-none placeholder:text-blue-300 min-w-0"
+            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-jai-card-border bg-jai-input-bg/50 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary min-w-0"
           />
           <button
             onClick={sendBotMessage}
             disabled={!jaiInput.trim()}
-            className="px-2 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors shrink-0"
+            className="px-2 py-1.5 text-xs bg-jai-secondary text-white rounded-lg hover:bg-jai-accent disabled:opacity-50 transition-colors shrink-0"
           >
             发送
           </button>

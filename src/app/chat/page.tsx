@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck } from '@/components/icons';
+import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown } from '@/components/icons';
 import { copyToClipboard } from '@/lib/utils';
 
 // ========== Types ==========
@@ -141,6 +141,19 @@ export default function ChatPage() {
   const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [memoryResult, setMemoryResult] = useState<{ en: string; cn: string } | null>(null);
   const [memoryFlipped, setMemoryFlipped] = useState(false);
+
+  // Plot Assistant states
+  const [showPlotPanel, setShowPlotPanel] = useState(false);
+  const [plotSummaryLoading, setPlotSummaryLoading] = useState(false);
+  const [plotSummary, setPlotSummary] = useState<{ en: string; cn: string; flipped: boolean; translating: boolean } | null>(null);
+  const [plotPredictions, setPlotPredictions] = useState<string[]>([]);
+  const [plotTwist, setPlotTwist] = useState<string | null>(null);
+  const [plotPredictLoading, setPlotPredictLoading] = useState(false);
+  const [plotDirectionKeyword, setPlotDirectionKeyword] = useState('');
+  const [plotAdvanceLoading, setPlotAdvanceLoading] = useState(false);
+  const [plotAdvanceResult, setPlotAdvanceResult] = useState<{ en: string; cn: string; flipped: boolean } | null>(null);
+  const [selectedPredictionIdx, setSelectedPredictionIdx] = useState<number | null>(null);
+  const [predictionTranslations, setPredictionTranslations] = useState<Record<number, { cn: string; flipped: boolean; translating: boolean }>>({});
 
   const [notification, setNotification] = useState('');
   const [showInstructionPicker, setShowInstructionPicker] = useState(false);
@@ -549,10 +562,263 @@ export default function ChatPage() {
     showNotification('记忆已写入预设');
   };
 
+  // ========== Plot Assistant ==========
+  const handlePlotSummary = async () => {
+    if (!currentPreset) { showNotification('请选择预设'); return; }
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) { showNotification('请先配置 API Key'); return; }
+
+    setPlotSummaryLoading(true);
+    setPlotSummary(null);
+
+    try {
+      const res = await fetch('/api/plot-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charInfo: currentPreset.charInfo,
+          userCard: currentPreset.userCard,
+          chatHistory: buildChatHistoryForMemory(),
+          longTermMemory: currentPreset.longTermMemory,
+          plotDirection: currentPreset.plotDirection,
+          apiKey
+        })
+      });
+
+      if (!res.ok) throw new Error('摘要生成失败');
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No reader');
+
+      let fullText = '';
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) fullText += parsed.content;
+            } catch { /* skip */ }
+          }
+        }
+      }
+
+      const parts = fullText.split('===CHINESE===');
+      setPlotSummary({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim(), flipped: false, translating: false });
+    } catch {
+      showNotification('摘要生成失败');
+    } finally {
+      setPlotSummaryLoading(false);
+    }
+  };
+
+  const handlePlotPredict = async () => {
+    if (!currentPreset) { showNotification('请选择预设'); return; }
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) { showNotification('请先配置 API Key'); return; }
+
+    setPlotPredictLoading(true);
+    setPlotPredictions([]);
+    setPlotTwist(null);
+    setPlotAdvanceResult(null);
+    setSelectedPredictionIdx(null);
+    setPredictionTranslations({});
+
+    try {
+      const res = await fetch('/api/plot-predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charInfo: currentPreset.charInfo,
+          userCard: currentPreset.userCard,
+          chatHistory: buildChatHistoryForMemory(),
+          longTermMemory: currentPreset.longTermMemory,
+          plotDirection: currentPreset.plotDirection,
+          messageCount: messages.filter(m => m.id !== 'greeting-' + currentPresetId).length,
+          directionKeyword: plotDirectionKeyword || undefined,
+          personMode,
+          apiKey
+        })
+      });
+
+      if (!res.ok) throw new Error('预测生成失败');
+      const data = await res.json();
+
+      if (data.predictions && Array.isArray(data.predictions)) {
+        setPlotPredictions(data.predictions);
+      }
+      if (data.twist) {
+        setPlotTwist(data.twist);
+      }
+    } catch {
+      showNotification('预测生成失败');
+    } finally {
+      setPlotPredictLoading(false);
+    }
+  };
+
+  const handlePlotAdvance = async (prediction: string, idx: number) => {
+    if (!currentPreset) return;
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) { showNotification('请先配置 API Key'); return; }
+
+    setPlotAdvanceLoading(true);
+    setPlotAdvanceResult(null);
+    setSelectedPredictionIdx(idx);
+
+    try {
+      const res = await fetch('/api/plot-predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charInfo: currentPreset.charInfo,
+          userCard: currentPreset.userCard,
+          chatHistory: buildChatHistoryForMemory(),
+          longTermMemory: currentPreset.longTermMemory,
+          plotDirection: currentPreset.plotDirection,
+          selectedPrediction: prediction,
+          personMode,
+          apiKey
+        })
+      });
+
+      if (!res.ok) throw new Error('推进生成失败');
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No reader');
+
+      let fullText = '';
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) fullText += parsed.content;
+            } catch { /* skip */ }
+          }
+        }
+      }
+
+      const parts = fullText.split('===CHINESE===');
+      setPlotAdvanceResult({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim(), flipped: false });
+    } catch {
+      showNotification('推进生成失败');
+    } finally {
+      setPlotAdvanceLoading(false);
+    }
+  };
+
+  const flipPlotPrediction = async (idx: number) => {
+    const existing = predictionTranslations[idx];
+    if (existing?.flipped) {
+      // Flip back
+      setPredictionTranslations(prev => ({ ...prev, [idx]: { ...prev[idx], flipped: false } }));
+      return;
+    }
+    if (existing?.cn) {
+      setPredictionTranslations(prev => ({ ...prev, [idx]: { ...prev[idx], flipped: true } }));
+      return;
+    }
+    // Need to translate
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) { showNotification('请先配置 API Key'); return; }
+
+    setPredictionTranslations(prev => ({ ...prev, [idx]: { cn: '', flipped: false, translating: true } }));
+
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: plotPredictions[idx], apiKey }),
+      });
+      const data = await res.json();
+      setPredictionTranslations(prev => ({ ...prev, [idx]: { cn: data.translation || '翻译失败', flipped: true, translating: false } }));
+    } catch {
+      setPredictionTranslations(prev => ({ ...prev, [idx]: { cn: '翻译失败', flipped: true, translating: false } }));
+    }
+  };
+
+  const flipPlotSummary = async () => {
+    if (!plotSummary) return;
+    if (plotSummary.flipped) {
+      setPlotSummary(prev => prev ? { ...prev, flipped: false } : null);
+      return;
+    }
+    if (plotSummary.cn) {
+      setPlotSummary(prev => prev ? { ...prev, flipped: true } : null);
+      return;
+    }
+    // Translate
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) { showNotification('请先配置 API Key'); return; }
+
+    setPlotSummary(prev => prev ? { ...prev, translating: true } : null);
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: plotSummary.en, apiKey }),
+      });
+      const data = await res.json();
+      setPlotSummary(prev => prev ? { ...prev, cn: data.translation || '翻译失败', flipped: true, translating: false } : null);
+    } catch {
+      setPlotSummary(prev => prev ? { ...prev, translating: false } : null);
+      showNotification('翻译失败');
+    }
+  };
+
+  const flipPlotTwist = async () => {
+    if (!plotTwist) return;
+    // Toggle twist translation inline - reuse predictionTranslations with special key
+    const twistKey = -1;
+    const existing = predictionTranslations[twistKey];
+    if (existing?.flipped) {
+      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { ...prev[twistKey], flipped: false } }));
+      return;
+    }
+    if (existing?.cn) {
+      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { ...prev[twistKey], flipped: true } }));
+      return;
+    }
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) { showNotification('请先配置 API Key'); return; }
+    setPredictionTranslations(prev => ({ ...prev, [twistKey]: { cn: '', flipped: false, translating: true } }));
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: plotTwist, apiKey }),
+      });
+      const data = await res.json();
+      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { cn: data.translation || '翻译失败', flipped: true, translating: false } }));
+    } catch {
+      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { cn: '翻译失败', flipped: true, translating: false } }));
+    }
+  };
+
   const handleBackToPresets = () => {
     if (currentPresetId) {
       const preset = presets.find(p => p.id === currentPresetId);
-      if (preset) saveSession(currentPresetId, messages, preset.longTermMemory);
+      if (preset) {
+        // Auto-save plot progress: if we have a plot summary, save it to preset.plotDirection
+        const updatedPreset = plotSummary?.en
+          ? { ...preset, plotDirection: plotSummary.en }
+          : preset;
+        if (updatedPreset !== preset) {
+          updatePreset(updatedPreset);
+          setPresets(prev => prev.map(p => p.id === currentPresetId ? updatedPreset : p));
+        }
+        saveSession(currentPresetId, messages, updatedPreset.longTermMemory);
+      }
     }
     showNotification('会话已保存');
     setTimeout(() => router.push('/presets'), 500);
@@ -724,6 +990,207 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* Plot Assistant Panel */}
+      {showPlotPanel && (
+        <div className="shrink-0 mx-4 mb-2 bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden">
+          {/* Panel Header */}
+          <div className="flex items-center justify-between px-3 py-2 bg-amber-50/50 border-b border-amber-100">
+            <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
+              <IconPlot className="w-3.5 h-3.5" /> 剧情助手
+            </span>
+            <button onClick={() => setShowPlotPanel(false)} className="p-1 text-gray-400 hover:text-gray-600 text-xs">✕</button>
+          </div>
+
+          <div className="p-3 space-y-3 max-h-[50vh] overflow-y-auto">
+            {/* Section 1: Plot Summary */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">剧情摘要</span>
+                <div className="flex items-center gap-1">
+                  <button onClick={handlePlotSummary} disabled={plotSummaryLoading} className="p-1 text-amber-400 hover:text-amber-600 disabled:opacity-50">
+                    <IconRefresh className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              {plotSummaryLoading ? (
+                <p className="text-xs text-gray-400 animate-pulse">生成中...</p>
+              ) : plotSummary ? (
+                <div>
+                  <div
+                    className="p-2.5 rounded-lg border bg-amber-50/50 border-amber-100 cursor-pointer hover:bg-amber-50 transition-colors"
+                    onClick={flipPlotSummary}
+                  >
+                    {plotSummary.translating ? (
+                      <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
+                    ) : (
+                      <p className="text-xs text-gray-800 whitespace-pre-wrap">
+                        {plotSummary.flipped && plotSummary.cn ? plotSummary.cn : plotSummary.en}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <button onClick={(e) => { e.stopPropagation(); copyContent(plotSummary.en); }} className="text-[10px] text-amber-500 hover:text-amber-700">复制</button>
+                    <span className="text-[10px] text-gray-300">|</span>
+                    <button onClick={flipPlotSummary} className="text-[10px] text-gray-400 hover:text-gray-600">翻转</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-400">点击刷新按钮生成摘要</p>
+              )}
+            </div>
+
+            <div className="border-t border-amber-100" />
+
+            {/* Section 2: Plot Predictions */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">剧情走向</span>
+                <div className="flex items-center gap-1">
+                  <button onClick={handlePlotPredict} disabled={plotPredictLoading} className="p-1 text-amber-400 hover:text-amber-600 disabled:opacity-50">
+                    <IconRefresh className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Direction keyword input */}
+              <div className="flex items-center gap-1.5 mb-2">
+                <input
+                  type="text"
+                  value={plotDirectionKeyword}
+                  onChange={e => setPlotDirectionKeyword(e.target.value)}
+                  placeholder="剧情方向关键词（可选）"
+                  className="flex-1 text-[11px] px-2 py-1 rounded border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handlePlotPredict(); } }}
+                />
+                <button
+                  onClick={handlePlotPredict}
+                  disabled={plotPredictLoading}
+                  className="text-[10px] px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50"
+                >
+                  预测
+                </button>
+              </div>
+
+              {plotPredictLoading ? (
+                <p className="text-xs text-gray-400 animate-pulse">生成中...</p>
+              ) : plotPredictions.length > 0 ? (
+                <div className="space-y-2">
+                  {plotPredictions.map((pred, i) => {
+                    const translation = predictionTranslations[i];
+                    const isSelected = selectedPredictionIdx === i;
+                    return (
+                      <div key={i} className={`rounded-lg border p-2 transition-colors ${isSelected ? 'border-amber-300 bg-amber-50' : 'border-amber-100 bg-white hover:bg-amber-50/30'}`}>
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => flipPlotPrediction(i)}
+                        >
+                          {translation?.translating ? (
+                            <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
+                          ) : translation?.flipped && translation.cn ? (
+                            <p className="text-xs text-gray-800">{translation.cn}</p>
+                          ) : (
+                            <p className="text-xs text-gray-800">{pred}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); copyContent(pred); }}
+                            className="text-[10px] text-amber-500 hover:text-amber-700"
+                          >复制</button>
+                          <span className="text-[10px] text-gray-300">|</span>
+                          <button
+                            onClick={() => flipPlotPrediction(i)}
+                            className="text-[10px] text-gray-400 hover:text-gray-600"
+                          >翻转</button>
+                          <span className="text-[10px] text-gray-300">|</span>
+                          <button
+                            onClick={() => handlePlotAdvance(pred, i)}
+                            disabled={plotAdvanceLoading}
+                            className="text-[10px] text-amber-500 hover:text-amber-700 font-medium disabled:opacity-50"
+                          >推进</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Twist prediction (long-term plot) */}
+                  {plotTwist && (
+                    <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-2">
+                      <div className="flex items-center gap-1 mb-1">
+                        <span className="text-[9px] font-medium text-violet-500 bg-violet-100 px-1 py-0.5 rounded">阶段性转折</span>
+                      </div>
+                      <div className="cursor-pointer" onClick={flipPlotTwist}>
+                        {predictionTranslations[-1]?.translating ? (
+                          <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
+                        ) : predictionTranslations[-1]?.flipped && predictionTranslations[-1]?.cn ? (
+                          <p className="text-xs text-gray-800">{predictionTranslations[-1].cn}</p>
+                        ) : (
+                          <p className="text-xs text-gray-800">{plotTwist}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <button onClick={(e) => { e.stopPropagation(); copyContent(plotTwist); }} className="text-[10px] text-violet-500 hover:text-violet-700">复制</button>
+                        <span className="text-[10px] text-gray-300">|</span>
+                        <button onClick={flipPlotTwist} className="text-[10px] text-gray-400 hover:text-gray-600">翻转</button>
+                        <span className="text-[10px] text-gray-300">|</span>
+                        <button
+                          onClick={() => handlePlotAdvance(plotTwist, -1)}
+                          disabled={plotAdvanceLoading}
+                          className="text-[10px] text-violet-500 hover:text-violet-700 font-medium disabled:opacity-50"
+                        >推进</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-400">点击预测按钮生成走向</p>
+              )}
+            </div>
+
+            {/* Section 3: Advance Result */}
+            {plotAdvanceResult && (
+              <>
+                <div className="border-t border-amber-100" />
+                <div>
+                  <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">推进结果</span>
+                  <div
+                    className="mt-1.5 p-2.5 rounded-lg border bg-amber-50/50 border-amber-100 cursor-pointer hover:bg-amber-50 transition-colors"
+                    onClick={() => setPlotAdvanceResult(prev => prev ? { ...prev, flipped: !prev.flipped } : null)}
+                  >
+                    <p className="text-xs text-gray-800 whitespace-pre-wrap">
+                      {plotAdvanceResult.flipped ? plotAdvanceResult.cn : plotAdvanceResult.en}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <button
+                      onClick={() => copyContent(plotAdvanceResult.en)}
+                      className="text-[10px] text-amber-500 hover:text-amber-700"
+                    >复制</button>
+                    <span className="text-[10px] text-gray-300">|</span>
+                    <button
+                      onClick={() => setPlotAdvanceResult(prev => prev ? { ...prev, flipped: !prev.flipped } : null)}
+                      className="text-[10px] text-gray-400 hover:text-gray-600"
+                    >翻转</button>
+                    <span className="text-[10px] text-gray-300">|</span>
+                    <button
+                      onClick={() => {
+                        setUserInput(plotAdvanceResult.en);
+                        showNotification('已复制到输入框');
+                      }}
+                      className="text-[10px] text-pink-500 hover:text-pink-700 font-medium"
+                    >填入输入框</button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {plotAdvanceLoading && (
+              <p className="text-xs text-gray-400 animate-pulse">生成推进内容中...</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Expand Modal */}
       {showExpandModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
@@ -881,6 +1348,12 @@ export default function ChatPage() {
           </button>
           <button onClick={handleMemory} disabled={memoryLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors">
             <IconBrain className="w-3.5 h-3.5" /> 记忆
+          </button>
+          <button
+            onClick={() => { setShowPlotPanel(!showPlotPanel); if (!showPlotPanel && !plotSummary && !plotPredictions.length) { handlePlotSummary(); handlePlotPredict(); } }}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-colors"
+          >
+            <IconPlot className="w-3.5 h-3.5" /> 剧情
           </button>
           <div className="relative" ref={instructionPickerRef}>
             <button

@@ -224,3 +224,27 @@ export function IconBook({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconPlot({ className }: IconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap={linecap} strokeLinejoin={linejoin} className={className}>
+      <path d="M2 12h4l3-9 4 18 3-9h6" />
+    </svg>
+  );
+}
+
+export function IconChevronUp({ className }: IconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap={linecap} strokeLinejoin={linejoin} className={className}>
+      <path d="M18 15l-6-6-6 6" />
+    </svg>
+  );
+}
+
+export function IconChevronDown({ className }: IconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap={linecap} strokeLinejoin={linejoin} className={className}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}

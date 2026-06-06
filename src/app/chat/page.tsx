@@ -134,6 +134,9 @@ export default function ChatPage() {
   const [styleEmotion, setStyleEmotion] = useState<string>(''); // 情感浓度
   const [stylePace, setStylePace] = useState<string>(''); // 叙事节奏
   const [styleOptional, setStyleOptional] = useState<string[]>([]); // 可选风格(多选)
+  const [mixModeNote, setMixModeNote] = useState(''); // 混合模式主基调
+  const [showMixModal, setShowMixModal] = useState(false); // 混合模式弹窗
+  const [expandedStyleCategory, setExpandedStyleCategory] = useState<string | null>(null);
   const [showOptionalMenu, setShowOptionalMenu] = useState(false);
 
   // Feature states
@@ -214,12 +217,15 @@ export default function ChatPage() {
       if (optionalMenuRef.current && !optionalMenuRef.current.contains(e.target as Node)) {
         setShowOptionalMenu(false);
       }
+      if (expandedStyleCategory) {
+        setExpandedStyleCategory(null);
+      }
     };
-    if (showOptionalMenu) {
+    if (showOptionalMenu || expandedStyleCategory) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showOptionalMenu]);
+  }, [showOptionalMenu, expandedStyleCategory]);
 
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -354,49 +360,76 @@ export default function ChatPage() {
   }, [messages]);
 
   // Build style prompt string for API injection
-  const STYLE_OPTIONS: Record<string, Record<string, string>> = {
+  const STYLE_OPTIONS = {
     tone: {
-      '欧美剧集': '多线叙事，分幕节奏。对话克制但有重量。每轮对话推动一个情绪节点。适合长线发展。',
-      '电影质感': '镜头感强，场景切换明显。对话密度低，动作和环境描述占比更高。画面感和张力优先。适合高潮段落或单幕收束。',
+      '欧美剧集': '日常叙事感，情节逐步展开。多线叙事，分幕节奏。对话克制但有重量。每轮对话推动一个情绪节点。适合长线发展。',
+      '电影质感': '画面感强，镜头叙事，节奏更紧凑。场景切换明显，对话密度低，动作和环境描述占比更高。画面感和张力优先。适合高潮段落或单幕收束。',
+      '混合模式': '以电影质感为主，但保留剧集的长线推进感。',
     },
     genre: {
-      '黑色电影': '冷调、阴影、雨夜。对话简练、暗示多。权力博弈以低语和眼神完成。适合背叛、潜伏、调查线。',
-      '西部片': '空旷、沉默、对峙。话少，靠动作和眼神推进。荣誉、复仇、清算作为核心驱动。适合孤立场景、最后通牒、决斗。',
-      '赛博朋克': '光与霓虹，潮湿街巷。对话带有信息密度，夹杂术语。科技与肉体的界限模糊。适合改造、入侵、身份错位。',
-      '战争军事': '纪律性对话，战术动作为主。感情交流被压缩成暗示和短句。服从、忠诚、牺牲、崩坏。适合小队、任务、撤退、溃败线。',
+      '黑色电影': '光影阴暗，道德模糊，旁白冷峻。冷调、阴影、雨夜。对话简练、暗示多。权力博弈以低语和眼神完成。适合背叛、潜伏、调查线。',
+      '西部片': '空旷、孤寂、沉默的对抗，荒野法则。话少，靠动作和眼神推进。荣誉、复仇、清算作为核心驱动。适合孤立场景、最后通牒、决斗。',
+      '战争/军事': '纪律、压迫、战场上的情感交错。战术动作为主，感情交流被压缩成暗示和短句。服从、忠诚、牺牲、崩坏。适合小队、任务、撤退、溃败线。',
+      '黑帮/犯罪': '雨夜、枪声、背叛的低语。暴力美学与信义并存。层级分明，每个位置都有代价。适合上位、背叛、收编线。',
+      '法庭/律政': '言辞交锋，逻辑与情感的博弈。每句话都有攻防。外表冷静内里燃烧。适合审讯、谈判、当面对质。',
+      '文艺/公路': '缓慢、孤独、宿命式的相遇。大量留白和环境描写。情感在沉默和风景中流淌。适合逃离、寻找、回归线。',
+      '青春痛/校园': '男大、宿舍、暗恋、迷茫、成长痛。言语直白但不成熟，冲动但不后悔。身份还在形成，一切都在试。',
+      '街头/废土': '辍学、流浪、底层生存、混迹边缘。粗粝、直白、不装。生存本能驱动一切。适合同类相吸、底层联盟。',
+      '叛逆/坠落': '反抗权威、自毁倾向、甜心陷阱/糖宝关系。越界是日常，崩溃是必然。适合越陷越深、毁人毁己线。',
     },
     emotion: {
-      '强强对抗': '对话如击剑，每句都是试探。试探、压制、反杀交替出现。谁先软谁输。适合权力换手、底线博弈。',
-      '暧昧推拉': '每句话都带未完成的重量。既定的距离感。肢体和视线描写替代码头。适合持续拉扯、立场渐染。',
-      '极度压抑': '静默段落占主导。情绪通过动作泄露。对话断句多、间隙长。适合创伤、废墟、对峙。',
-      '极度暴力': '行动优先于语言。对话纯粹功能性，全为推进动作。身体语言给出全部信息。适合围猎、清算、反杀。',
+      '强强对抗': '双方势均力敌，互不相让。对话如击剑，每句都是试探。试探、压制、反杀交替出现。谁先软谁输。适合权力换手、底线博弈。',
+      '暧昧推拉': '欲言又止，靠近又撤离。每句话都带未完成的重量。肢体和视线描写替代码头。适合持续拉扯、立场渐染。',
+      '极度压抑': '沉默比嘶吼更狠，隐忍成病。静默段落占主导。情绪通过动作泄露。对话断句多、间隙长。适合创伤、废墟、对峙。',
+      '极度暴力': '身体或心理上的痛感，真实不遮掩。行动优先于语言。对话纯粹功能性，全为推进动作。身体语言给出全部信息。适合围猎、清算、反杀。',
+      '极致占有': '偏见、控制、只属于我的执念。封锁、监视、不允许任何人靠近。占有欲从占有到吞噬。适合囚禁、监视、独占线。',
+      '病态依赖': '从利用到离不开，双刃剑。一方是毒药也是解药。离开会死，留下会疯。适合共生、崩坏、无法切割线。',
+      '年少轻狂': '冲动、不顾后果、热烈但短暂。没有退路也没有后悔药。燃烧感优先。适合青春暴走、一意孤行线。',
+      '迷惘沦陷': '不知道自己想要什么，却已经陷进去。方向感丧失，但身体在靠近。适合身份错位、不知不觉线。',
+      '玩世不恭': '用轻浮保护自己，其实比谁都怕受伤。笑着说出最痛的话。什么都不当真，但什么都看在眼里。适合伪装崩塌线。',
     },
     pace: {
-      '慢燃': '前几轮只有铺垫和氛围。细节堆叠。情绪在沉默中积累。适合建立关系、倒叙展开。',
-      '快切': '每轮对话切换场景或时间点。推进迅速，冲突提早暴露。适合闪回/多线穿插。',
-      '单幕压缩': '所有事件在一轮完整场景内发生。最紧凑的结构。适合短线收束、一次爆发。',
+      '快切': '事件紧凑，节奏迅猛，适合动作/惊险线。每轮对话切换场景或时间点。推进迅速，冲突提早暴露。适合闪回/多线穿插。',
+      '慢热': '情绪的缓慢铺陈，一点一滴积累张力。前几轮只有铺垫和氛围。细节堆叠。情绪在沉默中积累。适合建立关系、倒叙展开。',
+      '单幕压缩': '高密度叙事，一集内完成起承转合。所有事件在一轮完整场景内发生。最紧凑的结构。适合短线收束、一次爆发。',
+      '篇章递进': '分幕式叙事，每阶段明确主题。每个篇章有自己的高潮和收束。整体推进感强。适合长线发展、多线收束。',
+      '即兴感': '没有明确剧本，跟着直觉走，像一场不成熟的冒险。方向随时可能偏转。适合意外相遇、计划外线。',
     },
     optional: {
-      '加一点浪漫': '对话软一点。手与眼。对看变成事件。',
-      '加一点背叛': '所有对话都可以是伏笔。沉默不可信。谁先回头谁输。',
-      '加一点救赎': '对方是伤口也是方向。一步远或者一步晚。动作比语言更接近答案。',
-      '加一点牺牲': '台词不全。心里话只有一半。另一部分用动作替掉。',
+      '加一点浪漫': '在强硬外壳下，细碎的、沉默的温柔。对话软一点。手与眼。对看变成事件。',
+      '加一点背叛': '信任被撕开，关系陷入重新洗牌。所有对话都可以是伏笔。沉默不可信。谁先回头谁输。',
+      '加一点救赎': '赎罪、放下、重新站起来。对方是伤口也是方向。一步远或者一步晚。动作比语言更接近答案。',
+      '加一点牺牲': '等价交换或无法挽回的让渡。台词不全。心里话只有一半。另一部分用动作替掉。',
+      '加一点宿命感': '他们相遇本身就是一种注定。无论怎么绕都会回到同一个地方。适合轮回、重逢线。',
+      '加一点战损': '身体或心理的伤痕，不掩饰脆弱。伤疤是叙事的一部分。疼痛让沉默更有重量。',
+      '加一点地狱笑话': '在压抑情境中冷幽默。笑着说出最不该笑的事。用荒诞感破局。',
+      '加一点不可言说': '留白，不说破，更烫人。最关键的话永远不说出口。沉默比台词更有信息量。',
+      '加一点疯感': '不理智、不计后果的冲动。理智在关键时刻下线。适合失控、暴走、赌徒线。',
+      '加一点躁动': '荷尔蒙、不安分、坐不住的年轻感。身体比脑子先动。空气里都是张力。适合年轻角色、夏天线。',
+      '加一点破碎感': '原生家庭问题、自我认同危机、脆弱但逞强。裂痕在外表下。每一次逞强都在碎一点。适合自毁、伪装崩塌线。',
+      '加一点街头气': '粗粝、直白、不装、生存本能。话糙理不糙。活下来才是第一位。适合底层、边缘线。',
     },
-  };
+  } as const;
 
   const buildStylePrompt = useCallback(() => {
     const parts: string[] = [];
-    if (styleTone) parts.push(`[剧集调性: ${styleTone}] ${STYLE_OPTIONS.tone[styleTone]}`);
-    if (styleGenre) parts.push(`[经典类型: ${styleGenre}] ${STYLE_OPTIONS.genre[styleGenre]}`);
-    if (styleEmotion) parts.push(`[情感浓度: ${styleEmotion}] ${STYLE_OPTIONS.emotion[styleEmotion]}`);
-    if (stylePace) parts.push(`[叙事节奏: ${stylePace}] ${STYLE_OPTIONS.pace[stylePace]}`);
+    if (styleTone === '混合模式') {
+      parts.push(`[剧集调性: 混合模式] ${STYLE_OPTIONS.tone['混合模式']}${mixModeNote ? ' ' + mixModeNote : ''}`);
+    } else if (styleTone) {
+      parts.push(`[剧集调性: ${styleTone}] ${STYLE_OPTIONS.tone[styleTone as keyof typeof STYLE_OPTIONS.tone]}`);
+    }
+    if (styleGenre) parts.push(`[经典类型: ${styleGenre}] ${STYLE_OPTIONS.genre[styleGenre as keyof typeof STYLE_OPTIONS.genre]}`);
+    if (styleEmotion) parts.push(`[情感浓度: ${styleEmotion}] ${STYLE_OPTIONS.emotion[styleEmotion as keyof typeof STYLE_OPTIONS.emotion]}`);
+    if (stylePace) parts.push(`[叙事节奏: ${stylePace}] ${STYLE_OPTIONS.pace[stylePace as keyof typeof STYLE_OPTIONS.pace]}`);
     styleOptional.forEach(s => {
-      if (STYLE_OPTIONS.optional[s]) parts.push(`[可选风格: ${s}] ${STYLE_OPTIONS.optional[s]}`);
+      const key = s as keyof typeof STYLE_OPTIONS.optional;
+      if (STYLE_OPTIONS.optional[key]) parts.push(`[可选风格: ${s}] ${STYLE_OPTIONS.optional[key]}`);
     });
-    return parts.length > 0
+    parts.push(`[隐形适配规则] 所有生成内容默认适配：成人向、强强关系、耽美叙事。角色年龄层默认29-55岁男性为主（可根据设定自动匹配）。类型影响场景和氛围描写；情感浓度影响对话张力与心理描写；节奏影响推进速度和场景切换频率；可选风格作为调味料嵌入每一段生成的细节中。在生成关键剧情时必须匹配选定的风格组合。`);
+    return parts.length > 1
       ? `\n\n[风格指令 - 请严格遵循以下风格进行创作]\n${parts.join('\n')}`
       : '';
-  }, [styleTone, styleGenre, styleEmotion, stylePace, styleOptional]);
+  }, [styleTone, styleGenre, styleEmotion, stylePace, styleOptional, mixModeNote]);
 
   const toggleKeyword = (category: 'ending' | 'relation' | 'scene' | 'stage', keyword: string) => {
     const setters: Record<string, React.Dispatch<React.SetStateAction<string[]>>> = {
@@ -1577,78 +1610,103 @@ export default function ChatPage() {
             <option value="third">第三人称 (He/She)</option>
           </select>
 
-          <select
-            value={styleTone}
-            onChange={e => setStyleTone(e.target.value)}
-            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
-          >
-            <option value="">剧集调性</option>
-            <option value="欧美剧集">欧美剧集</option>
-            <option value="电影质感">电影质感</option>
-          </select>
+          {/* Style Category Buttons */}
+          {(['tone', 'genre', 'emotion', 'pace'] as const).map(cat => {
+            const labels: Record<string, string> = { tone: '剧集调性', genre: '经典类型', emotion: '情感浓度', pace: '叙事节奏' };
+            const currentVal = cat === 'tone' ? styleTone : cat === 'genre' ? styleGenre : cat === 'emotion' ? styleEmotion : stylePace;
+            const setter = cat === 'tone' ? setStyleTone : cat === 'genre' ? setStyleGenre : cat === 'emotion' ? setStyleEmotion : setStylePace;
+            const options = STYLE_OPTIONS[cat];
+            const isExpanded = expandedStyleCategory === cat;
+            return (
+              <div key={cat} className="relative">
+                <button
+                  onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
+                  className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${currentVal ? 'bg-pink-500 text-white border-pink-500' : 'border-pink-100 bg-pink-50/50 text-pink-600 hover:border-pink-300'}`}
+                >
+                  <span>{currentVal || labels[cat]}</span>
+                  <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {isExpanded && (
+                  <div className="absolute bottom-full left-0 mb-1 bg-white border border-pink-100 rounded-lg shadow-lg py-1 min-w-[220px] z-50 max-h-60 overflow-y-auto">
+                    {Object.entries(options).map(([key, desc]) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          if (cat === 'tone' && key === '混合模式') {
+                            setter(key);
+                            setShowMixModal(true);
+                          } else {
+                            setter(key);
+                          }
+                          setExpandedStyleCategory(null);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-pink-50 transition-colors ${currentVal === key ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-700'}`}
+                      >
+                        <span className="font-medium">{key}</span>
+                        <span className="block text-[10px] text-gray-400 mt-0.5 line-clamp-2">{desc}</span>
+                      </button>
+                    ))}
+                    {currentVal && (
+                      <button
+                        onClick={() => { setter(''); setExpandedStyleCategory(null); }}
+                        className="w-full text-left px-3 py-1 text-xs text-red-400 hover:bg-red-50 border-t border-pink-50"
+                      >清除选择</button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-          <select
-            value={styleGenre}
-            onChange={e => setStyleGenre(e.target.value)}
-            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
-          >
-            <option value="">经典类型</option>
-            <option value="黑色电影">黑色电影</option>
-            <option value="西部片">西部片</option>
-            <option value="赛博朋克/科幻">赛博朋克/科幻</option>
-            <option value="战争/军事">战争/军事</option>
-          </select>
-
-          <select
-            value={styleEmotion}
-            onChange={e => setStyleEmotion(e.target.value)}
-            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
-          >
-            <option value="">情感浓度</option>
-            <option value="强强对抗">强强对抗</option>
-            <option value="暧昧推拉">暧昧推拉</option>
-            <option value="极度压抑">极度压抑</option>
-            <option value="极度暴力">极度暴力</option>
-          </select>
-
-          <select
-            value={stylePace}
-            onChange={e => setStylePace(e.target.value)}
-            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
-          >
-            <option value="">叙事节奏</option>
-            <option value="慢燃">慢燃</option>
-            <option value="快切">快切</option>
-            <option value="单幕压缩">单幕压缩</option>
-          </select>
-
+          {/* Optional Styles (Multi-select) */}
           <div className="relative" ref={optionalMenuRef}>
             <button
               onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-              className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300 flex items-center gap-1"
+              className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${styleOptional.length > 0 ? 'bg-pink-500 text-white border-pink-500' : 'border-pink-100 bg-pink-50/50 text-pink-600 hover:border-pink-300'}`}
             >
-              <span>可选风格</span>
-              {styleOptional.length > 0 && <span className="bg-pink-500 text-white rounded-full px-1.5 text-[10px]">{styleOptional.length}</span>}
+              <span>{styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选风格'}</span>
             </button>
             {showOptionalMenu && (
-              <div className="absolute bottom-full left-0 mb-1 bg-white border border-pink-100 rounded-lg shadow-lg p-2 min-w-[180px] z-50">
-                {['加一点浪漫', '加一点背叛', '加一点救赎', '加一点牺牲'].map(opt => (
-                  <label key={opt} className="flex items-center gap-2 py-1 text-xs text-gray-700 cursor-pointer hover:bg-pink-50 rounded px-1">
+              <div className="absolute bottom-full left-0 mb-1 bg-white border border-pink-100 rounded-lg shadow-lg p-2 min-w-[220px] z-50 max-h-64 overflow-y-auto">
+                {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
+                  <label key={key} className="flex items-start gap-2 py-1 text-xs text-gray-700 cursor-pointer hover:bg-pink-50 rounded px-1">
                     <input
                       type="checkbox"
-                      checked={styleOptional.includes(opt)}
+                      checked={styleOptional.includes(key)}
                       onChange={e => {
-                        if (e.target.checked) setStyleOptional(prev => [...prev, opt]);
-                        else setStyleOptional(prev => prev.filter(v => v !== opt));
+                        if (e.target.checked) setStyleOptional(prev => [...prev, key]);
+                        else setStyleOptional(prev => prev.filter(v => v !== key));
                       }}
-                      className="rounded border-pink-300 text-pink-500 focus:ring-pink-300"
+                      className="rounded border-pink-300 text-pink-500 focus:ring-pink-300 mt-0.5 shrink-0"
                     />
-                    {opt}
+                    <div>
+                      <span className="font-medium">{key}</span>
+                      <span className="block text-[10px] text-gray-400 mt-0.5">{desc}</span>
+                    </div>
                   </label>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Mix Mode Modal */}
+          {showMixModal && styleTone === '混合模式' && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30" onClick={() => setShowMixModal(false)}>
+              <div className="bg-white rounded-xl shadow-lg p-4 w-80 space-y-3" onClick={e => e.stopPropagation()}>
+                <div className="text-sm font-medium text-gray-800">混合模式 - 请指定主基调</div>
+                <div className="text-xs text-gray-500">例：电影质感为主，但保留剧集的慢热推进感。</div>
+                <textarea
+                  value={mixModeNote}
+                  onChange={e => setMixModeNote(e.target.value)}
+                  placeholder="描述你想要的混合效果..."
+                  className="w-full text-xs border border-pink-100 rounded-lg p-2 h-20 resize-none focus:outline-none focus:border-pink-300"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setShowMixModal(false)} className="text-xs px-3 py-1.5 rounded-lg bg-pink-500 text-white hover:bg-pink-600">确认</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer ml-auto">
             <span>思考</span>

@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { copyToClipboard } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { IconBack, IconPlay, IconSave } from '@/components/icons';
+import { IconBack, IconPlay } from '@/components/icons';
 import { getPreset, savePreset } from '@/lib/storage';
+import FlipCard from '@/components/flip-card';
 import type { Preset } from '@/lib/types';
 
 export default function PresetDetailPage() {
@@ -20,9 +20,11 @@ export default function PresetDetailPage() {
   const [editPlot, setEditPlot] = useState('');
   const [editMemory, setEditMemory] = useState('');
   const [editGreeting, setEditGreeting] = useState('');
+  const [editCharInfo, setEditCharInfo] = useState('');
   const [isEditingPlot, setIsEditingPlot] = useState(false);
   const [isEditingMemory, setIsEditingMemory] = useState(false);
   const [isEditingGreeting, setIsEditingGreeting] = useState(false);
+  const [isEditingCharInfo, setIsEditingCharInfo] = useState(false);
 
   const loadPreset = useCallback(() => {
     const p = getPreset(presetId);
@@ -31,6 +33,7 @@ export default function PresetDetailPage() {
       setEditPlot(p.plotDirection);
       setEditMemory(p.longTermMemory);
       setEditGreeting(p.greeting);
+      setEditCharInfo(p.charInfo);
     }
   }, [presetId]);
 
@@ -46,30 +49,12 @@ export default function PresetDetailPage() {
     );
   }
 
-  const handleSavePlot = () => {
+  const handleSave = (field: keyof Preset, value: string, setter: (v: boolean) => void) => {
     if (preset) {
-      const updated = { ...preset, plotDirection: editPlot };
+      const updated = { ...preset, [field]: value, updatedAt: Date.now() };
       savePreset(updated);
       setPreset(updated);
-      setIsEditingPlot(false);
-    }
-  };
-
-  const handleSaveMemory = () => {
-    if (preset) {
-      const updated = { ...preset, longTermMemory: editMemory };
-      savePreset(updated);
-      setPreset(updated);
-      setIsEditingMemory(false);
-    }
-  };
-
-  const handleSaveGreeting = () => {
-    if (preset) {
-      const updated = { ...preset, greeting: editGreeting };
-      savePreset(updated);
-      setPreset(updated);
-      setIsEditingGreeting(false);
+      setter(false);
     }
   };
 
@@ -134,48 +119,68 @@ export default function PresetDetailPage() {
           <TabsTrigger value="memory">记忆</TabsTrigger>
         </TabsList>
 
+        {/* Char Tab */}
         <TabsContent value="char">
           <Card className="border-pink-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">角色卡 (Char)</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">角色卡 (Char)</CardTitle>
+                {!isEditingCharInfo && (
+                  <Button onClick={() => setIsEditingCharInfo(true)} variant="outline" size="sm">
+                    编辑
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg font-mono leading-relaxed max-h-[500px] overflow-y-auto">
-                {preset.charInfo || '—'}
-              </pre>
+              {isEditingCharInfo ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editCharInfo}
+                    onChange={(e) => setEditCharInfo(e.target.value)}
+                    className="min-h-[120px] text-sm"
+                    placeholder="输入角色信息..."
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleSave('charInfo', editCharInfo, setIsEditingCharInfo)} size="sm">保存</Button>
+                    <Button onClick={() => { setEditCharInfo(preset.charInfo); setIsEditingCharInfo(false); }} variant="outline" size="sm">取消</Button>
+                  </div>
+                </div>
+              ) : (
+                <FlipCard content={preset.charInfo} title="角色卡" emptyText="暂无角色信息，点击编辑添加" />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* User Tab */}
         <TabsContent value="user">
           <Card className="border-pink-100">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">User 卡</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg font-mono leading-relaxed max-h-[500px] overflow-y-auto">
-                {preset.userCard || '—'}
-              </pre>
-              <Button
-                onClick={() => copyToClipboard(preset.userCard)}
-                variant="outline"
-                size="sm"
-                className="mt-2"
-              >
-                复制 User 卡
-              </Button>
+              <FlipCard content={preset.userCard} title="User 卡" mono emptyText="暂无 User 卡" />
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Greeting Tab */}
         <TabsContent value="greeting">
           <Card className="border-pink-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">开场白 (Greeting)</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">开场白 (Greeting)</CardTitle>
+                {!isEditingGreeting && (
+                  <Button onClick={() => setIsEditingGreeting(true)} variant="outline" size="sm">
+                    编辑
+                  </Button>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               {isEditingGreeting ? (
-                <>
+                <div className="space-y-2">
                   <Textarea
                     value={editGreeting}
                     onChange={(e) => setEditGreeting(e.target.value)}
@@ -183,54 +188,33 @@ export default function PresetDetailPage() {
                     placeholder="输入开场白，用于设定角色初次登场场景..."
                   />
                   <div className="flex gap-2">
-                    <Button onClick={handleSaveGreeting} size="sm">
-                      保存
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setEditGreeting(preset.greeting);
-                        setIsEditingGreeting(false);
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      取消
-                    </Button>
+                    <Button onClick={() => handleSave('greeting', editGreeting, setIsEditingGreeting)} size="sm">保存</Button>
+                    <Button onClick={() => { setEditGreeting(preset.greeting); setIsEditingGreeting(false); }} variant="outline" size="sm">取消</Button>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap min-h-[60px]">
-                    {preset.greeting || '暂无开场白，点击编辑添加'}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setIsEditingGreeting(true)} variant="outline" size="sm">
-                      编辑
-                    </Button>
-                    {preset.greeting && (
-                      <Button
-                        onClick={() => copyToClipboard(preset.greeting)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        复制
-                      </Button>
-                    )}
-                  </div>
-                </>
+                <FlipCard content={preset.greeting} title="开场白" emptyText="暂无开场白，点击编辑添加" />
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Plot Tab */}
         <TabsContent value="plot">
           <Card className="border-pink-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">剧情走向</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">剧情走向</CardTitle>
+                {!isEditingPlot && (
+                  <Button onClick={() => setIsEditingPlot(true)} variant="outline" size="sm">
+                    编辑
+                  </Button>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               {isEditingPlot ? (
-                <>
+                <div className="space-y-2">
                   <Textarea
                     value={editPlot}
                     onChange={(e) => setEditPlot(e.target.value)}
@@ -238,43 +222,33 @@ export default function PresetDetailPage() {
                     placeholder="输入当前剧情走向..."
                   />
                   <div className="flex gap-2">
-                    <Button onClick={handleSavePlot} size="sm">
-                      保存
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setEditPlot(preset.plotDirection);
-                        setIsEditingPlot(false);
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      取消
-                    </Button>
+                    <Button onClick={() => handleSave('plotDirection', editPlot, setIsEditingPlot)} size="sm">保存</Button>
+                    <Button onClick={() => { setEditPlot(preset.plotDirection); setIsEditingPlot(false); }} variant="outline" size="sm">取消</Button>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap min-h-[60px]">
-                    {preset.plotDirection || '暂无剧情走向，点击编辑添加'}
-                  </p>
-                  <Button onClick={() => setIsEditingPlot(true)} variant="outline" size="sm">
-                    编辑
-                  </Button>
-                </>
+                <FlipCard content={preset.plotDirection} title="剧情走向" emptyText="暂无剧情走向，点击编辑添加" />
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Memory Tab */}
         <TabsContent value="memory">
           <Card className="border-pink-100">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">长期记忆</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">长期记忆</CardTitle>
+                {!isEditingMemory && (
+                  <Button onClick={() => setIsEditingMemory(true)} variant="outline" size="sm">
+                    编辑
+                  </Button>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               {isEditingMemory ? (
-                <>
+                <div className="space-y-2">
                   <Textarea
                     value={editMemory}
                     onChange={(e) => setEditMemory(e.target.value)}
@@ -282,30 +256,12 @@ export default function PresetDetailPage() {
                     placeholder="<Memory_LTM>&#10;- ...&#10;</Memory_LTM>"
                   />
                   <div className="flex gap-2">
-                    <Button onClick={handleSaveMemory} size="sm">
-                      保存
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setEditMemory(preset.longTermMemory);
-                        setIsEditingMemory(false);
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      取消
-                    </Button>
+                    <Button onClick={() => handleSave('longTermMemory', editMemory, setIsEditingMemory)} size="sm">保存</Button>
+                    <Button onClick={() => { setEditMemory(preset.longTermMemory); setIsEditingMemory(false); }} variant="outline" size="sm">取消</Button>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono min-h-[60px]">
-                    {preset.longTermMemory || '暂无长期记忆，点击编辑添加'}
-                  </pre>
-                  <Button onClick={() => setIsEditingMemory(true)} variant="outline" size="sm">
-                    编辑
-                  </Button>
-                </>
+                <FlipCard content={preset.longTermMemory} title="长期记忆" mono emptyText="暂无长期记忆，点击编辑添加" />
               )}
             </CardContent>
           </Card>

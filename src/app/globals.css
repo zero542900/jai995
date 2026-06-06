@@ -51,18 +51,18 @@
     'Courier New', monospace;
 
   /* === Custom JAI Theme Colors (Rose default) === */
-  --color-jai-bg: #E8C8C8;
-  --color-jai-secondary: #D4A8A8;
-  --color-jai-accent: #C48888;
+  --color-jai-bg: #E8BABA;
+  --color-jai-secondary: #D49898;
+  --color-jai-accent: #C47878;
   --color-jai-card: #FFFFFF;
-  --color-jai-card-border: #E0C0C0;
-  --color-jai-input-bg: #F2E0E0;
-  --color-jai-text: #4A3535;
-  --color-jai-text-secondary: #8A6F6F;
-  --color-jai-muted: #F2E0E0;
-  --color-jai-shadow: rgba(195, 150, 150, 0.18);
-  --color-jai-shadow-hover: rgba(195, 150, 150, 0.28);
-  --color-jai-success: #6BAA8E;
+  --color-jai-card-border: #E0B0B0;
+  --color-jai-input-bg: #F2D5D5;
+  --color-jai-text: #4A2E2E;
+  --color-jai-text-secondary: #8A6060;
+  --color-jai-muted: #F2D5D5;
+  --color-jai-shadow: rgba(190, 140, 140, 0.20);
+  --color-jai-shadow-hover: rgba(190, 140, 140, 0.30);
+  --color-jai-success: #5DA07E;
   --color-jai-thinking: #a78bfa;
 }
 

@@ -26,7 +26,20 @@ Current Scene:
 ${chatHistory || '(This is the beginning of the story)'}
 
 Output: Three independent lines of inspiration. Each line is a different emotional, subtle reaction from User to the current event. No dramatic words or plot twists. Think film-like, detail-driven.
-Format: Strictly separate each line with "===ITEM===" on its own line. No numbered lists. No extra text. Output only three lines. English only.`;
+
+Format: Strictly separate each line with "===ITEM===" on its own line (3 times, before each item). No numbered lists. No extra text. Output only three lines. English only.
+
+Strict rules:
+- LINE 1: First direction — a reasonable guess based on the current scene. Restrained, not exaggerated, not dramatic.
+- LINE 2: Second direction — logically different from LINE 1 (different time, angle, emotion, or action choice).
+- LINE 3: Third direction — different from both LINE 1 and LINE 2.
+- Events must follow existing plot logic. No forced conflicts or twists.
+- Inspirations should feel like a natural camera angle shift in a film: calm, reasonable, logical.
+
+Self-check (internal, do not output):
+- Does ===ITEM=== appear exactly 3 times?
+- Do the three lines have different core verbs?
+- If any check fails, regenerate internally before output.`;
 
     const response = await callDeepSeek({
       apiKey,

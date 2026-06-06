@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IconBack, IconPlay, IconSave } from '@/components/icons';
-import { getPreset, savePreset, createSession, saveSession, getSessionsByPreset } from '@/lib/storage';
+import { getPreset, savePreset } from '@/lib/storage';
 import type { Preset } from '@/lib/types';
 
 export default function PresetDetailPage() {
@@ -73,11 +73,7 @@ export default function PresetDetailPage() {
   };
 
   const handleStartSession = () => {
-    const existingSessions = getSessionsByPreset(presetId);
-    const sessionName = `${preset.name} - 会话 ${existingSessions.length + 1}`;
-    const session = createSession(presetId, sessionName);
-    saveSession(session);
-    router.push(`/chat?sessionId=${session.id}&presetId=${presetId}`);
+    router.push(`/chat?preset=${presetId}`);
   };
 
   return (

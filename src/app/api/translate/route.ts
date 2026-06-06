@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: `请将以下英文翻译为中文：\n\n${text}` },
     ];
 
+    // Non-streaming request for translation (short content, simpler and more reliable)
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
         model: 'deepseek-chat',
         messages,
         temperature: 0.5,
-        stream: true,
+        stream: false,
       }),
     });
 
@@ -70,51 +71,15 @@ export async function POST(request: NextRequest) {
       let errMsg = `DeepSeek API error: ${response.status}`;
       try {
         const errJson = JSON.parse(errText);
-        errMsg = `DeepSeek API error: ${response.status} - ${errText}`;
-        if (errJson?.error?.message) errMsg = `DeepSeek API error: ${response.status} - ${errJson.error.message}`;
+        if (errJson?.error?.message) errMsg = errJson.error.message;
       } catch { /* use default */ }
       return Response.json({ error: errMsg }, { status: response.status >= 400 && response.status < 500 ? response.status : 500 });
     }
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) { controller.close(); return; }
-        const decoder = new TextDecoder();
-        let buffer = '';
+    const data = await response.json();
+    const translation = data.choices?.[0]?.message?.content || '';
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data: ')) continue;
-              const data = trimmed.slice(6);
-              if (data === '[DONE]') continue;
-              try {
-                const json = JSON.parse(data);
-                const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                }
-              } catch { /* skip */ }
-            }
-          }
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
-    });
+    return Response.json({ translation });
   } catch (error) {
     const message = error instanceof Error ? error.message : '翻译失败';
     return Response.json({ error: message }, { status: 500 });

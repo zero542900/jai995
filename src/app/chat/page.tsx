@@ -990,14 +990,14 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-[100dvh] bg-jai-bg/50 chat-fullscreen">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 bg-white/80 backdrop-blur-sm border-b border-jai-card-border">
+      <div className="shrink-0 flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 bg-jai-card/80 backdrop-blur-sm border-b border-jai-card-border">
         <button onClick={handleBackToPresets} className="p-1.5 md:p-1 text-jai-secondary hover:text-jai-accent transition-colors">
           <IconBack className="w-5 h-5" />
         </button>
         <select
           value={currentPresetId}
           onChange={e => setCurrentPresetId(e.target.value)}
-          className="flex-1 text-sm font-medium bg-transparent border-none focus:outline-none text-[#5A4F4F]"
+          className="flex-1 text-sm font-medium bg-transparent border-none focus:outline-none text-jai-text"
         >
           {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
@@ -1008,7 +1008,7 @@ export default function ChatPage() {
         <div className="flex justify-end px-3 md:px-4 pt-1 pb-0.5" onClick={() => setShowInstructionPicker(false)}>
           <button
             onClick={() => setShowDirectionCard(v => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50/90 border border-amber-200/60 text-amber-600 hover:bg-amber-100 transition-colors text-[11px] max-w-[95%] md:max-w-[80%]"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-jai-muted/90 border border-jai-secondary/60 text-jai-accent hover:bg-jai-muted transition-colors text-[11px] max-w-[95%] md:max-w-[80%]"
           >
             <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
             <span className="truncate">{currentDirection}</span>
@@ -1018,10 +1018,10 @@ export default function ChatPage() {
       {/* Direction popup card */}
       {showDirectionCard && currentDirection && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setShowDirectionCard(false)}>
-          <div className="bg-white rounded-2xl shadow-xl border border-amber-100 mx-4 max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-4 pt-4 pb-3 border-b border-amber-50 flex items-center justify-between">
+          <div className="bg-jai-card rounded-2xl shadow-xl border border-jai-card-border mx-4 max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-4 pt-4 pb-3 border-b border-jai-card-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">当前走向</span>
+                <span className="text-xs bg-jai-muted text-jai-accent px-2 py-0.5 rounded-full font-medium">当前走向</span>
               </div>
               <button onClick={() => setShowDirectionCard(false)} className="text-jai-text-secondary hover:text-jai-text p-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1081,7 +1081,7 @@ export default function ChatPage() {
 
       {/* Inspiration Panel */}
       {showInspiration && (
-        <div className="shrink-0 mx-3 md:mx-4 mb-2 bg-white rounded-xl border border-jai-card-border shadow-sm p-3">
+        <div className="shrink-0 mx-3 md:mx-4 mb-2 bg-jai-card rounded-xl border border-jai-card-border shadow-sm p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-jai-accent flex items-center gap-1">
               <IconSparkle className="w-3.5 h-3.5" /> 灵感
@@ -1101,7 +1101,7 @@ export default function ChatPage() {
                 <div key={i} className="relative">
                   <div
                     className={`p-2.5 rounded-lg border transition-colors cursor-pointer ${
-                      item.flipped ? 'bg-jai-muted border-jai-secondary' : 'bg-white border-jai-card-border hover:bg-jai-bg/50'
+                      item.flipped ? 'bg-jai-muted border-jai-secondary' : 'bg-jai-card border-jai-card-border hover:bg-jai-bg/50'
                     }`}
                     onClick={() => {
                       if (!item.flipped) {
@@ -1150,7 +1150,7 @@ export default function ChatPage() {
                       onClick={(e) => { e.stopPropagation(); copyContent(item.en); }}
                       className="text-[10px] text-jai-secondary hover:text-jai-accent"
                     >复制</button>
-                    <span className="text-[10px] text-[#B8AEAE]">|</span>
+                    <span className="text-[10px] text-jai-text-secondary">|</span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1196,10 +1196,10 @@ export default function ChatPage() {
       {/* Plot Assistant Panel */}
       {showPlotPanel && (
         <div className="fixed inset-0 z-50 md:relative md:z-auto flex items-end md:items-start justify-center bg-black/30 md:bg-transparent" onClick={() => setShowPlotPanel(false)}>
-          <div className="bg-white md:bg-white rounded-t-2xl md:rounded-xl border-t md:border border-amber-100 md:border-amber-100 shadow-sm w-full md:mx-4 md:mb-2 max-h-[90vh] md:max-h-[55vh] overflow-hidden md:shadow-sm" onClick={e => e.stopPropagation()}>
+          <div className="bg-jai-card md:bg-jai-card rounded-t-2xl md:rounded-xl border-t md:border border-jai-card-border md:border-jai-card-border shadow-sm w-full md:mx-4 md:mb-2 max-h-[90vh] md:max-h-[55vh] overflow-hidden md:shadow-sm" onClick={e => e.stopPropagation()}>
             {/* Panel Header */}
-            <div className="flex items-center justify-between px-3 py-2 bg-amber-50/50 border-b border-amber-100 sticky top-0 z-10">
-              <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
+            <div className="flex items-center justify-between px-3 py-2 bg-jai-muted/50 border-b border-jai-card-border sticky top-0 z-10">
+              <span className="text-xs font-medium text-jai-accent flex items-center gap-1">
                 <IconPlot className="w-3.5 h-3.5" /> 剧情助手
               </span>
               <button onClick={() => setShowPlotPanel(false)} className="p-1 text-jai-text-secondary hover:text-jai-text text-xs">✕</button>
@@ -1211,7 +1211,7 @@ export default function ChatPage() {
               <button
                 onClick={handlePlotAnalyze}
                 disabled={plotAnalyzeLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted0 text-white hover:bg-jai-secondary disabled:opacity-50 transition-colors"
               >
                 <IconRefresh className={`w-3 h-3 ${plotAnalyzeLoading ? 'animate-spin' : ''}`} />
                 {plotAnalyzeLoading ? 'AI 分析中...' : 'AI 概括主线 + 推荐关键词'}
@@ -1219,7 +1219,7 @@ export default function ChatPage() {
               <span className="text-[10px] text-jai-text-secondary">AI 自动概括当前剧情主线和推荐关键词</span>
             </div>
 
-            <div className="border-t border-amber-100" />
+            <div className="border-t border-jai-card-border" />
 
             {/* Section 1: Main Line Summary (from AI analysis, direction switching is in the top bar) */}
             <div>
@@ -1227,15 +1227,15 @@ export default function ChatPage() {
                 <span className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide">剧情概括</span>
               </div>
               {currentMainLine ? (
-                <div className="p-2.5 rounded-lg border bg-amber-50/50 border-amber-200">
+                <div className="p-2.5 rounded-lg border bg-jai-muted/50 border-jai-secondary">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-amber-700">{currentMainLine}</span>
+                    <span className="text-xs font-medium text-jai-accent">{currentMainLine}</span>
                     {currentMainLineCn && <span className="text-[11px] text-jai-text-secondary">({currentMainLineCn})</span>}
                   </div>
                   {plotStage && (
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className="text-[10px] text-jai-text-secondary">阶段:</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>
+                      <span className="text-[10px] bg-jai-muted text-jai-accent px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>
                     </div>
                   )}
                   {progressDesc && (
@@ -1253,14 +1253,14 @@ export default function ChatPage() {
                       value={currentMainLine}
                       onChange={e => setCurrentMainLine(e.target.value)}
                       placeholder="手动输入概括，或点上方 AI 按钮自动概括"
-                      className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                      className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-amber-100" />
+            <div className="border-t border-jai-card-border" />
 
             {/* Section 2: Keyword Library */}
             <div>
@@ -1269,7 +1269,7 @@ export default function ChatPage() {
                 <button
                   onClick={handlePlotAnalyze}
                   disabled={plotAnalyzeLoading}
-                  className="p-1 text-amber-400 hover:text-amber-600 disabled:opacity-50"
+                  className="p-1 text-jai-secondary hover:text-jai-accent disabled:opacity-50"
                   title="刷新推荐关键词"
                 >
                   <IconRefresh className={`w-3 h-3 ${plotAnalyzeLoading ? 'animate-spin' : ''}`} />
@@ -1281,7 +1281,7 @@ export default function ChatPage() {
               <div className="space-y-2">
                 {/* Ending keywords */}
                 <div>
-                  <span className="text-[10px] text-amber-500 font-medium">结局走向</span>
+                  <span className="text-[10px] text-jai-accent font-medium">结局走向</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.ending.map(kw => (
                       <button
@@ -1289,8 +1289,8 @@ export default function ChatPage() {
                         onClick={() => toggleKeyword('ending', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                           selectedEnding.includes(kw.en)
-                            ? 'bg-amber-200 border-amber-300 text-amber-800'
-                            : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
+                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
+                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
                         }`}
                       ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
@@ -1307,7 +1307,7 @@ export default function ChatPage() {
                         }
                       }}
                       placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
                     />
                     <button
                       onClick={() => {
@@ -1316,14 +1316,14 @@ export default function ChatPage() {
                           setCustomKeyword(prev => ({ ...prev, ending: '' }));
                         }
                       }}
-                      className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded hover:bg-amber-200"
+                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
                     >+</button>
                   </div>
                 </div>
 
                 {/* Relation keywords */}
                 <div>
-                  <span className="text-[10px] text-amber-500 font-medium">关系动态</span>
+                  <span className="text-[10px] text-jai-accent font-medium">关系动态</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.relation.map(kw => (
                       <button
@@ -1331,8 +1331,8 @@ export default function ChatPage() {
                         onClick={() => toggleKeyword('relation', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                           selectedRelation.includes(kw.en)
-                            ? 'bg-amber-200 border-amber-300 text-amber-800'
-                            : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
+                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
+                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
                         }`}
                       ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
@@ -1349,7 +1349,7 @@ export default function ChatPage() {
                         }
                       }}
                       placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
                     />
                     <button
                       onClick={() => {
@@ -1358,14 +1358,14 @@ export default function ChatPage() {
                           setCustomKeyword(prev => ({ ...prev, relation: '' }));
                         }
                       }}
-                      className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded hover:bg-amber-200"
+                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
                     >+</button>
                   </div>
                 </div>
 
                 {/* Scene keywords */}
                 <div>
-                  <span className="text-[10px] text-amber-500 font-medium">场景</span>
+                  <span className="text-[10px] text-jai-accent font-medium">场景</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.scene.map(kw => (
                       <button
@@ -1373,8 +1373,8 @@ export default function ChatPage() {
                         onClick={() => toggleKeyword('scene', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                           selectedScene.includes(kw.en)
-                            ? 'bg-amber-200 border-amber-300 text-amber-800'
-                            : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
+                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
+                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
                         }`}
                       ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
@@ -1391,7 +1391,7 @@ export default function ChatPage() {
                         }
                       }}
                       placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
                     />
                     <button
                       onClick={() => {
@@ -1400,14 +1400,14 @@ export default function ChatPage() {
                           setCustomKeyword(prev => ({ ...prev, scene: '' }));
                         }
                       }}
-                      className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded hover:bg-amber-200"
+                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
                     >+</button>
                   </div>
                 </div>
 
                 {/* Stage keywords */}
                 <div>
-                  <span className="text-[10px] text-amber-500 font-medium">阶段</span>
+                  <span className="text-[10px] text-jai-accent font-medium">阶段</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.stage.map(kw => (
                       <button
@@ -1415,8 +1415,8 @@ export default function ChatPage() {
                         onClick={() => toggleKeyword('stage', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                           selectedStageKeyword.includes(kw.en)
-                            ? 'bg-amber-200 border-amber-300 text-amber-800'
-                            : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
+                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
+                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
                         }`}
                       ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
@@ -1433,7 +1433,7 @@ export default function ChatPage() {
                         }
                       }}
                       placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
                     />
                     <button
                       onClick={() => {
@@ -1442,17 +1442,17 @@ export default function ChatPage() {
                           setCustomKeyword(prev => ({ ...prev, stage: '' }));
                         }
                       }}
-                      className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded hover:bg-amber-200"
+                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
                     >+</button>
                   </div>
                 </div>
 
                 {/* Selected keywords summary */}
                 {getAllKeywords().length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1 border-t border-amber-50">
+                  <div className="flex flex-wrap gap-1 pt-1 border-t border-jai-card-border">
                     <span className="text-[10px] text-jai-text-secondary">已选:</span>
                     {getAllKeywords().map((kw, i) => (
-                      <span key={i} className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      <span key={i} className="text-[10px] bg-jai-muted text-jai-accent px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                         {kw}
                         <button
                           onClick={() => {
@@ -1461,7 +1461,7 @@ export default function ChatPage() {
                             setSelectedScene(prev => prev.filter(k => k !== kw));
                             setSelectedStageKeyword(prev => prev.filter(k => k !== kw));
                           }}
-                          className="text-amber-400 hover:text-amber-600 ml-0.5"
+                          className="text-jai-secondary hover:text-jai-accent ml-0.5"
                         >×</button>
                       </span>
                     ))}
@@ -1475,7 +1475,7 @@ export default function ChatPage() {
               )}
             </div>
 
-            <div className="border-t border-amber-100" />
+            <div className="border-t border-jai-card-border" />
 
             {/* Section 3: Plot Prediction (God's Eye View) */}
             <div>
@@ -1487,10 +1487,10 @@ export default function ChatPage() {
                     value={plotDirectionKeyword}
                     onChange={e => setPlotDirectionKeyword(e.target.value)}
                     placeholder="补充方向..."
-                    className="text-[10px] w-20 px-1.5 py-0.5 rounded border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
+                    className="text-[10px] w-20 px-1.5 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handlePlotPredict(); } }}
                   />
-                  <button onClick={handlePlotPredict} disabled={plotPredictLoading} className="p-1 text-amber-400 hover:text-amber-600 disabled:opacity-50">
+                  <button onClick={handlePlotPredict} disabled={plotPredictLoading} className="p-1 text-jai-secondary hover:text-jai-accent disabled:opacity-50">
                     <IconRefresh className="w-3 h-3" />
                   </button>
                 </div>
@@ -1503,18 +1503,18 @@ export default function ChatPage() {
                   {plotPredictions.map((pred, i) => {
                     const isSelected = currentDirection === pred.en;
                     return (
-                      <div key={i} className={`rounded-lg border p-2 transition-colors ${isSelected ? 'border-amber-300 bg-amber-50' : 'border-amber-100 bg-white hover:bg-amber-50/30'}`}>
+                      <div key={i} className={`rounded-lg border p-2 transition-colors ${isSelected ? 'border-jai-accent bg-jai-muted' : 'border-jai-card-border bg-jai-card hover:bg-jai-muted/30'}`}>
                         <p className="text-xs text-jai-text">{pred.en}</p>
                         {pred.cn && <p className="text-[11px] text-jai-text-secondary mt-0.5">{pred.cn}</p>}
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <button
                             onClick={() => copyContent(pred.en)}
-                            className="text-[10px] text-amber-500 hover:text-amber-700"
+                            className="text-[10px] text-jai-accent hover:text-jai-accent"
                           >复制</button>
-                          <span className="text-[10px] text-[#B8AEAE]">|</span>
+                          <span className="text-[10px] text-jai-text-secondary">|</span>
                           <button
                             onClick={() => selectPlotDirection(i)}
-                            className={`text-[10px] font-medium ${isSelected ? 'text-amber-700' : 'text-amber-500 hover:text-amber-700'}`}
+                            className={`text-[10px] font-medium ${isSelected ? 'text-jai-accent' : 'text-jai-accent hover:text-jai-accent'}`}
                           >{isSelected ? '✓ 当前走向' : '选为走向'}</button>
                         </div>
                       </div>
@@ -1532,7 +1532,7 @@ export default function ChatPage() {
                       </div>
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <button onClick={() => copyContent(plotTwist || '')} className="text-[10px] text-jai-thinking hover:text-jai-thinking/80">复制</button>
-                        <span className="text-[10px] text-[#B8AEAE]">|</span>
+                        <span className="text-[10px] text-jai-text-secondary">|</span>
                         <button
                           onClick={() => {
                             if (plotTwist) {
@@ -1582,7 +1582,7 @@ export default function ChatPage() {
       {/* Expand Modal */}
       {showExpandModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-xl">
+          <div className="bg-jai-card rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-xl">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-jai-accent flex items-center gap-1.5">
@@ -1631,7 +1631,7 @@ export default function ChatPage() {
       {/* Memory Modal */}
       {showMemoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-xl">
+          <div className="bg-jai-card rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-xl">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-jai-thinking flex items-center gap-1.5">
@@ -1666,7 +1666,7 @@ export default function ChatPage() {
       )}
 
       {/* Bottom Input Area */}
-      <div className="shrink-0 border-t border-jai-card-border bg-white/90 backdrop-blur-sm px-3 md:px-4 pt-2 pb-2 md:pb-3 space-y-1.5 md:space-y-2 safe-area-bottom">
+      <div className="shrink-0 border-t border-jai-card-border bg-jai-card/90 backdrop-blur-sm px-3 md:px-4 pt-2 pb-2 md:pb-3 space-y-1.5 md:space-y-2 safe-area-bottom">
 
         {/* Memory Reminder Banner */}
         {showMemoryReminder && !memoryAutoGenerating && (
@@ -1723,7 +1723,7 @@ export default function ChatPage() {
                   <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 {isExpanded && (
-                  <div className="absolute bottom-full left-0 mb-1 bg-white border border-jai-card-border rounded-lg shadow-lg py-1 min-w-[220px] z-50 max-h-60 overflow-y-auto">
+                  <div className="absolute bottom-full left-0 mb-1 bg-jai-card border border-jai-card-border rounded-lg shadow-lg py-1 min-w-[220px] z-50 max-h-60 overflow-y-auto">
                     {Object.entries(options).map(([key, desc]) => (
                       <button
                         key={key}
@@ -1736,7 +1736,7 @@ export default function ChatPage() {
                           }
                           setExpandedStyleCategory(null);
                         }}
-                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-jai-muted transition-colors ${currentVal === key ? 'bg-jai-muted text-jai-accent font-medium' : 'text-[#5A4F4F]'}`}
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-jai-muted transition-colors ${currentVal === key ? 'bg-jai-muted text-jai-accent font-medium' : 'text-jai-text'}`}
                       >
                         <span className="font-medium">{key}</span>
                         <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
@@ -1763,9 +1763,9 @@ export default function ChatPage() {
               <span>{styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选风格'}</span>
             </button>
             {showOptionalMenu && (
-              <div className="absolute bottom-full left-0 mb-1 bg-white border border-jai-card-border rounded-lg shadow-lg p-2 min-w-[220px] z-50 max-h-64 overflow-y-auto">
+              <div className="absolute bottom-full left-0 mb-1 bg-jai-card border border-jai-card-border rounded-lg shadow-lg p-2 min-w-[220px] z-50 max-h-64 overflow-y-auto">
                 {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
-                  <label key={key} className="flex items-start gap-2 py-1 text-xs text-[#5A4F4F] cursor-pointer hover:bg-jai-muted rounded px-1">
+                  <label key={key} className="flex items-start gap-2 py-1 text-xs text-jai-text cursor-pointer hover:bg-jai-muted rounded px-1">
                     <input
                       type="checkbox"
                       checked={styleOptional.includes(key)}
@@ -1791,7 +1791,7 @@ export default function ChatPage() {
               onClick={() => setThinkingEnabled(!thinkingEnabled)}
               className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
             </button>
           </label>
         </div>
@@ -1838,7 +1838,7 @@ export default function ChatPage() {
                   onClick={() => setThinkingEnabled(!thinkingEnabled)}
                   className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
                 >
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
                 </button>
               </label>
             </div>
@@ -1856,7 +1856,7 @@ export default function ChatPage() {
               </button>
               <button
                 onClick={() => setShowPlotPanel(!showPlotPanel)}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-muted transition-colors"
               >
                 <IconPlot className="w-3 h-3" /> 剧情
               </button>
@@ -1871,7 +1871,7 @@ export default function ChatPage() {
                   <IconBook className="w-3 h-3" /> 指令
                 </button>
                 {showInstructionPicker && instructionList.length > 0 && (
-                  <div className="absolute bottom-full right-0 mb-1 w-56 max-h-48 overflow-y-auto bg-white rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
+                  <div className="absolute bottom-full right-0 mb-1 w-56 max-h-48 overflow-y-auto bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
                     {instructionList.map(inst => (
                       <button
                         key={inst.id}
@@ -1889,7 +1889,7 @@ export default function ChatPage() {
                   </div>
                 )}
                 {showInstructionPicker && instructionList.length === 0 && (
-                  <div className="absolute bottom-full right-0 mb-1 w-44 bg-white rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
+                  <div className="absolute bottom-full right-0 mb-1 w-44 bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
                     <p className="text-xs text-jai-text-secondary">暂无指令</p>
                     <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
                   </div>
@@ -1902,8 +1902,8 @@ export default function ChatPage() {
         {/* Mobile: Style bottom sheet */}
         {expandedStyleCategory && (
           <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setExpandedStyleCategory(null)}>
-            <div className="bg-white rounded-t-2xl w-full max-h-[60vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 bg-white px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
+            <div className="bg-jai-card rounded-t-2xl w-full max-h-[60vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-jai-card px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
                 <span className="text-sm font-medium text-jai-text">
                   {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'genre' ? '经典类型' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
                 </span>
@@ -1950,14 +1950,14 @@ export default function ChatPage() {
         {/* Mobile: Optional styles bottom sheet */}
         {showOptionalMenu && (
           <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setShowOptionalMenu(false)}>
-            <div className="bg-white rounded-t-2xl w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 bg-white px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
+            <div className="bg-jai-card rounded-t-2xl w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-jai-card px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
                 <span className="text-sm font-medium text-jai-text">可选风格</span>
                 <button onClick={() => setShowOptionalMenu(false)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
               <div className="p-3 space-y-1">
                 {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
-                  <label key={key} className="flex items-start gap-3 py-2.5 px-3 text-sm text-[#5A4F4F] cursor-pointer hover:bg-jai-muted rounded-xl">
+                  <label key={key} className="flex items-start gap-3 py-2.5 px-3 text-sm text-jai-text cursor-pointer hover:bg-jai-muted rounded-xl">
                     <input
                       type="checkbox"
                       checked={styleOptional.includes(key)}
@@ -1981,7 +1981,7 @@ export default function ChatPage() {
         {/* Mix Mode Modal */}
         {showMixModal && styleTone === '混合模式' && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4" onClick={() => setShowMixModal(false)}>
-            <div className="bg-white rounded-xl shadow-lg p-4 w-full max-w-80 space-y-3" onClick={e => e.stopPropagation()}>
+            <div className="bg-jai-card rounded-xl shadow-lg p-4 w-full max-w-80 space-y-3" onClick={e => e.stopPropagation()}>
               <div className="text-sm font-medium text-jai-text">混合模式 - 请指定主基调</div>
               <div className="text-xs text-jai-text-secondary">例：电影质感为主，但保留剧集的慢热推进感。</div>
               <textarea
@@ -2010,7 +2010,7 @@ export default function ChatPage() {
           </button>
           <button
             onClick={() => setShowPlotPanel(!showPlotPanel)}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-muted transition-colors"
           >
             <IconPlot className="w-3.5 h-3.5" /> 剧情
           </button>
@@ -2025,7 +2025,7 @@ export default function ChatPage() {
               <IconBook className="w-3.5 h-3.5" /> 指令
             </button>
             {showInstructionPicker && instructionList.length > 0 && (
-              <div className="absolute bottom-full left-0 mb-1 w-56 max-h-60 overflow-y-auto bg-white rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
+              <div className="absolute bottom-full left-0 mb-1 w-56 max-h-60 overflow-y-auto bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
                 {instructionList.map(inst => (
                   <button
                     key={inst.id}
@@ -2043,7 +2043,7 @@ export default function ChatPage() {
               </div>
             )}
             {showInstructionPicker && instructionList.length === 0 && (
-              <div className="absolute bottom-full left-0 mb-1 w-56 bg-white rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
+              <div className="absolute bottom-full left-0 mb-1 w-56 bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
                 <p className="text-xs text-jai-text-secondary">暂无指令</p>
                 <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
               </div>
@@ -2214,7 +2214,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
       {/* Paragraph Picker Modal */}
       {showPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setShowPicker(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-jai-card rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
             <div className="p-4 border-b border-jai-card-border">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-jai-accent flex items-center gap-1.5">
@@ -2244,7 +2244,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                   >
                     <div className="flex items-start gap-2">
                       <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? 'border-jai-secondary bg-jai-secondary' : 'border-[#B8AEAE]'
+                        isSelected ? 'border-jai-secondary bg-jai-secondary' : 'border-jai-card-border'
                       }`}>
                         {isSelected && <IconCheck className="w-3 h-3 text-white" />}
                       </div>

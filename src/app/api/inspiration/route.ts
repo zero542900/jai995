@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey } from '@/lib/deepseek';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, userPersonality, plotDirection, chatHistory, longTermMemory, personMode, apiKey, stylePrompt } = body;
+    const { charInfo, userCard, userPersonality, plotDirection, chatHistory, longTermMemory, personMode, apiKey, stylePrompt, mainLinePrompt } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
 Perspective: User only
 Persona: ${personInstruction}
 ${stylePrompt ? `Style: ${stylePrompt}` : ''}
+${mainLinePrompt ? `Main Plot Line: ${mainLinePrompt}` : ''}
 Context:
 - Character (Char): ${charInfo || '(not provided)'}
 - User Persona: ${userCard || userPersonality || '(not provided)'}

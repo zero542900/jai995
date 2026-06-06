@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       charInfo, userCard, chatHistory, longTermMemory, plotDirection,
-      messageCount, directionKeyword, personMode, stylePrompt,
+      messageCount, directionKeyword, personMode, stylePrompt, mainLinePrompt,
       selectedPrediction, // if provided, generate a User reply advancing that direction
       apiKey
     } = body;
@@ -16,10 +16,6 @@ export async function POST(request: NextRequest) {
 
     // Mode 1: Generate predictions
     if (!selectedPrediction) {
-      const personInstruction = personMode === 'first'
-        ? 'Write from the FIRST PERSON perspective (I / me / my).'
-        : 'Write from the THIRD PERSON perspective (he / she / they).';
-
       const isNearClimax = messageCount >= 20;
       const twistInstruction = isNearClimax
         ? `\n\nIMPORTANT: The conversation has ${messageCount} messages, which suggests the story is approaching a climactic point. You MUST include a 4th prediction as a "stage transition" — a major shift like scene change, conflict escalation, relationship transformation, or unexpected event. This goes in the "twist" field of the JSON.`
@@ -30,11 +26,12 @@ export async function POST(request: NextRequest) {
         : '';
 
       const styleInstruction = stylePrompt ? `\n\nSTYLE OVERRIDE: ${stylePrompt}` : '';
+      const mainLineInstruction = mainLinePrompt ? `\n\nCURRENT MAIN STORYLINE: The user has locked the following main storyline. All predictions must be consistent with this direction: ${mainLinePrompt}` : '';
 
-      const systemPrompt = `You are a plot prediction assistant for JanitorAI roleplay. Generate 3 possible plot directions from the User's perspective.
+      const systemPrompt = `You are a plot prediction assistant for JanitorAI roleplay. Generate 3 possible long-term story directions from a GOD'S EYE VIEW (narrator perspective).
 
-${personInstruction}
 ${styleInstruction}
+${mainLineInstruction}
 
 CONTEXT:
 - Character (Char): ${charInfo || '(not provided)'}
@@ -46,22 +43,36 @@ CURRENT SCENE:
 ${chatHistory || '(This is the beginning of the story)'}
 ${twistInstruction}${keywordInstruction}
 
-STYLE: Western TV series or film. Tense, natural pacing, no dragging. Each prediction should be a concrete action the User could take — not vague or passive.
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. Write from GOD'S EYE VIEW — describe where the STORY is heading, not what any character will do.
+2. DO NOT predict Char's specific actions. Never write things like "Char will..." or "Char is going to..."
+3. DO NOT predict User's specific actions either. This is about story ARCH, not character actions.
+4. Focus on: ending possibilities (HE/BE/open), relationship dynamics, power shifts, emotional arcs.
+5. Each prediction should be 1-2 sentences describing the MACRO direction of the story.
+
+GOOD examples:
+- "This line may lead to HE: trust builds through shared vulnerability, eventual mutual rescue."
+- "BE possibility is growing: accumulated silence will crush the relationship, ending with one party leaving for good."
+- "Open ending is likely: the relationship deepens but neither will be the first to define it."
+- "Power reversal is the core of this line: whoever falls first loses the most in the end."
+
+BAD examples (NEVER write like this):
+- "Next round Char will suddenly confess."
+- "Char will protect User in the third act."
+- "Char will leave the scene in anger."
 
 OUTPUT FORMAT: Return a JSON object with NO markdown formatting, NO code blocks, just raw JSON:
 {
   "predictions": [
-    "First prediction: 1-2 sentences about what User could do.",
-    "Second prediction: 1-2 sentences, logically different from the first.",
-    "Third prediction: 1-2 sentences, different from both above."
-  ]${isNearClimax ? ',\n  "twist": "A stage-transition prediction: a major shift in the story."' : ''}
+    "First prediction: 1-2 sentences about the story's overall direction.",
+    "Second prediction: 1-2 sentences, a different possible arc.",
+    "Third prediction: 1-2 sentences, another distinct possibility."
+  ]${isNearClimax ? ',\n  "twist": "A stage-transition prediction: a major shift in the story arc."' : ''}
 }
 
-RULES:
-- Each prediction must be from the User's perspective (what User can do or say).
-- The 3 predictions must have clearly different core actions/emotions.
-- No dramatic words like "suddenly", "unexpectedly", "collapse", "destiny".
-- Think like a screenwriter choosing between scene branches: grounded, logical, film-like.
+ADDITIONAL RULES:
+- The 3 predictions must represent clearly different story arcs (e.g., HE vs BE vs open ending).
+- Think like a screenwriter outlining season arcs: grounded, logical, film-like.
 - Output ONLY the JSON object. No other text.`;
 
       const response = await callDeepSeek({

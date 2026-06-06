@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION } from '@/lib/
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, chatHistory, longTermMemory, plotDirection, apiKey, stylePrompt } = body;
+    const { charInfo, userCard, chatHistory, longTermMemory, plotDirection, apiKey, stylePrompt, mainLinePrompt } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -31,6 +31,7 @@ Generate a concise plot summary in the style of "Previously on..." (like a TV se
 Write in English, cinematic and concise. Think HBO recap, not academic summary. 2-4 sentences max.
 
 ${stylePrompt ? `\nSTYLE INSTRUCTION:\n${stylePrompt}\n` : ''}
+${mainLinePrompt ? `\nMAIN LINE INSTRUCTION:\n${mainLinePrompt}\n` : ''}
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
     const response = await callDeepSeek({

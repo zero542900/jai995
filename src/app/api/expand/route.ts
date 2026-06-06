@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { brief, charInfo, userCard, userPersonality, plotDirection, chatHistory, longTermMemory, personMode, apiKey, stylePrompt } = body;
+    const { brief, charInfo, userCard, userPersonality, plotDirection, chatHistory, longTermMemory, personMode, apiKey, stylePrompt, mainLinePrompt } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 CORE PRINCIPLE: The expanded content must be from the User's perspective — what the User says or does.
 
 ${personInstruction}
-${stylePrompt ? `\nSTYLE INSTRUCTION:\n${stylePrompt}` : ''}
+${stylePrompt ? `\nSTYLE INSTRUCTION:\n${stylePrompt}` : ''}${mainLinePrompt ? `\nMAIN STORYLINE:\n${mainLinePrompt}` : ''}
 
 CONTEXT:
 - Character (Char): ${charInfo || '(not provided)'}

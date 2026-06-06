@@ -64,7 +64,7 @@ export default function InstructionsPage() {
   }, [newName, newSummary, newContent, loadInstructions]);
 
   return (
-    <div className="page-enter space-y-6">
+    <div className="page-enter space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">指令库</h1>
         <Button size="sm" onClick={() => setShowCreate(true)} className="gap-1.5">
@@ -110,7 +110,7 @@ export default function InstructionsPage() {
         </Card>
       )}
 
-      {/* 指令卡片列表 */}
+      {/* 指令卡片列表 - 紧凑小卡片 */}
       {instructions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <IconBook className="w-12 h-12 mb-3 opacity-30" />
@@ -118,63 +118,56 @@ export default function InstructionsPage() {
           <p className="text-xs mt-1">点击右上角「新增指令」添加</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           {instructions.map((instruction) => (
-            <Card
+            <div
               key={instruction.id}
-              className="group border-border hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer"
+              className="group relative bg-card border border-jai-card-border rounded-lg p-3 hover:shadow-[0_2px_8px_var(--color-jai-shadow)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
             >
-              <CardContent className="pt-5 pb-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <Link
-                    href={`/instructions/${instruction.id}`}
-                    className="flex-1 min-w-0"
-                  >
-                    <h3 className="font-semibold text-sm text-foreground truncate">
-                      {instruction.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {instruction.summary || instruction.name}
-                    </p>
-                  </Link>
-                </div>
+              {/* 标题 */}
+              <Link href={`/instructions/${instruction.id}`}>
+                <h3 className="font-semibold text-xs text-jai-accent leading-tight mb-1.5 line-clamp-1">
+                  {instruction.name}
+                </h3>
+                <p className="text-[11px] text-jai-text-secondary leading-relaxed mb-3" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {instruction.summary || instruction.name}
+                </p>
+              </Link>
 
-                {/* 操作按钮行 */}
-                <div className="flex items-center gap-1 mt-3 pt-2 border-t border-border/50">
-                  <button
-                    onClick={() => handleCopy(instruction)}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                    title="复制指令内容"
-                  >
-                    {copiedId === instruction.id ? (
-                      <>
-                        <IconCheck className="w-3.5 h-3.5 text-jai-success" />
-                        <span className="text-jai-success">已复制</span>
-                      </>
-                    ) : (
-                      <>
-                        <IconCopy className="w-3.5 h-3.5" />
-                        <span>复制</span>
-                      </>
-                    )}
-                  </button>
-                  <div className="flex-1" />
-                  <Link
-                    href={`/instructions/${instruction.id}`}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                  >
-                    编辑
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(instruction.id, instruction.name)}
-                    className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
-                    title="删除"
-                  >
-                    <IconTrash className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
+              {/* 操作按钮 - 底部紧凑排列 */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => handleCopy(instruction)}
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-jai-accent hover:bg-jai-muted transition-colors"
+                  title="复制指令内容"
+                >
+                  {copiedId === instruction.id ? (
+                    <>
+                      <IconCheck className="w-3 h-3 text-jai-success" />
+                      <span className="text-jai-success">已复制</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconCopy className="w-3 h-3" />
+                      <span>复制</span>
+                    </>
+                  )}
+                </button>
+                <Link
+                  href={`/instructions/${instruction.id}`}
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-jai-accent hover:bg-jai-muted transition-colors"
+                >
+                  编辑
+                </Link>
+                <button
+                  onClick={() => handleDelete(instruction.id, instruction.name)}
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors ml-auto"
+                  title="删除"
+                >
+                  <IconTrash className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}

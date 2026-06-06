@@ -42,16 +42,17 @@ Analyze the current story and return a JSON object with the following fields:
 
 6. "progressDescCn" (string): Chinese translation of progressDesc.
 
-7. "suggestedKeywords": An object with exactly these 4 keys, each containing 3-5 keyword strings that are RELEVANT to the current story context:
-   - "ending": Suggested ending direction keywords (e.g., "HE", "BE", "Open ending", specific to this story)
-   - "relation": Suggested relationship dynamic keywords (e.g., "Push-pull", "Trust crisis", specific to current dynamics)
-   - "scene": Suggested scene keywords (e.g., specific locations or settings that would fit the current story direction)
+7. "suggestedKeywords": An object with exactly these 4 keys, each containing 3-5 keyword objects. Each keyword MUST be an object with "en" (English) and "cn" (Chinese) fields:
+   - "ending": Suggested ending direction keywords (e.g., {"en": "Mutual Sacrifice HE", "cn": "双向牺牲式HE"})
+   - "relation": Suggested relationship dynamic keywords (e.g., {"en": "Push-Pull Dynamic", "cn": "推拉试探"})
+   - "scene": Suggested scene keywords (e.g., {"en": "Interrogation Standoff", "cn": "审讯室对峙"})
    - "stage": Suggested stage transition keywords (what stage the story might move into next)
 
 CRITICAL RULES FOR KEYWORDS:
+- The "en" field must be in ENGLISH. The "cn" field must be in CHINESE.
 - Keywords must be SPECIFIC to this story, not generic. "HE through mutual sacrifice" is better than just "HE".
-- Each keyword should be 2-8 characters.
-- Mix Chinese and English freely — use whichever language feels more natural for that keyword.
+- Each English keyword should be 2-8 words. Each Chinese keyword should be 2-8 characters.
+- Chinese translations should be natural and evocative, not literal word-for-word.
 - Keywords should suggest FUTURE directions, not describe what already happened.
 
 ${WRITING_STYLE_INSTRUCTION}
@@ -65,10 +66,10 @@ OUTPUT FORMAT: Return ONLY a JSON object, no markdown, no code blocks, no extra 
   "progressDesc": "...",
   "progressDescCn": "...",
   "suggestedKeywords": {
-    "ending": ["...", "...", "..."],
-    "relation": ["...", "...", "..."],
-    "scene": ["...", "...", "..."],
-    "stage": ["...", "...", "..."]
+    "ending": [{"en": "...", "cn": "..."}, ...],
+    "relation": [{"en": "...", "cn": "..."}, ...],
+    "scene": [{"en": "...", "cn": "..."}, ...],
+    "stage": [{"en": "...", "cn": "..."}, ...]
   }
 }`;
 

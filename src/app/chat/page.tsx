@@ -152,8 +152,6 @@ export default function ChatPage() {
 
   // Plot Assistant states
   const [showPlotPanel, setShowPlotPanel] = useState(false);
-  const [plotSummaryLoading, setPlotSummaryLoading] = useState(false);
-  const [plotSummary, setPlotSummary] = useState<{ en: string; cn: string; flipped: boolean; translating: boolean } | null>(null);
   const [plotPredictions, setPlotPredictions] = useState<string[]>([]);
   const [plotTwist, setPlotTwist] = useState<string | null>(null);
   const [plotPredictLoading, setPlotPredictLoading] = useState(false);
@@ -168,17 +166,16 @@ export default function ChatPage() {
   const [plotStageCn, setPlotStageCn] = useState('');
   const [progressDesc, setProgressDesc] = useState('');
   const [progressDescCn, setProgressDescCn] = useState('');
-  const [mainLineLocked, setMainLineLocked] = useState(false);
 
   // AI analysis state
   const [plotAnalyzeLoading, setPlotAnalyzeLoading] = useState(false);
 
   // Keyword library states (dynamic AI suggestions + free input)
   const [suggestedKeywords, setSuggestedKeywords] = useState<{
-    ending: string[];
-    relation: string[];
-    scene: string[];
-    stage: string[];
+    ending: { en: string; cn: string }[];
+    relation: { en: string; cn: string }[];
+    scene: { en: string; cn: string }[];
+    stage: { en: string; cn: string }[];
   }>({ ending: [], relation: [], scene: [], stage: [] });
   const [selectedEnding, setSelectedEnding] = useState<string[]>([]);
   const [selectedRelation, setSelectedRelation] = useState<string[]>([]);
@@ -758,61 +755,6 @@ export default function ChatPage() {
     }
   };
 
-  const handlePlotSummary = async () => {
-    if (!currentPreset) { showNotification('请选择预设'); return; }
-    const apiKey = localStorage.getItem('jai_api_key');
-    if (!apiKey) { showNotification('请先配置 API Key'); return; }
-
-    setPlotSummaryLoading(true);
-    setPlotSummary(null);
-
-    try {
-      const res = await fetch('/api/plot-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          charInfo: currentPreset.charInfo,
-          userCard: currentPreset.userCard,
-          chatHistory: buildChatHistoryForMemory(),
-          longTermMemory: currentPreset.longTermMemory,
-          plotDirection: currentPreset.plotDirection,
-          apiKey,
-          stylePrompt: buildStylePrompt(),
-          mainLinePrompt: buildMainLinePrompt()
-        })
-      });
-
-      if (!res.ok) throw new Error('摘要生成失败');
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error('No reader');
-
-      let fullText = '';
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split('\n')) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) fullText += parsed.content;
-            } catch { /* skip */ }
-          }
-        }
-      }
-
-      const parts = fullText.split('===CHINESE===');
-      setPlotSummary({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim(), flipped: false, translating: false });
-    } catch {
-      showNotification('摘要生成失败');
-    } finally {
-      setPlotSummaryLoading(false);
-    }
-  };
-
   const handlePlotPredict = async () => {
     if (!currentPreset) { showNotification('请选择预设'); return; }
     const apiKey = localStorage.getItem('jai_api_key');
@@ -889,35 +831,6 @@ export default function ChatPage() {
     }
   };
 
-  const flipPlotSummary = async () => {
-    if (!plotSummary) return;
-    if (plotSummary.flipped) {
-      setPlotSummary(prev => prev ? { ...prev, flipped: false } : null);
-      return;
-    }
-    if (plotSummary.cn) {
-      setPlotSummary(prev => prev ? { ...prev, flipped: true } : null);
-      return;
-    }
-    // Translate
-    const apiKey = localStorage.getItem('jai_api_key');
-    if (!apiKey) { showNotification('请先配置 API Key'); return; }
-
-    setPlotSummary(prev => prev ? { ...prev, translating: true } : null);
-    try {
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: plotSummary.en, apiKey }),
-      });
-      const data = await res.json();
-      setPlotSummary(prev => prev ? { ...prev, cn: data.translation || '翻译失败', flipped: true, translating: false } : null);
-    } catch {
-      setPlotSummary(prev => prev ? { ...prev, translating: false } : null);
-      showNotification('翻译失败');
-    }
-  };
-
   const flipPlotTwist = async () => {
     if (!plotTwist) return;
     // Toggle twist translation inline - reuse predictionTranslations with special key
@@ -951,9 +864,9 @@ export default function ChatPage() {
     if (currentPresetId) {
       const preset = presets.find(p => p.id === currentPresetId);
       if (preset) {
-        // Auto-save plot progress: if we have a plot summary, save it to preset.plotDirection
-        const updatedPreset = plotSummary?.en
-          ? { ...preset, plotDirection: plotSummary.en }
+        // Auto-save plot progress: if we have a current main line, save it to preset.plotDirection
+        const updatedPreset = currentMainLine
+          ? { ...preset, plotDirection: currentMainLine }
           : preset;
         if (updatedPreset !== preset) {
           updatePreset(updatedPreset);
@@ -1015,9 +928,9 @@ export default function ChatPage() {
                 className="text-[10px] text-amber-500 hover:text-amber-700 shrink-0"
               >详情</button>
               <button
-                onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); setMainLineLocked(false); }}
+                onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
                 className="text-[10px] text-gray-400 hover:text-gray-600 shrink-0"
-              >解锁</button>
+              >更换</button>
             </div>
             {progressDesc && (
               <p className="text-[10px] text-gray-400 mt-0.5 truncate">{progressDescCn || progressDesc}</p>
@@ -1193,7 +1106,7 @@ export default function ChatPage() {
                 <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">当前主线</span>
                 {currentMainLine && (
                   <button
-                    onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); setMainLineLocked(false); }}
+                    onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
                     className="text-[10px] text-gray-400 hover:text-gray-600"
                   >清除</button>
                 )}
@@ -1204,7 +1117,7 @@ export default function ChatPage() {
                     <span className="text-xs font-medium text-amber-700">{currentMainLine}</span>
                     {currentMainLineCn && <span className="text-[11px] text-gray-500">({currentMainLineCn})</span>}
                     {plotStage && <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>}
-                    {mainLineLocked && <span className="text-[9px] bg-amber-200 text-amber-800 px-1 py-0.5 rounded">已锁定</span>}
+
                   </div>
                   {progressDesc && (
                     <p className="text-[11px] text-gray-500">{progressDesc}</p>
@@ -1214,12 +1127,7 @@ export default function ChatPage() {
                   )}
                   <div className="flex items-center gap-2 mt-1.5">
                     <button
-                      onClick={() => setMainLineLocked(prev => !prev)}
-                      className={`text-[10px] font-medium ${mainLineLocked ? 'text-amber-700' : 'text-amber-500 hover:text-amber-700'}`}
-                    >{mainLineLocked ? '✓ 已锁定' : '锁定主线'}</button>
-                    <span className="text-[10px] text-gray-300">|</span>
-                    <button
-                      onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); setMainLineLocked(false); }}
+                      onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
                       className="text-[10px] text-gray-400 hover:text-gray-600"
                     >更换</button>
                   </div>
@@ -1234,11 +1142,6 @@ export default function ChatPage() {
                       placeholder="手动输入主线名称，或点上方 AI 按钮自动概括"
                       className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
                     />
-                    <button
-                      onClick={() => { if (currentMainLine.trim()) setMainLineLocked(true); }}
-                      className="text-[10px] px-2 py-1.5 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 disabled:opacity-50"
-                      disabled={!currentMainLine.trim()}
-                    >锁定</button>
                   </div>
                 </div>
               )}
@@ -1269,14 +1172,14 @@ export default function ChatPage() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.ending.map(kw => (
                       <button
-                        key={kw}
-                        onClick={() => toggleKeyword('ending', kw)}
+                        key={kw.en}
+                        onClick={() => toggleKeyword('ending', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedEnding.includes(kw)
+                          selectedEnding.includes(kw.en)
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw}</button>
+                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1311,14 +1214,14 @@ export default function ChatPage() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.relation.map(kw => (
                       <button
-                        key={kw}
-                        onClick={() => toggleKeyword('relation', kw)}
+                        key={kw.en}
+                        onClick={() => toggleKeyword('relation', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedRelation.includes(kw)
+                          selectedRelation.includes(kw.en)
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw}</button>
+                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1353,14 +1256,14 @@ export default function ChatPage() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.scene.map(kw => (
                       <button
-                        key={kw}
-                        onClick={() => toggleKeyword('scene', kw)}
+                        key={kw.en}
+                        onClick={() => toggleKeyword('scene', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedScene.includes(kw)
+                          selectedScene.includes(kw.en)
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw}</button>
+                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1395,14 +1298,14 @@ export default function ChatPage() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {suggestedKeywords.stage.map(kw => (
                       <button
-                        key={kw}
-                        onClick={() => toggleKeyword('stage', kw)}
+                        key={kw.en}
+                        onClick={() => toggleKeyword('stage', kw.en)}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedStageKeyword.includes(kw)
+                          selectedStageKeyword.includes(kw.en)
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-gray-500 hover:bg-amber-100'
                         }`}
-                      >{kw}</button>
+                      >{kw.en}<span className="text-[9px] text-gray-400 ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1516,9 +1419,8 @@ export default function ChatPage() {
                             onClick={() => {
                               setCurrentMainLine(pred);
                               setCurrentMainLineCn('');
-                              setMainLineLocked(true);
                               setSelectedPredictionIdx(i);
-                              showNotification('已锁定为主线');
+                              showNotification('已设为主线');
                             }}
                             className={`text-[10px] font-medium ${isSelected ? 'text-amber-700' : 'text-amber-500 hover:text-amber-700'}`}
                           >{isSelected ? '✓ 已为主线' : '锁定为主线'}</button>
@@ -1551,8 +1453,7 @@ export default function ChatPage() {
                           onClick={() => {
                             setCurrentMainLine(plotTwist);
                             setCurrentMainLineCn('');
-                            setMainLineLocked(true);
-                            showNotification('转折已锁定为主线');
+                            showNotification('转折已设为主线');
                           }}
                           className="text-[10px] text-violet-500 hover:text-violet-700 font-medium"
                         >锁定为主线</button>
@@ -1565,44 +1466,6 @@ export default function ChatPage() {
               )}
             </div>
 
-            <div className="border-t border-amber-100" />
-
-            {/* Section 4: Plot Summary */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">剧情摘要</span>
-                <div className="flex items-center gap-1">
-                  <button onClick={handlePlotSummary} disabled={plotSummaryLoading} className="p-1 text-amber-400 hover:text-amber-600 disabled:opacity-50">
-                    <IconRefresh className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-              {plotSummaryLoading ? (
-                <p className="text-xs text-gray-400 animate-pulse">生成中...</p>
-              ) : plotSummary ? (
-                <div>
-                  <div
-                    className="p-2.5 rounded-lg border bg-amber-50/50 border-amber-100 cursor-pointer hover:bg-amber-50 transition-colors"
-                    onClick={flipPlotSummary}
-                  >
-                    {plotSummary.translating ? (
-                      <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
-                    ) : (
-                      <p className="text-xs text-gray-800 whitespace-pre-wrap">
-                        {plotSummary.flipped && plotSummary.cn ? plotSummary.cn : plotSummary.en}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <button onClick={(e) => { e.stopPropagation(); copyContent(plotSummary.en); }} className="text-[10px] text-amber-500 hover:text-amber-700">复制</button>
-                    <span className="text-[10px] text-gray-300">|</span>
-                    <button onClick={flipPlotSummary} className="text-[10px] text-gray-400 hover:text-gray-600">翻转</button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[11px] text-gray-400">点击刷新按钮生成摘要</p>
-              )}
-            </div>
           </div>
         </div>
       )}

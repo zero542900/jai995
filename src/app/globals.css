@@ -54,7 +54,7 @@
   --color-jai-bg: #E0A0AC;
   --color-jai-secondary: #D08898;
   --color-jai-accent: #B86878;
-  --color-jai-card: #FFFFFF;
+  --color-jai-card: #F8EFF0;
   --color-jai-card-border: #D8A0AA;
   --color-jai-input-bg: #ECC0C8;
   --color-jai-text: #4A2028;
@@ -66,6 +66,7 @@
   --color-jai-bubble-user: #D08898;
   --color-jai-success: #5DA07E;
   --color-jai-thinking: #a78bfa;
+  --color-jai-btn-text: #FFFFFF;
 }
 
 :root {
@@ -80,16 +81,16 @@
   --popover-foreground: var(--color-jai-text);
   /* Primary: 跟随主题 */
   --primary: var(--color-jai-secondary);
-  --primary-foreground: var(--color-jai-card);
+  --primary-foreground: var(--color-jai-btn-text);
   /* Secondary: 跟随主题 */
   --secondary: var(--color-jai-accent);
-  --secondary-foreground: var(--color-jai-card);
+  --secondary-foreground: var(--color-jai-btn-text);
   /* Muted: 跟随主题 */
   --muted: var(--color-jai-muted);
   --muted-foreground: var(--color-jai-text-secondary);
   /* Accent: 跟随主题 */
   --accent: var(--color-jai-accent);
-  --accent-foreground: var(--color-jai-card);
+  --accent-foreground: var(--color-jai-btn-text);
   --destructive: #D47575;
   /* Borders: 跟随主题 */
   --border: var(--color-jai-card-border);
@@ -105,9 +106,9 @@
   --sidebar: var(--color-jai-muted);
   --sidebar-foreground: var(--color-jai-text);
   --sidebar-primary: var(--color-jai-accent);
-  --sidebar-primary-foreground: var(--color-jai-card);
+  --sidebar-primary-foreground: var(--color-jai-btn-text);
   --sidebar-accent: var(--color-jai-secondary);
-  --sidebar-accent-foreground: var(--color-jai-card);
+  --sidebar-accent-foreground: var(--color-jai-btn-text);
   --sidebar-border: var(--color-jai-card-border);
   --sidebar-ring: var(--color-jai-accent);
 }
@@ -120,6 +121,30 @@
     @apply bg-background text-foreground;
     line-height: 1.5;
   }
+}
+
+/* === Override shadcn/ui Select/Dropdown to use theme colors === */
+[data-radix-popper-content-wrapper] {
+  --primary: var(--color-jai-accent);
+  --primary-foreground: var(--color-jai-btn-text);
+}
+[data-radix-select-content],
+[data-radix-dropdown-menu-content] {
+  background: var(--color-jai-card) !important;
+  border: 1px solid var(--color-jai-card-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0px 4px 12px var(--color-jai-shadow) !important;
+}
+[data-radix-select-item][data-highlighted],
+[data-radix-dropdown-menu-item][data-highlighted] {
+  background: var(--color-jai-muted) !important;
+  color: var(--color-jai-text) !important;
+  outline: none !important;
+}
+[data-radix-select-item][data-state="checked"],
+[data-radix-dropdown-menu-item][data-state="checked"] {
+  background: var(--color-jai-secondary) !important;
+  color: var(--color-jai-btn-text) !important;
 }
 
 /* Custom scrollbar - follows theme */
@@ -210,7 +235,7 @@
 /* === JAI Button Style === */
 .jai-btn {
   background: var(--color-jai-secondary);
-  color: var(--color-jai-card);
+  color: var(--color-jai-btn-text);
   border-radius: 20px;
   border: none;
   transition: background-color 0.3s ease, transform 0.15s ease;

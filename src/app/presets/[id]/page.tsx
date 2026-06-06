@@ -119,7 +119,7 @@ export default function PresetDetailPage() {
               savePreset(updated);
               setPreset(updated);
             }}
-            className="border border-jai-secondary rounded-md px-2 py-1 text-sm bg-white"
+            className="border border-jai-secondary rounded-md px-2 py-1 text-sm bg-jai-card"
           >
             <option value="third">第三人称</option>
             <option value="first">第一人称</option>

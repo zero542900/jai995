@@ -1,6 +1,6 @@
 /**
  * 主题配色系统
- * 每个主题包含 12 个颜色变量，切换时一次性替换所有变量
+ * 每个主题包含 14 个颜色变量，切换时一次性替换所有变量
  */
 
 export interface ThemeColors {
@@ -53,7 +53,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#E0A0AC',
       'jai-secondary': '#D08898',
       'jai-accent': '#B86878',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#F8E8EC',
       'jai-card-border': '#D8A0AA',
       'jai-input-bg': '#ECC0C8',
       'jai-text': '#4A2028',
@@ -75,7 +75,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#B8D0E8',
       'jai-secondary': '#98B4D0',
       'jai-accent': '#7898BE',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#E8F0F8',
       'jai-card-border': '#B0C4DA',
       'jai-input-bg': '#D8E6F0',
       'jai-text': '#2E3A4A',
@@ -97,7 +97,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#B8DAC5',
       'jai-secondary': '#98C8A5',
       'jai-accent': '#78B088',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#E8F2EC',
       'jai-card-border': '#B0D0BA',
       'jai-input-bg': '#D8ECE0',
       'jai-text': '#2E4A35',
@@ -119,7 +119,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#D0B8E0',
       'jai-secondary': '#B898D0',
       'jai-accent': '#9E78C0',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#EEE5F5',
       'jai-card-border': '#C8B0DC',
       'jai-input-bg': '#E6D6F0',
       'jai-text': '#3A2E4A',
@@ -141,7 +141,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#DAC5B0',
       'jai-secondary': '#C8A888',
       'jai-accent': '#B88E70',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#F2EAE0',
       'jai-card-border': '#D4BEA8',
       'jai-input-bg': '#EEDCC8',
       'jai-text': '#4A3628',
@@ -163,7 +163,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#E0B898',
       'jai-secondary': '#D08858',
       'jai-accent': '#C45A30',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#F8EDE0',
       'jai-card-border': '#D8A880',
       'jai-input-bg': '#F0D0B8',
       'jai-text': '#4A2010',
@@ -185,7 +185,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#F0C898',
       'jai-secondary': '#E89838',
       'jai-accent': '#FE8005',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#FAF0E0',
       'jai-card-border': '#E8B878',
       'jai-input-bg': '#F8DCB0',
       'jai-text': '#3A2008',
@@ -207,7 +207,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#F5F0EC',
       'jai-secondary': '#E0D8D0',
       'jai-accent': '#B0A090',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#FAFAF8',
       'jai-card-border': '#E0D8D0',
       'jai-input-bg': '#EDE6E0',
       'jai-text': '#3A3230',
@@ -229,7 +229,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#E898B8',
       'jai-secondary': '#D878A0',
       'jai-accent': '#C85888',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#F8E5EE',
       'jai-card-border': '#E088A8',
       'jai-input-bg': '#F0B8CC',
       'jai-text': '#4A1830',
@@ -251,7 +251,7 @@ export const THEMES: Theme[] = [
       'jai-bg': '#A0D0C8',
       'jai-secondary': '#80BCB0',
       'jai-accent': '#60A898',
-      'jai-card': '#FFFFFF',
+      'jai-card': '#E5F2EF',
       'jai-card-border': '#98C8BE',
       'jai-input-bg': '#C0E0D8',
       'jai-text': '#1E3A34',
@@ -300,22 +300,22 @@ export function applyTheme(themeId: string): void {
   root.style.setProperty('--popover', c['jai-card']);
   root.style.setProperty('--popover-foreground', c['jai-text']);
   root.style.setProperty('--primary', c['jai-secondary']);
-  root.style.setProperty('--primary-foreground', c['jai-card']);
+  root.style.setProperty('--primary-foreground', c['jai-text']);
   root.style.setProperty('--secondary', c['jai-accent']);
-  root.style.setProperty('--secondary-foreground', c['jai-card']);
+  root.style.setProperty('--secondary-foreground', c['jai-text']);
   root.style.setProperty('--muted', c['jai-muted']);
   root.style.setProperty('--muted-foreground', c['jai-text-secondary']);
   root.style.setProperty('--accent', c['jai-accent']);
-  root.style.setProperty('--accent-foreground', c['jai-card']);
+  root.style.setProperty('--accent-foreground', c['jai-text']);
   root.style.setProperty('--border', c['jai-card-border']);
   root.style.setProperty('--input', c['jai-secondary']);
   root.style.setProperty('--ring', c['jai-accent']);
   root.style.setProperty('--sidebar', c['jai-muted']);
   root.style.setProperty('--sidebar-foreground', c['jai-text']);
   root.style.setProperty('--sidebar-primary', c['jai-accent']);
-  root.style.setProperty('--sidebar-primary-foreground', c['jai-card']);
+  root.style.setProperty('--sidebar-primary-foreground', c['jai-text']);
   root.style.setProperty('--sidebar-accent', c['jai-secondary']);
-  root.style.setProperty('--sidebar-accent-foreground', c['jai-card']);
+  root.style.setProperty('--sidebar-accent-foreground', c['jai-text']);
   root.style.setProperty('--sidebar-border', c['jai-card-border']);
   root.style.setProperty('--sidebar-ring', c['jai-accent']);
   root.style.setProperty('--chart-1', c['jai-accent']);

@@ -340,7 +340,7 @@ export default function GeneratePage() {
                   </span>
                   {hasLocked && <span className="text-xs text-jai-accent font-medium ml-1">已锁定 {Object.keys(lockedFields).length} 项</span>}
                 </div>
-                <div className="grid gap-1 border border-jai-card-border rounded-lg p-1.5 md:p-2 bg-white/50">
+                <div className="grid gap-1 border border-jai-card-border rounded-lg p-1.5 md:p-2 bg-jai-card/50">
                   {(showFront ? parsedFields : parsedChineseFields).map((field, idx) => {
                     const lockKey = parsedFields[idx]?.key || field.key;
                     const locked = isFieldLocked(lockKey);

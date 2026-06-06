@@ -988,7 +988,7 @@ function ChatPageInner() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-jai-bg/50 px-4">
         <p className="text-jai-text-secondary mb-4">暂无预设，请先生成 User 卡并保存</p>
-        <button onClick={() => router.push('/')} className="px-4 py-2 bg-jai-secondary text-white rounded-lg hover:bg-jai-accent">
+        <button onClick={() => router.push('/')} className="px-4 py-2 bg-jai-secondary/60 text-jai-btn-text rounded-lg hover:bg-jai-secondary/80">
           去生成
         </button>
       </div>
@@ -1219,7 +1219,7 @@ function ChatPageInner() {
               <button
                 onClick={handlePlotAnalyze}
                 disabled={plotAnalyzeLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted0 text-white hover:bg-jai-secondary disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary disabled:opacity-50 transition-colors"
               >
                 <IconRefresh className={`w-3 h-3 ${plotAnalyzeLoading ? 'animate-spin' : ''}`} />
                 {plotAnalyzeLoading ? 'AI 分析中...' : 'AI 概括主线 + 推荐关键词'}
@@ -1611,7 +1611,7 @@ function ChatPageInner() {
                   <button
                     onClick={handleExpand}
                     disabled={!expandBrief.trim() || expandLoading}
-                    className="w-full py-2 text-sm bg-jai-secondary text-white rounded-xl hover:bg-jai-accent disabled:opacity-50 transition-colors"
+                    className="w-full py-2 text-sm bg-jai-secondary/60 text-jai-btn-text rounded-xl hover:bg-jai-secondary/80 disabled:opacity-50 transition-colors"
                   >
                     {expandLoading ? '生成中...' : '扩写'}
                   </button>
@@ -1725,7 +1725,7 @@ function ChatPageInner() {
               <div key={cat} className="relative">
                 <button
                   onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                  className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${currentVal ? 'bg-jai-secondary text-white border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
+                  className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${currentVal ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
                 >
                   <span>{currentVal || labels[cat]}</span>
                   <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -1766,7 +1766,7 @@ function ChatPageInner() {
           <div className="relative" ref={optionalMenuRef}>
             <button
               onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-              className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${styleOptional.length > 0 ? 'bg-jai-secondary text-white border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
+              className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${styleOptional.length > 0 ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
             >
               <span>{styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选风格'}</span>
             </button>
@@ -1827,7 +1827,7 @@ function ChatPageInner() {
                   <button
                     key={cat}
                     onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                    className={`text-xs px-2 py-1.5 rounded-lg border transition-colors flex items-center gap-0.5 ${currentVal ? 'bg-jai-secondary text-white border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
+                    className={`text-xs px-2 py-1.5 rounded-lg border transition-colors flex items-center gap-0.5 ${currentVal ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
                   >
                     <span>{currentVal || labels[cat]}</span>
                     <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -1836,7 +1836,7 @@ function ChatPageInner() {
               })}
               <button
                 onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-                className={`text-xs px-2 py-1.5 rounded-lg border transition-colors ${styleOptional.length > 0 ? 'bg-jai-secondary text-white border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
+                className={`text-xs px-2 py-1.5 rounded-lg border transition-colors ${styleOptional.length > 0 ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
               >
                 {styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选'}
               </button>
@@ -1999,7 +1999,7 @@ function ChatPageInner() {
                 className="w-full text-xs border border-jai-card-border rounded-lg p-2 h-20 resize-none focus:outline-none focus:border-jai-accent"
               />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setShowMixModal(false)} className="text-xs px-3 py-1.5 rounded-lg bg-jai-secondary text-white hover:bg-jai-accent">确认</button>
+                <button onClick={() => setShowMixModal(false)} className="text-xs px-3 py-1.5 rounded-lg bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary">确认</button>
               </div>
             </div>
           </div>
@@ -2079,7 +2079,7 @@ function ChatPageInner() {
           <button
             onClick={sendBotMessage}
             disabled={!jaiInput.trim()}
-            className="px-2 py-1.5 text-xs bg-jai-secondary text-white rounded-lg hover:bg-jai-accent disabled:opacity-50 transition-colors shrink-0"
+            className="px-2 py-1.5 text-xs bg-jai-secondary/60 text-jai-btn-text rounded-lg hover:bg-jai-secondary/80 disabled:opacity-50 transition-colors shrink-0"
           >
             发送
           </button>
@@ -2097,7 +2097,7 @@ function ChatPageInner() {
           />
           <button
             onClick={sendUserMessage}
-            className="p-2.5 md:p-3 rounded-xl bg-jai-secondary text-white hover:bg-jai-accent transition-colors shrink-0"
+            className="p-2.5 md:p-3 rounded-xl bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary transition-colors shrink-0"
           >
             <IconSend className="w-4 h-4" />
           </button>
@@ -2274,7 +2274,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
               <span className="text-[11px] text-jai-text-secondary">已选 {selectedParagraphs.size} / {paragraphs.length} 段</span>
               <div className="flex gap-2">
                 <button onClick={() => setShowPicker(false)} className="px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-text hover:bg-jai-muted">取消</button>
-                <button onClick={handleConfirmPicker} className="px-3 py-1.5 text-xs rounded-lg bg-jai-secondary text-white hover:bg-jai-accent disabled:opacity-50" disabled={selectedParagraphs.size === 0}>
+                <button onClick={handleConfirmPicker} className="px-3 py-1.5 text-xs rounded-lg bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary disabled:opacity-50" disabled={selectedParagraphs.size === 0}>
                   确认标记
                 </button>
               </div>
@@ -2306,7 +2306,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                 rows={3}
               />
               <div className="flex gap-1.5">
-                <button onClick={() => onSaveEdit(editContent)} className="text-[10px] px-2 py-0.5 bg-jai-secondary text-white rounded">保存</button>
+                <button onClick={() => onSaveEdit(editContent)} className="text-[10px] px-2 py-0.5 bg-jai-secondary/70 text-jai-btn-text rounded">保存</button>
                 <button onClick={onCancelEdit} className="text-[10px] px-2 py-0.5 bg-jai-muted text-jai-text rounded">取消</button>
               </div>
             </div>

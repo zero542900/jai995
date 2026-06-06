@@ -152,12 +152,11 @@ export default function ChatPage() {
 
   // Plot Assistant states
   const [showPlotPanel, setShowPlotPanel] = useState(false);
-  const [plotPredictions, setPlotPredictions] = useState<string[]>([]);
+  const [plotPredictions, setPlotPredictions] = useState<{ en: string; cn: string }[]>([]);
   const [plotTwist, setPlotTwist] = useState<string | null>(null);
   const [plotPredictLoading, setPlotPredictLoading] = useState(false);
   const [plotDirectionKeyword, setPlotDirectionKeyword] = useState('');
   const [selectedPredictionIdx, setSelectedPredictionIdx] = useState<number | null>(null);
-  const [predictionTranslations, setPredictionTranslations] = useState<Record<number, { cn: string; flipped: boolean; translating: boolean }>>({});
 
   // Main storyline states
   const [currentMainLine, setCurrentMainLine] = useState('');
@@ -166,6 +165,10 @@ export default function ChatPage() {
   const [plotStageCn, setPlotStageCn] = useState('');
   const [progressDesc, setProgressDesc] = useState('');
   const [progressDescCn, setProgressDescCn] = useState('');
+
+  // Saved plot directions for quick switch (accumulated across predictions)
+  const [savedPlotDirections, setSavedPlotDirections] = useState<{ en: string; cn: string; stage?: string; stageCn?: string }[]>([]);
+  const [showDirectionDropdown, setShowDirectionDropdown] = useState(false);
 
   // AI analysis state
   const [plotAnalyzeLoading, setPlotAnalyzeLoading] = useState(false);
@@ -213,6 +216,19 @@ export default function ChatPage() {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showOptionalMenu]);
+
+  // Close direction dropdown on outside click
+  useEffect(() => {
+    if (!showDirectionDropdown) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-direction-dropdown]')) {
+        setShowDirectionDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showDirectionDropdown]);
 
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -277,6 +293,14 @@ export default function ChatPage() {
     if (preset) {
       setPersonMode(preset.personMode || 'third');
       setThinkingEnabled(preset.thinkingEnabled || false);
+      // Load plot direction from preset
+      if (preset.plotDirection) {
+        setCurrentMainLine(preset.plotDirection);
+        setSavedPlotDirections(prev => {
+          if (prev.some(d => d.en === preset.plotDirection)) return prev;
+          return [...prev, { en: preset.plotDirection, cn: '' }];
+        });
+      }
     }
   }, [currentPresetId, presets]);
 
@@ -728,6 +752,11 @@ export default function ChatPage() {
       if (data.mainLineName) {
         setCurrentMainLine(data.mainLineName);
         setCurrentMainLineCn(data.mainLineNameCn || '');
+        setSavedPlotDirections(prev => {
+          if (prev.some(d => d.en === data.mainLineName)) return prev;
+          return [...prev, { en: data.mainLineName, cn: data.mainLineNameCn || '', stage: data.stage, stageCn: data.stageCn }];
+        });
+        autoSavePlotDirection(data.mainLineName);
       }
       if (data.stage) {
         setPlotStage(data.stage);
@@ -764,7 +793,6 @@ export default function ChatPage() {
     setPlotPredictions([]);
     setPlotTwist(null);
     setSelectedPredictionIdx(null);
-    setPredictionTranslations({});
 
     try {
       const res = await fetch('/api/plot-predict', {
@@ -789,7 +817,10 @@ export default function ChatPage() {
       const data = await res.json();
 
       if (data.predictions && Array.isArray(data.predictions)) {
-        setPlotPredictions(data.predictions);
+        const preds = data.predictions.map((p: { en: string; cn: string } | string) =>
+          typeof p === 'string' ? { en: p, cn: '' } : p
+        );
+        setPlotPredictions(preds);
       }
       if (data.twist) {
         setPlotTwist(data.twist);
@@ -801,78 +832,56 @@ export default function ChatPage() {
     }
   };
 
-  const flipPlotPrediction = async (idx: number) => {
-    const existing = predictionTranslations[idx];
-    if (existing?.flipped) {
-      // Flip back
-      setPredictionTranslations(prev => ({ ...prev, [idx]: { ...prev[idx], flipped: false } }));
-      return;
-    }
-    if (existing?.cn) {
-      setPredictionTranslations(prev => ({ ...prev, [idx]: { ...prev[idx], flipped: true } }));
-      return;
-    }
-    // Need to translate
-    const apiKey = localStorage.getItem('jai_api_key');
-    if (!apiKey) { showNotification('请先配置 API Key'); return; }
-
-    setPredictionTranslations(prev => ({ ...prev, [idx]: { cn: '', flipped: false, translating: true } }));
-
-    try {
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: plotPredictions[idx], apiKey }),
-      });
-      const data = await res.json();
-      setPredictionTranslations(prev => ({ ...prev, [idx]: { cn: data.translation || '翻译失败', flipped: true, translating: false } }));
-    } catch {
-      setPredictionTranslations(prev => ({ ...prev, [idx]: { cn: '翻译失败', flipped: true, translating: false } }));
+  // Auto-save plot direction to preset whenever it changes
+  const autoSavePlotDirection = (direction: string) => {
+    if (!currentPresetId) return;
+    const preset = presets.find(p => p.id === currentPresetId);
+    if (preset && preset.plotDirection !== direction) {
+      const updated = { ...preset, plotDirection: direction };
+      updatePreset(updated);
+      setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
     }
   };
 
-  const flipPlotTwist = async () => {
-    if (!plotTwist) return;
-    // Toggle twist translation inline - reuse predictionTranslations with special key
-    const twistKey = -1;
-    const existing = predictionTranslations[twistKey];
-    if (existing?.flipped) {
-      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { ...prev[twistKey], flipped: false } }));
-      return;
+  // Also auto-save when main line fields change (for manual edits)
+  const updateMainLineField = (field: 'mainLine' | 'stage' | 'progress', value: string) => {
+    if (field === 'mainLine') {
+      setCurrentMainLine(value);
+      autoSavePlotDirection(value);
+    } else if (field === 'stage') {
+      setPlotStage(value);
+    } else if (field === 'progress') {
+      setProgressDesc(value);
     }
-    if (existing?.cn) {
-      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { ...prev[twistKey], flipped: true } }));
-      return;
-    }
-    const apiKey = localStorage.getItem('jai_api_key');
-    if (!apiKey) { showNotification('请先配置 API Key'); return; }
-    setPredictionTranslations(prev => ({ ...prev, [twistKey]: { cn: '', flipped: false, translating: true } }));
-    try {
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: plotTwist, apiKey }),
-      });
-      const data = await res.json();
-      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { cn: data.translation || '翻译失败', flipped: true, translating: false } }));
-    } catch {
-      setPredictionTranslations(prev => ({ ...prev, [twistKey]: { cn: '翻译失败', flipped: true, translating: false } }));
-    }
+  };
+
+  const selectPlotDirection = (idx: number) => {
+    const pred = plotPredictions[idx];
+    if (!pred) return;
+    setSelectedPredictionIdx(idx);
+    setCurrentMainLine(pred.en);
+    setCurrentMainLineCn(pred.cn);
+    setSavedPlotDirections(prev => {
+      if (prev.some(d => d.en === pred.en)) return prev;
+      return [...prev, { en: pred.en, cn: pred.cn, stage: plotStage, stageCn: plotStageCn }];
+    });
+    autoSavePlotDirection(pred.en);
+  };
+
+  const switchPlotDirection = (dir: { en: string; cn: string; stage?: string; stageCn?: string }) => {
+    setCurrentMainLine(dir.en);
+    setCurrentMainLineCn(dir.cn);
+    if (dir.stage) setPlotStage(dir.stage);
+    if (dir.stageCn) setPlotStageCn(dir.stageCn);
+    autoSavePlotDirection(dir.en);
+    setShowDirectionDropdown(false);
   };
 
   const handleBackToPresets = () => {
     if (currentPresetId) {
       const preset = presets.find(p => p.id === currentPresetId);
       if (preset) {
-        // Auto-save plot progress: if we have a current main line, save it to preset.plotDirection
-        const updatedPreset = currentMainLine
-          ? { ...preset, plotDirection: currentMainLine }
-          : preset;
-        if (updatedPreset !== preset) {
-          updatePreset(updatedPreset);
-          setPresets(prev => prev.map(p => p.id === currentPresetId ? updatedPreset : p));
-        }
-        saveSession(currentPresetId, messages, updatedPreset.longTermMemory);
+        saveSession(currentPresetId, messages, preset.longTermMemory);
       }
     }
     showNotification('会话已保存');
@@ -909,12 +918,12 @@ export default function ChatPage() {
 
       {/* Chat Messages - scrollable */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3" onClick={() => setShowInstructionPicker(false)}>
-        {/* Persistent Main Line Bar */}
+        {/* Persistent Main Line Bar - standalone display & quick switch */}
         {currentMainLine && (
           <div className="sticky top-0 z-10 -mx-4 -mt-3 mb-2 px-4 py-2 bg-gradient-to-r from-amber-50/95 to-pink-50/95 backdrop-blur-sm border-b border-amber-100">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-medium shrink-0">主线</span>
+                <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-medium shrink-0">当前走向</span>
                 <span className="text-xs font-medium text-gray-800 truncate">{currentMainLine}</span>
                 {currentMainLineCn && <span className="text-[11px] text-gray-500 truncate">({currentMainLineCn})</span>}
               </div>
@@ -923,14 +932,35 @@ export default function ChatPage() {
                   {plotStageCn || plotStage}
                 </span>
               )}
-              <button
-                onClick={() => setShowPlotPanel(true)}
-                className="text-[10px] text-amber-500 hover:text-amber-700 shrink-0"
-              >详情</button>
+              {savedPlotDirections.length > 1 && (
+                <div className="relative" data-direction-dropdown>
+                  <button
+                    onClick={() => setShowDirectionDropdown(v => !v)}
+                    className="text-[10px] text-amber-500 hover:text-amber-700 shrink-0 flex items-center gap-0.5"
+                  >
+                    切换
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {showDirectionDropdown && (
+                    <div className="absolute right-0 top-5 z-20 bg-white rounded-lg shadow-lg border border-amber-100 py-1 min-w-[200px] max-w-[280px]">
+                      {savedPlotDirections.map((dir, i) => (
+                        <button
+                          key={i}
+                          onClick={() => switchPlotDirection(dir)}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-amber-50 transition-colors ${dir.en === currentMainLine ? 'bg-amber-50 font-medium' : ''}`}
+                        >
+                          <span className="text-gray-800">{dir.en}</span>
+                          {dir.cn && <span className="text-gray-400 ml-1">({dir.cn})</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
                 className="text-[10px] text-gray-400 hover:text-gray-600 shrink-0"
-              >更换</button>
+              >清除</button>
             </div>
             {progressDesc && (
               <p className="text-[10px] text-gray-400 mt-0.5 truncate">{progressDescCn || progressDesc}</p>
@@ -1100,16 +1130,10 @@ export default function ChatPage() {
 
             <div className="border-t border-amber-100" />
 
-            {/* Section 1: Current Main Line */}
+            {/* Section 1: Main Line Edit (viewing/switching is in the top bar) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">当前主线</span>
-                {currentMainLine && (
-                  <button
-                    onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
-                    className="text-[10px] text-gray-400 hover:text-gray-600"
-                  >清除</button>
-                )}
+                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">当前走向</span>
               </div>
               {currentMainLine ? (
                 <div className="p-2.5 rounded-lg border bg-amber-50/50 border-amber-200">
@@ -1117,7 +1141,6 @@ export default function ChatPage() {
                     <span className="text-xs font-medium text-amber-700">{currentMainLine}</span>
                     {currentMainLineCn && <span className="text-[11px] text-gray-500">({currentMainLineCn})</span>}
                     {plotStage && <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>}
-
                   </div>
                   {progressDesc && (
                     <p className="text-[11px] text-gray-500">{progressDesc}</p>
@@ -1125,12 +1148,6 @@ export default function ChatPage() {
                   {progressDescCn && (
                     <p className="text-[10px] text-gray-400 mt-0.5">{progressDescCn}</p>
                   )}
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <button
-                      onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
-                      className="text-[10px] text-gray-400 hover:text-gray-600"
-                    >更换</button>
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -1138,8 +1155,8 @@ export default function ChatPage() {
                     <input
                       type="text"
                       value={currentMainLine}
-                      onChange={e => setCurrentMainLine(e.target.value)}
-                      placeholder="手动输入主线名称，或点上方 AI 按钮自动概括"
+                      onChange={e => updateMainLineField('mainLine', e.target.value)}
+                      placeholder="手动输入走向，或点上方 AI 按钮自动概括"
                       className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
                     />
                   </div>
@@ -1388,42 +1405,21 @@ export default function ChatPage() {
               ) : plotPredictions.length > 0 ? (
                 <div className="space-y-2">
                   {plotPredictions.map((pred, i) => {
-                    const translation = predictionTranslations[i];
-                    const isSelected = selectedPredictionIdx === i;
+                    const isSelected = currentMainLine === pred.en;
                     return (
                       <div key={i} className={`rounded-lg border p-2 transition-colors ${isSelected ? 'border-amber-300 bg-amber-50' : 'border-amber-100 bg-white hover:bg-amber-50/30'}`}>
-                        <div
-                          className="cursor-pointer"
-                          onClick={() => flipPlotPrediction(i)}
-                        >
-                          {translation?.translating ? (
-                            <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
-                          ) : translation?.flipped && translation.cn ? (
-                            <p className="text-xs text-gray-800">{translation.cn}</p>
-                          ) : (
-                            <p className="text-xs text-gray-800">{pred}</p>
-                          )}
-                        </div>
+                        <p className="text-xs text-gray-800">{pred.en}</p>
+                        {pred.cn && <p className="text-[11px] text-gray-500 mt-0.5">{pred.cn}</p>}
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <button
-                            onClick={(e) => { e.stopPropagation(); copyContent(pred); }}
+                            onClick={() => copyContent(pred.en)}
                             className="text-[10px] text-amber-500 hover:text-amber-700"
                           >复制</button>
                           <span className="text-[10px] text-gray-300">|</span>
                           <button
-                            onClick={() => flipPlotPrediction(i)}
-                            className="text-[10px] text-gray-400 hover:text-gray-600"
-                          >翻转</button>
-                          <span className="text-[10px] text-gray-300">|</span>
-                          <button
-                            onClick={() => {
-                              setCurrentMainLine(pred);
-                              setCurrentMainLineCn('');
-                              setSelectedPredictionIdx(i);
-                              showNotification('已设为主线');
-                            }}
+                            onClick={() => selectPlotDirection(i)}
                             className={`text-[10px] font-medium ${isSelected ? 'text-amber-700' : 'text-amber-500 hover:text-amber-700'}`}
-                          >{isSelected ? '✓ 已为主线' : '锁定为主线'}</button>
+                          >{isSelected ? '✓ 当前走向' : '选为走向'}</button>
                         </div>
                       </div>
                     );
@@ -1435,28 +1431,27 @@ export default function ChatPage() {
                       <div className="flex items-center gap-1 mb-1">
                         <span className="text-[9px] font-medium text-violet-500 bg-violet-100 px-1 py-0.5 rounded">阶段性转折</span>
                       </div>
-                      <div className="cursor-pointer" onClick={flipPlotTwist}>
-                        {predictionTranslations[-1]?.translating ? (
-                          <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
-                        ) : predictionTranslations[-1]?.flipped && predictionTranslations[-1]?.cn ? (
-                          <p className="text-xs text-gray-800">{predictionTranslations[-1].cn}</p>
-                        ) : (
-                          <p className="text-xs text-gray-800">{plotTwist}</p>
-                        )}
+                      <div>
+                        <p className="text-xs text-gray-800">{plotTwist}</p>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1.5">
-                        <button onClick={(e) => { e.stopPropagation(); copyContent(plotTwist); }} className="text-[10px] text-violet-500 hover:text-violet-700">复制</button>
-                        <span className="text-[10px] text-gray-300">|</span>
-                        <button onClick={flipPlotTwist} className="text-[10px] text-gray-400 hover:text-gray-600">翻转</button>
+                        <button onClick={() => copyContent(plotTwist || '')} className="text-[10px] text-violet-500 hover:text-violet-700">复制</button>
                         <span className="text-[10px] text-gray-300">|</span>
                         <button
                           onClick={() => {
-                            setCurrentMainLine(plotTwist);
-                            setCurrentMainLineCn('');
-                            showNotification('转折已设为主线');
+                            if (plotTwist) {
+                              setCurrentMainLine(plotTwist);
+                              setCurrentMainLineCn('');
+                              setSavedPlotDirections(prev => {
+                                if (prev.some(d => d.en === plotTwist)) return prev;
+                                return [...prev, { en: plotTwist, cn: '' }];
+                              });
+                              autoSavePlotDirection(plotTwist);
+                              showNotification('转折已设为当前走向');
+                            }
                           }}
                           className="text-[10px] text-violet-500 hover:text-violet-700 font-medium"
-                        >锁定为主线</button>
+                        >选为走向</button>
                       </div>
                     </div>
                   )}

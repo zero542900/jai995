@@ -64,9 +64,9 @@ BAD examples (NEVER write like this):
 OUTPUT FORMAT: Return a JSON object with NO markdown formatting, NO code blocks, just raw JSON:
 {
   "predictions": [
-    "First prediction: 1-2 sentences about the story's overall direction.",
-    "Second prediction: 1-2 sentences, a different possible arc.",
-    "Third prediction: 1-2 sentences, another distinct possibility."
+    { "en": "First prediction in English: 1-2 sentences about the story's overall direction.", "cn": "第一条预测的中文翻译" },
+    { "en": "Second prediction in English, a different possible arc.", "cn": "第二条预测的中文翻译" },
+    { "en": "Third prediction in English, another distinct possibility.", "cn": "第三条预测的中文翻译" }
   ]${isNearClimax ? ',\n  "twist": "A stage-transition prediction: a major shift in the story arc."' : ''}
 }
 

@@ -54,16 +54,16 @@ const themeInitScript = `
         'jai-success': '#5AA07A', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(195,160,130,0.20)'
       },
       midnight: {
-        'jai-bg': '#D8B090', 'jai-secondary': '#C89870', 'jai-accent': '#B88050',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#D0A888', 'jai-input-bg': '#E8D0B0',
-        'jai-text': '#4A3018', 'jai-text-secondary': '#8A6840', 'jai-muted': '#E8D0B0',
-        'jai-success': '#5AA078', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(170,130,80,0.20)'
+        'jai-bg': '#E0C0B0', 'jai-secondary': '#C89078', 'jai-accent': '#C45A30',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#D0A090', 'jai-input-bg': '#ECD0C0',
+        'jai-text': '#4A2818', 'jai-text-secondary': '#8A6850', 'jai-muted': '#ECD0C0',
+        'jai-success': '#5AA078', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(180,100,60,0.20)'
       },
       warmnight: {
-        'jai-bg': '#E0B090', 'jai-secondary': '#D09870', 'jai-accent': '#C08058',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#D8A888', 'jai-input-bg': '#ECD0B0',
-        'jai-text': '#4A3020', 'jai-text-secondary': '#8A6848', 'jai-muted': '#ECD0B0',
-        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(180,130,80,0.20)'
+        'jai-bg': '#F0D0A8', 'jai-secondary': '#E0A858', 'jai-accent': '#FE8005',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#E0B888', 'jai-input-bg': '#F8DDB0',
+        'jai-text': '#3A2008', 'jai-text-secondary': '#7A5828', 'jai-muted': '#F8DDB0',
+        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(200,140,40,0.20)'
       },
       daylight: {
         'jai-bg': '#F5F0EC', 'jai-secondary': '#E0D8D0', 'jai-accent': '#B0A090',

@@ -8,6 +8,8 @@ export interface BilingualText {
 export interface PlotData {
   currentMainLine: string;
   currentMainLineCn: string;
+  currentDirection: string;
+  currentDirectionCn: string;
   plotStage: string;
   plotStageCn: string;
   progressDesc: string;

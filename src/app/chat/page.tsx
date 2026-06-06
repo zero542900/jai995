@@ -160,17 +160,19 @@ export default function ChatPage() {
   const [plotDirectionKeyword, setPlotDirectionKeyword] = useState('');
   const [selectedPredictionIdx, setSelectedPredictionIdx] = useState<number | null>(null);
 
-  // Main storyline states
+  // Current plot direction (shown in top bar, switched between saved directions)
+  const [currentDirection, setCurrentDirection] = useState('');
+  const [currentDirectionCn, setCurrentDirectionCn] = useState('');
+  const [savedPlotDirections, setSavedPlotDirections] = useState<{ en: string; cn: string; stage?: string; stageCn?: string }[]>([]);
+  const [showDirectionDropdown, setShowDirectionDropdown] = useState(false);
+
+  // Main storyline summary (shown in plot panel, from AI analysis)
   const [currentMainLine, setCurrentMainLine] = useState('');
   const [currentMainLineCn, setCurrentMainLineCn] = useState('');
   const [plotStage, setPlotStage] = useState('');
   const [plotStageCn, setPlotStageCn] = useState('');
   const [progressDesc, setProgressDesc] = useState('');
   const [progressDescCn, setProgressDescCn] = useState('');
-
-  // Saved plot directions for quick switch (accumulated across predictions)
-  const [savedPlotDirections, setSavedPlotDirections] = useState<{ en: string; cn: string; stage?: string; stageCn?: string }[]>([]);
-  const [showDirectionDropdown, setShowDirectionDropdown] = useState(false);
 
   // AI analysis state
   const [plotAnalyzeLoading, setPlotAnalyzeLoading] = useState(false);
@@ -300,6 +302,8 @@ export default function ChatPage() {
         const pd = preset.plotData;
         if (pd.currentMainLine) setCurrentMainLine(pd.currentMainLine);
         if (pd.currentMainLineCn) setCurrentMainLineCn(pd.currentMainLineCn);
+        if (pd.currentDirection) setCurrentDirection(pd.currentDirection);
+        if (pd.currentDirectionCn) setCurrentDirectionCn(pd.currentDirectionCn);
         if (pd.plotStage) setPlotStage(pd.plotStage);
         if (pd.plotStageCn) setPlotStageCn(pd.plotStageCn);
         if (pd.progressDesc) setProgressDesc(pd.progressDesc);
@@ -311,8 +315,9 @@ export default function ChatPage() {
         if (pd.savedPlotDirections) setSavedPlotDirections(pd.savedPlotDirections);
         if (pd.suggestedKeywords) setSuggestedKeywords(pd.suggestedKeywords);
       } else if (preset.plotDirection) {
-        // Legacy: migrate from plotDirection
+        // Legacy: migrate from plotDirection (was used as both summary and direction)
         setCurrentMainLine(preset.plotDirection);
+        setCurrentDirection(preset.plotDirection);
         setSavedPlotDirections([{ en: preset.plotDirection, cn: '' }]);
       }
     }
@@ -427,9 +432,10 @@ export default function ChatPage() {
   const getAllKeywords = () => [...selectedEnding, ...selectedRelation, ...selectedScene, ...selectedStageKeyword];
 
   const buildMainLinePrompt = useCallback(() => {
-    if (!currentMainLine.trim() && getAllKeywords().length === 0) return '';
+    if (!currentMainLine.trim() && !currentDirection.trim() && getAllKeywords().length === 0) return '';
     const parts: string[] = [];
-    if (currentMainLine.trim()) parts.push(`[当前主线: ${currentMainLine}]`);
+    if (currentMainLine.trim()) parts.push(`[主线概括: ${currentMainLine}]`);
+    if (currentDirection.trim()) parts.push(`[当前剧情走向: ${currentDirection}]`);
     const allKw = getAllKeywords();
     if (allKw.length > 0) parts.push(`[主线关键词: ${allKw.join('、')}]`);
     if (plotStage) parts.push(`[当前阶段: ${plotStage}]`);
@@ -437,7 +443,7 @@ export default function ChatPage() {
     return parts.length > 0
       ? `\n\n[主线指令 - 灵感和扩写必须向此方向靠拢]\n${parts.join('\n')}\n所有后续生成的灵感、扩写内容都应推动剧情向主线方向发展。`
       : '';
-  }, [currentMainLine, selectedEnding, selectedRelation, selectedScene, selectedStageKeyword, plotStage, progressDesc]);
+  }, [currentMainLine, currentDirection, selectedEnding, selectedRelation, selectedScene, selectedStageKeyword, plotStage, progressDesc]);
 
   // ========== Message Actions ==========
   const sendUserMessage = () => {
@@ -766,10 +772,6 @@ export default function ChatPage() {
       if (data.mainLineName) {
         setCurrentMainLine(data.mainLineName);
         setCurrentMainLineCn(data.mainLineNameCn || '');
-        setSavedPlotDirections(prev => {
-          if (prev.some(d => d.en === data.mainLineName)) return prev;
-          return [...prev, { en: data.mainLineName, cn: data.mainLineNameCn || '', stage: data.stage, stageCn: data.stageCn }];
-        });
       }
       if (data.stage) {
         setPlotStage(data.stage);
@@ -853,6 +855,8 @@ export default function ChatPage() {
     const plotData: PlotData = {
       currentMainLine,
       currentMainLineCn,
+      currentDirection,
+      currentDirectionCn,
       plotStage,
       plotStageCn,
       progressDesc,
@@ -864,7 +868,7 @@ export default function ChatPage() {
       savedPlotDirections,
       suggestedKeywords,
     };
-    const updated = { ...preset, plotData, plotDirection: currentMainLine };
+    const updated = { ...preset, plotData, plotDirection: currentDirection };
     updatePreset(updated);
     setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
   };
@@ -877,7 +881,7 @@ export default function ChatPage() {
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMainLine, currentMainLineCn, plotStage, plotStageCn, progressDesc, progressDescCn,
+  }, [currentMainLine, currentMainLineCn, currentDirection, currentDirectionCn, plotStage, plotStageCn, progressDesc, progressDescCn,
       selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
       savedPlotDirections, suggestedKeywords]);
 
@@ -885,8 +889,8 @@ export default function ChatPage() {
     const pred = plotPredictions[idx];
     if (!pred) return;
     setSelectedPredictionIdx(idx);
-    setCurrentMainLine(pred.en);
-    setCurrentMainLineCn(pred.cn);
+    setCurrentDirection(pred.en);
+    setCurrentDirectionCn(pred.cn);
     setSavedPlotDirections(prev => {
       if (prev.some(d => d.en === pred.en)) return prev;
       return [...prev, { en: pred.en, cn: pred.cn, stage: plotStage, stageCn: plotStageCn }];
@@ -894,8 +898,8 @@ export default function ChatPage() {
   };
 
   const switchPlotDirection = (dir: { en: string; cn: string; stage?: string; stageCn?: string }) => {
-    setCurrentMainLine(dir.en);
-    setCurrentMainLineCn(dir.cn);
+    setCurrentDirection(dir.en);
+    setCurrentDirectionCn(dir.cn);
     if (dir.stage) setPlotStage(dir.stage);
     if (dir.stageCn) setPlotStageCn(dir.stageCn);
     setShowDirectionDropdown(false);
@@ -942,20 +946,15 @@ export default function ChatPage() {
 
       {/* Chat Messages - scrollable */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3" onClick={() => setShowInstructionPicker(false)}>
-        {/* Persistent Main Line Bar - standalone display & quick switch */}
-        {currentMainLine && (
+        {/* Persistent Direction Bar - standalone display & quick switch */}
+        {currentDirection && (
           <div className="sticky top-0 z-10 -mx-4 -mt-3 mb-2 px-4 py-2 bg-gradient-to-r from-amber-50/95 to-pink-50/95 backdrop-blur-sm border-b border-amber-100">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-medium shrink-0">当前走向</span>
-                <span className="text-xs font-medium text-gray-800 truncate">{currentMainLine}</span>
-                {currentMainLineCn && <span className="text-[11px] text-gray-500 truncate">({currentMainLineCn})</span>}
+                <span className="text-xs font-medium text-gray-800 truncate">{currentDirection}</span>
+                {currentDirectionCn && <span className="text-[11px] text-gray-500 truncate">({currentDirectionCn})</span>}
               </div>
-              {plotStage && (
-                <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded shrink-0">
-                  {plotStageCn || plotStage}
-                </span>
-              )}
               {savedPlotDirections.length > 1 && (
                 <div className="relative" data-direction-dropdown>
                   <button
@@ -971,7 +970,7 @@ export default function ChatPage() {
                         <button
                           key={i}
                           onClick={() => switchPlotDirection(dir)}
-                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-amber-50 transition-colors ${dir.en === currentMainLine ? 'bg-amber-50 font-medium' : ''}`}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-amber-50 transition-colors ${dir.en === currentDirection ? 'bg-amber-50 font-medium' : ''}`}
                         >
                           <span className="text-gray-800">{dir.en}</span>
                           {dir.cn && <span className="text-gray-400 ml-1">({dir.cn})</span>}
@@ -982,13 +981,10 @@ export default function ChatPage() {
                 </div>
               )}
               <button
-                onClick={() => { setCurrentMainLine(''); setCurrentMainLineCn(''); setPlotStage(''); setPlotStageCn(''); setProgressDesc(''); setProgressDescCn(''); }}
+                onClick={() => { setCurrentDirection(''); setCurrentDirectionCn(''); }}
                 className="text-[10px] text-gray-400 hover:text-gray-600 shrink-0"
               >清除</button>
             </div>
-            {progressDesc && (
-              <p className="text-[10px] text-gray-400 mt-0.5 truncate">{progressDescCn || progressDesc}</p>
-            )}
           </div>
         )}
         {messages.map(msg => (
@@ -1154,18 +1150,23 @@ export default function ChatPage() {
 
             <div className="border-t border-amber-100" />
 
-            {/* Section 1: Main Line Edit (viewing/switching is in the top bar) */}
+            {/* Section 1: Main Line Summary (from AI analysis, direction switching is in the top bar) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">当前走向</span>
+                <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">剧情概括</span>
               </div>
               {currentMainLine ? (
                 <div className="p-2.5 rounded-lg border bg-amber-50/50 border-amber-200">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-medium text-amber-700">{currentMainLine}</span>
                     {currentMainLineCn && <span className="text-[11px] text-gray-500">({currentMainLineCn})</span>}
-                    {plotStage && <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>}
                   </div>
+                  {plotStage && (
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-[10px] text-gray-400">阶段:</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>
+                    </div>
+                  )}
                   {progressDesc && (
                     <p className="text-[11px] text-gray-500">{progressDesc}</p>
                   )}
@@ -1180,7 +1181,7 @@ export default function ChatPage() {
                       type="text"
                       value={currentMainLine}
                       onChange={e => setCurrentMainLine(e.target.value)}
-                      placeholder="手动输入走向，或点上方 AI 按钮自动概括"
+                      placeholder="手动输入概括，或点上方 AI 按钮自动概括"
                       className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-amber-100 bg-amber-50/30 focus:border-amber-300 focus:outline-none placeholder:text-amber-300"
                     />
                   </div>
@@ -1429,7 +1430,7 @@ export default function ChatPage() {
               ) : plotPredictions.length > 0 ? (
                 <div className="space-y-2">
                   {plotPredictions.map((pred, i) => {
-                    const isSelected = currentMainLine === pred.en;
+                    const isSelected = currentDirection === pred.en;
                     return (
                       <div key={i} className={`rounded-lg border p-2 transition-colors ${isSelected ? 'border-amber-300 bg-amber-50' : 'border-amber-100 bg-white hover:bg-amber-50/30'}`}>
                         <p className="text-xs text-gray-800">{pred.en}</p>
@@ -1464,8 +1465,8 @@ export default function ChatPage() {
                         <button
                           onClick={() => {
                             if (plotTwist) {
-                              setCurrentMainLine(plotTwist);
-                              setCurrentMainLineCn('');
+                              setCurrentDirection(plotTwist);
+                              setCurrentDirectionCn('');
                               setSavedPlotDirections(prev => {
                                 if (prev.some(d => d.en === plotTwist)) return prev;
                                 return [...prev, { en: plotTwist, cn: '' }];

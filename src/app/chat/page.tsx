@@ -130,27 +130,39 @@ export default function ChatPage() {
     if (!currentPresetId) return;
     const sessions = getSessions();
     const preset = presets.find(p => p.id === currentPresetId);
-    if (sessions[currentPresetId] && sessions[currentPresetId].messages.length > 0) {
-      setMessages(sessions[currentPresetId].messages);
-    } else if (preset) {
-      // Initialize with greeting
+    
+    // Build greeting message
+    let greetingMsg: ChatMessage | null = null;
+    if (preset) {
       const greeting = (preset.greeting || '')
         .replace(/\{\{char\}\}/gi, preset.charInfo?.split('\n')[0]?.replace(/[^a-zA-Z\s]/g, '').trim() || 'Char')
         .replace(/\{\{user\}\}/gi, preset.userCard?.split('\n')[0]?.replace(/[^a-zA-Z\s]/g, '').trim() || 'User');
       if (greeting.trim()) {
-        setMessages([{
-          id: crypto.randomUUID(),
+        greetingMsg = {
+          id: 'greeting-' + currentPresetId,
           role: 'bot',
           content: greeting,
           translated: false,
           translating: false,
           flipped: false,
           editing: false,
-          timestamp: Date.now()
-        }]);
-      } else {
-        setMessages([]);
+          timestamp: 0
+        };
       }
+    }
+    
+    if (sessions[currentPresetId] && sessions[currentPresetId].messages.length > 0) {
+      const saved = sessions[currentPresetId].messages;
+      // Always ensure greeting is the first message
+      if (greetingMsg && saved[0]?.id !== greetingMsg.id) {
+        setMessages([greetingMsg, ...saved]);
+      } else {
+        setMessages(saved);
+      }
+    } else if (greetingMsg) {
+      setMessages([greetingMsg]);
+    } else {
+      setMessages([]);
     }
   }, [currentPresetId, presets]);
 
@@ -195,23 +207,13 @@ export default function ChatPage() {
   const sendBotMessage = () => {
     if (!jaiInput.trim()) return;
     const content = jaiInput.trim();
-    setMessages(prev => {
-      // If last message is a bot message, replace it
-      if (prev.length > 0 && prev[prev.length - 1].role === 'bot') {
-        return prev.map((m, i) => i === prev.length - 1
-          ? { ...m, content, translated: false, translating: false, flipped: false, chineseTranslation: undefined }
-          : m
-        );
-      }
-      // Otherwise append
-      return [...prev, {
-        id: crypto.randomUUID(),
-        role: 'bot' as const,
-        content,
-        translated: false, translating: false, flipped: false, editing: false,
-        timestamp: Date.now()
-      }];
-    });
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: 'bot' as const,
+      content,
+      translated: false, translating: false, flipped: false, editing: false,
+      timestamp: Date.now()
+    }]);
     setJaiInput('');
   };
 
@@ -244,7 +246,7 @@ export default function ChatPage() {
       // Translate first
       setMessages(prev => prev.map(m => m.id === id ? { ...m, translating: true } : m));
       try {
-        const apiKey = localStorage.getItem('jai-api-key');
+        const apiKey = localStorage.getItem('jai_api_key');
         if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
         const res = await fetch('/api/translate', {
@@ -275,7 +277,7 @@ export default function ChatPage() {
   // ========== AI Features ==========
   const handleInspiration = async () => {
     if (!currentPreset) { showNotification('请选择预设'); return; }
-    const apiKey = localStorage.getItem('jai-api-key');
+    const apiKey = localStorage.getItem('jai_api_key');
     if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
     setInspirationLoading(true);
@@ -338,7 +340,7 @@ export default function ChatPage() {
 
   const handleExpand = async () => {
     if (!expandBrief.trim() || !currentPreset) return;
-    const apiKey = localStorage.getItem('jai-api-key');
+    const apiKey = localStorage.getItem('jai_api_key');
     if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
     setExpandLoading(true);
@@ -393,7 +395,7 @@ export default function ChatPage() {
 
   const handleMemory = async () => {
     if (!currentPreset) { showNotification('请选择预设'); return; }
-    const apiKey = localStorage.getItem('jai-api-key');
+    const apiKey = localStorage.getItem('jai_api_key');
     if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
     setMemoryLoading(true);

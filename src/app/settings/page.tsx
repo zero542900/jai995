@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { IconCheck, IconKey } from '@/components/icons';
 import { getApiKey, setApiKey } from '@/lib/storage';
+import { THEMES, getCurrentThemeId, applyTheme } from '@/lib/themes';
 
 export default function SettingsPage() {
   const [key, setKey] = useState('');
   const [saved, setSaved] = useState(false);
   const [maskedKey, setMaskedKey] = useState('');
+  const [currentThemeId, setCurrentThemeId] = useState('rose');
 
   useEffect(() => {
     const stored = getApiKey();
@@ -18,6 +20,7 @@ export default function SettingsPage() {
       setMaskedKey(stored.slice(0, 6) + '***' + stored.slice(-4));
       setSaved(true);
     }
+    setCurrentThemeId(getCurrentThemeId());
   }, []);
 
   const handleSave = () => {
@@ -37,10 +40,85 @@ export default function SettingsPage() {
     setMaskedKey('');
   };
 
+  const handleThemeChange = (themeId: string) => {
+    applyTheme(themeId);
+    setCurrentThemeId(themeId);
+  };
+
   return (
     <div className="page-enter space-y-6">
       <h1 className="text-xl font-semibold text-foreground">设置</h1>
 
+      {/* 主题选择 */}
+      <Card className="border-jai-card-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-jai-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+            主题配色
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            选择你喜欢的配色方案，切换后立即生效。
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {THEMES.map((theme) => {
+              const isActive = currentThemeId === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  onClick={() => handleThemeChange(theme.id)}
+                  className={`
+                    relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-300 text-left
+                    ${isActive
+                      ? 'border-jai-accent shadow-[0_2px_8px_var(--color-jai-shadow)]'
+                      : 'border-jai-card-border hover:border-jai-secondary hover:shadow-[0_2px_8px_var(--color-jai-shadow)]'
+                    }
+                  `}
+                >
+                  {/* 色块预览 */}
+                  <div className="flex-shrink-0 flex flex-col gap-0.5">
+                    <div className="flex gap-0.5">
+                      <div className="w-5 h-5 rounded-md" style={{ backgroundColor: theme.colors['jai-bg'] }} />
+                      <div className="w-5 h-5 rounded-md" style={{ backgroundColor: theme.colors['jai-secondary'] }} />
+                      <div className="w-5 h-5 rounded-md" style={{ backgroundColor: theme.colors['jai-accent'] }} />
+                    </div>
+                    <div className="flex gap-0.5">
+                      <div className="w-5 h-5 rounded-md border" style={{ backgroundColor: theme.colors['jai-card'], borderColor: theme.colors['jai-card-border'] }} />
+                      <div className="w-5 h-5 rounded-md" style={{ backgroundColor: theme.colors['jai-input-bg'] }} />
+                      <div className="w-5 h-5 rounded-md" style={{ backgroundColor: theme.colors['jai-text'] }} />
+                    </div>
+                  </div>
+
+                  {/* 主题信息 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-jai-text">{theme.name}</span>
+                      <span className="text-xs text-jai-text-secondary">{theme.nameEn}</span>
+                    </div>
+                    <p className="text-xs text-jai-text-secondary mt-0.5 truncate">{theme.description}</p>
+                  </div>
+
+                  {/* 选中标记 */}
+                  {isActive && (
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-jai-success flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* API Key 设置 */}
       <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-1.5"><IconKey className="w-4 h-4 text-jai-secondary" /> DeepSeek API Key</CardTitle>
@@ -51,9 +129,9 @@ export default function SettingsPage() {
           </p>
 
           {saved && (
-            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <IconCheck className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm text-emerald-700">
+            <div className="flex items-center gap-2 p-3 bg-jai-success/10 border border-jai-success/30 rounded-lg">
+              <IconCheck className="w-4 h-4 text-jai-success" />
+              <span className="text-sm text-jai-success">
                 已保存 Key: <code className="font-mono">{maskedKey}</code>
               </span>
             </div>

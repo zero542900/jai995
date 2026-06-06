@@ -2098,7 +2098,7 @@ export default function ChatPage() {
 
       {/* Notification */}
       {notification && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-[#4A3F3F] text-white text-sm rounded-lg shadow-lg animate-fade-in">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-jai-text text-white text-sm rounded-lg shadow-lg animate-fade-in">
           {notification}
         </div>
       )}

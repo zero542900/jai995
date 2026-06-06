@@ -157,6 +157,9 @@ export default function ChatPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showFirstTimeTip, setShowFirstTimeTip] = useState(false);
   const [greetingShown, setGreetingShown] = useState(false);
+  const [greetingFlipped, setGreetingFlipped] = useState(false);
+  const [greetingTranslation, setGreetingTranslation] = useState('');
+  const [greetingTranslating, setGreetingTranslating] = useState(false);
 
   // JAI Translation area
   const [jaiOriginal, setJaiOriginal] = useState('');
@@ -326,6 +329,57 @@ export default function ChatPage() {
     if (jaiDebounceRef.current) clearTimeout(jaiDebounceRef.current);
     jaiDebounceRef.current = setTimeout(() => translateJAI(text), 1500);
   };
+
+  // Greeting flip handler - translate on first flip
+  const handleGreetingFlip = useCallback(async () => {
+    if (greetingFlipped) {
+      setGreetingFlipped(false);
+      return;
+    }
+    // Flipping to translation side
+    if (!greetingTranslation && messages.length > 0 && messages[0].role === 'system') {
+      const originalText = messages[0].content;
+      const key = getApiKey();
+      if (originalText && key) {
+        setGreetingTranslating(true);
+        try {
+          const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: originalText, apiKey: key }),
+          });
+          if (!res.ok) throw new Error('Translation failed');
+          const reader = res.body?.getReader();
+          const decoder = new TextDecoder();
+          let result = '';
+          while (reader) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') break;
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.content) {
+                    result += parsed.content;
+                    setGreetingTranslation(result);
+                  }
+                } catch { /* skip */ }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Greeting translation error:', e);
+        } finally {
+          setGreetingTranslating(false);
+        }
+      }
+    }
+    setGreetingFlipped(true);
+  }, [greetingFlipped, greetingTranslation, messages]);
 
   // Build chat history string for AI context
   const buildChatHistory = useCallback(() => {
@@ -783,8 +837,20 @@ Always read the recent 5-10 messages for context before responding. If there is 
               )}
               <div className="whitespace-pre-wrap">{msg.content}</div>
               {msg.role === 'system' && (
-                <div className="mt-1 text-amber-400 flex items-center gap-1">
-                  <IconFlip className="w-3 h-3" /> 开场白
+                <div className="mt-2 pt-2 border-t border-amber-200/50">
+                  <button
+                    onClick={handleGreetingFlip}
+                    disabled={greetingTranslating}
+                    className="flex items-center gap-1.5 text-xs text-amber-500 hover:text-amber-600 transition-colors"
+                  >
+                    <IconFlip className="w-3.5 h-3.5" />
+                    {greetingTranslating ? '翻译中...' : greetingFlipped ? '查看原文' : '查看中文翻译'}
+                  </button>
+                  {greetingFlipped && greetingTranslation && (
+                    <div className="mt-2 text-xs text-amber-700 whitespace-pre-wrap leading-relaxed border-t border-amber-200/50 pt-2">
+                      {greetingTranslation}
+                    </div>
+                  )}
                 </div>
               )}
               {msg.role === 'assistant' && msg.content && (

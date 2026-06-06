@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown } from '@/components/icons';
 import { copyToClipboard } from '@/lib/utils';
@@ -116,6 +116,14 @@ const TRANSLATION_INSTRUCTION = `你是一位精通中英双语、深谙同人�
 
 // ========== Component ==========
 export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="h-[100dvh] bg-jai-bg flex items-center justify-center"><span className="text-jai-text-secondary text-sm">加载中...</span></div>}>
+      <ChatPageInner />
+    </Suspense>
+  );
+}
+
+function ChatPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const presetIdParam = searchParams.get('preset');

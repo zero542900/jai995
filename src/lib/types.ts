@@ -5,6 +5,15 @@ export interface BilingualText {
   cn: string;
 }
 
+export interface StyleSettings {
+  tone: string;
+  genre: string;
+  intensity: string;
+  rhythm: string;
+  optionalStyles: string[];
+  mixModeNote?: string;
+}
+
 export interface PlotData {
   currentMainLine: string;
   currentMainLineCn: string;
@@ -25,6 +34,7 @@ export interface PlotData {
     scene: BilingualText[];
     stage: BilingualText[];
   };
+  styleSettings?: StyleSettings;
 }
 
 export interface Preset {

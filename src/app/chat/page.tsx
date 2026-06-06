@@ -307,6 +307,13 @@ export default function ChatPage() {
         if (pd.selectedStageKeyword) setSelectedStageKeyword(pd.selectedStageKeyword);
         if (pd.savedPlotDirections) setSavedPlotDirections(pd.savedPlotDirections);
         if (pd.suggestedKeywords) setSuggestedKeywords(pd.suggestedKeywords);
+        if (pd.styleSettings) {
+          if (pd.styleSettings.tone) setStyleTone(pd.styleSettings.tone);
+          if (pd.styleSettings.genre) setStyleGenre(pd.styleSettings.genre);
+          if (pd.styleSettings.intensity) setStyleEmotion(pd.styleSettings.intensity);
+          if (pd.styleSettings.rhythm) setStylePace(pd.styleSettings.rhythm);
+          if (pd.styleSettings.optionalStyles) setStyleOptional(pd.styleSettings.optionalStyles);
+        }
       } else if (preset.plotDirection) {
         // Legacy: migrate from plotDirection (was used as both summary and direction)
         setCurrentMainLine(preset.plotDirection);
@@ -890,6 +897,14 @@ export default function ChatPage() {
       selectedStageKeyword,
       savedPlotDirections,
       suggestedKeywords,
+      styleSettings: {
+        tone: styleTone,
+        genre: styleGenre,
+        intensity: styleEmotion,
+        rhythm: stylePace,
+        optionalStyles: styleOptional,
+        mixModeNote,
+      },
     };
     const updated = { ...preset, plotData, plotDirection: currentDirection };
     updatePreset(updated);
@@ -906,7 +921,8 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMainLine, currentMainLineCn, currentDirection, currentDirectionCn, plotStage, plotStageCn, progressDesc, progressDescCn,
       selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
-      savedPlotDirections, suggestedKeywords]);
+      savedPlotDirections, suggestedKeywords,
+      styleTone, styleGenre, styleEmotion, stylePace, styleOptional, mixModeNote]);
 
   const selectPlotDirection = (idx: number) => {
     const pred = plotPredictions[idx];

@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       charInfo, userCard, chatHistory, longTermMemory, plotDirection,
-      messageCount, directionKeyword, personMode,
+      messageCount, directionKeyword, personMode, stylePrompt,
       selectedPrediction, // if provided, generate a User reply advancing that direction
       apiKey
     } = body;
@@ -29,9 +29,12 @@ export async function POST(request: NextRequest) {
         ? `\n\nPREFERRED DIRECTION: The user wants the plot to move toward "${directionKeyword}". Adjust your predictions accordingly.`
         : '';
 
+      const styleInstruction = stylePrompt ? `\n\nSTYLE OVERRIDE: ${stylePrompt}` : '';
+
       const systemPrompt = `You are a plot prediction assistant for JanitorAI roleplay. Generate 3 possible plot directions from the User's perspective.
 
 ${personInstruction}
+${styleInstruction}
 
 CONTEXT:
 - Character (Char): ${charInfo || '(not provided)'}

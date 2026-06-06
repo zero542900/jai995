@@ -126,6 +126,14 @@ export default function ChatPage() {
   const [personMode, setPersonMode] = useState<'first' | 'third'>('third');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
 
+  // Style selector states
+  const [styleTone, setStyleTone] = useState<string>(''); // 剧集调性
+  const [styleGenre, setStyleGenre] = useState<string>(''); // 经典类型
+  const [styleEmotion, setStyleEmotion] = useState<string>(''); // 情感浓度
+  const [stylePace, setStylePace] = useState<string>(''); // 叙事节奏
+  const [styleOptional, setStyleOptional] = useState<string[]>([]); // 可选风格(多选)
+  const [showOptionalMenu, setShowOptionalMenu] = useState(false);
+
   // Feature states
   const [inspirationLoading, setInspirationLoading] = useState(false);
   const [inspirationItems, setInspirationItems] = useState<Array<{ en: string; cn?: string; flipped: boolean; translating?: boolean }>>([]);
@@ -173,9 +181,23 @@ export default function ChatPage() {
     }
   }, [showInstructionPicker]);
 
+  // Close optional menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (optionalMenuRef.current && !optionalMenuRef.current.contains(e.target as Node)) {
+        setShowOptionalMenu(false);
+      }
+    };
+    if (showOptionalMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showOptionalMenu]);
+
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const optionalMenuRef = useRef<HTMLDivElement>(null);
 
   // ========== Load data ==========
   useEffect(() => {
@@ -281,6 +303,51 @@ export default function ChatPage() {
     return messages.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${stripInstructions(m.content)}`).join('\n');
   }, [messages]);
 
+  // Build style prompt string for API injection
+  const STYLE_OPTIONS: Record<string, Record<string, string>> = {
+    tone: {
+      '欧美剧集': '多线叙事，分幕节奏。对话克制但有重量。每轮对话推动一个情绪节点。适合长线发展。',
+      '电影质感': '镜头感强，场景切换明显。对话密度低，动作和环境描述占比更高。画面感和张力优先。适合高潮段落或单幕收束。',
+    },
+    genre: {
+      '黑色电影': '冷调、阴影、雨夜。对话简练、暗示多。权力博弈以低语和眼神完成。适合背叛、潜伏、调查线。',
+      '西部片': '空旷、沉默、对峙。话少，靠动作和眼神推进。荣誉、复仇、清算作为核心驱动。适合孤立场景、最后通牒、决斗。',
+      '赛博朋克': '光与霓虹，潮湿街巷。对话带有信息密度，夹杂术语。科技与肉体的界限模糊。适合改造、入侵、身份错位。',
+      '战争军事': '纪律性对话，战术动作为主。感情交流被压缩成暗示和短句。服从、忠诚、牺牲、崩坏。适合小队、任务、撤退、溃败线。',
+    },
+    emotion: {
+      '强强对抗': '对话如击剑，每句都是试探。试探、压制、反杀交替出现。谁先软谁输。适合权力换手、底线博弈。',
+      '暧昧推拉': '每句话都带未完成的重量。既定的距离感。肢体和视线描写替代码头。适合持续拉扯、立场渐染。',
+      '极度压抑': '静默段落占主导。情绪通过动作泄露。对话断句多、间隙长。适合创伤、废墟、对峙。',
+      '极度暴力': '行动优先于语言。对话纯粹功能性，全为推进动作。身体语言给出全部信息。适合围猎、清算、反杀。',
+    },
+    pace: {
+      '慢燃': '前几轮只有铺垫和氛围。细节堆叠。情绪在沉默中积累。适合建立关系、倒叙展开。',
+      '快切': '每轮对话切换场景或时间点。推进迅速，冲突提早暴露。适合闪回/多线穿插。',
+      '单幕压缩': '所有事件在一轮完整场景内发生。最紧凑的结构。适合短线收束、一次爆发。',
+    },
+    optional: {
+      '加一点浪漫': '对话软一点。手与眼。对看变成事件。',
+      '加一点背叛': '所有对话都可以是伏笔。沉默不可信。谁先回头谁输。',
+      '加一点救赎': '对方是伤口也是方向。一步远或者一步晚。动作比语言更接近答案。',
+      '加一点牺牲': '台词不全。心里话只有一半。另一部分用动作替掉。',
+    },
+  };
+
+  const buildStylePrompt = useCallback(() => {
+    const parts: string[] = [];
+    if (styleTone) parts.push(`[剧集调性: ${styleTone}] ${STYLE_OPTIONS.tone[styleTone]}`);
+    if (styleGenre) parts.push(`[经典类型: ${styleGenre}] ${STYLE_OPTIONS.genre[styleGenre]}`);
+    if (styleEmotion) parts.push(`[情感浓度: ${styleEmotion}] ${STYLE_OPTIONS.emotion[styleEmotion]}`);
+    if (stylePace) parts.push(`[叙事节奏: ${stylePace}] ${STYLE_OPTIONS.pace[stylePace]}`);
+    styleOptional.forEach(s => {
+      if (STYLE_OPTIONS.optional[s]) parts.push(`[可选风格: ${s}] ${STYLE_OPTIONS.optional[s]}`);
+    });
+    return parts.length > 0
+      ? `\n\n[风格指令 - 请严格遵循以下风格进行创作]\n${parts.join('\n')}`
+      : '';
+  }, [styleTone, styleGenre, styleEmotion, stylePace, styleOptional]);
+
   // ========== Message Actions ==========
   const sendUserMessage = () => {
     if (!userInput.trim()) return;
@@ -298,13 +365,24 @@ export default function ChatPage() {
   const sendBotMessage = () => {
     if (!jaiInput.trim()) return;
     const content = jaiInput.trim();
-    setMessages(prev => [...prev, {
-      id: crypto.randomUUID(),
-      role: 'bot' as const,
-      content,
-      translated: false, translating: false, flipped: false, editing: false,
-      timestamp: Date.now()
-    }]);
+    setMessages(prev => {
+      // If last message is Bot and no User after it, replace it
+      if (prev.length > 0 && prev[prev.length - 1].role === 'bot') {
+        return prev.map((m, i) =>
+          i === prev.length - 1
+            ? { ...m, content, translated: false, translating: false, flipped: false, chineseTranslation: undefined }
+            : m
+        );
+      }
+      // Otherwise add new
+      return [...prev, {
+        id: crypto.randomUUID(),
+        role: 'bot' as const,
+        content,
+        translated: false, translating: false, flipped: false, editing: false,
+        timestamp: Date.now()
+      }];
+    });
     setJaiInput('');
   };
 
@@ -391,7 +469,8 @@ export default function ChatPage() {
           chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
-          personMode
+          personMode,
+          stylePrompt: buildStylePrompt()
         })
       });
 
@@ -463,7 +542,8 @@ export default function ChatPage() {
           chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
-          personMode
+          personMode,
+          stylePrompt: buildStylePrompt()
         })
       });
 
@@ -581,7 +661,8 @@ export default function ChatPage() {
           chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           plotDirection: currentPreset.plotDirection,
-          apiKey
+          apiKey,
+          stylePrompt: buildStylePrompt()
         })
       });
 
@@ -641,7 +722,8 @@ export default function ChatPage() {
           messageCount: messages.filter(m => m.id !== 'greeting-' + currentPresetId).length,
           directionKeyword: plotDirectionKeyword || undefined,
           personMode,
-          apiKey
+          apiKey,
+          stylePrompt: buildStylePrompt()
         })
       });
 
@@ -682,7 +764,8 @@ export default function ChatPage() {
           plotDirection: currentPreset.plotDirection,
           selectedPrediction: prediction,
           personMode,
-          apiKey
+          apiKey,
+          stylePrompt: buildStylePrompt()
         })
       });
 
@@ -1280,7 +1363,7 @@ export default function ChatPage() {
       {/* Bottom Input Area */}
       <div className="shrink-0 border-t border-pink-100 bg-white/90 backdrop-blur-sm px-4 py-3 space-y-2">
         {/* Controls Row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-wrap">
           <select
             value={personMode}
             onChange={e => setPersonMode(e.target.value as 'first' | 'third')}
@@ -1290,7 +1373,80 @@ export default function ChatPage() {
             <option value="third">第三人称 (He/She)</option>
           </select>
 
-          <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+          <select
+            value={styleTone}
+            onChange={e => setStyleTone(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
+          >
+            <option value="">剧集调性</option>
+            <option value="欧美剧集">欧美剧集</option>
+            <option value="电影质感">电影质感</option>
+          </select>
+
+          <select
+            value={styleGenre}
+            onChange={e => setStyleGenre(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
+          >
+            <option value="">经典类型</option>
+            <option value="黑色电影">黑色电影</option>
+            <option value="西部片">西部片</option>
+            <option value="赛博朋克/科幻">赛博朋克/科幻</option>
+            <option value="战争/军事">战争/军事</option>
+          </select>
+
+          <select
+            value={styleEmotion}
+            onChange={e => setStyleEmotion(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
+          >
+            <option value="">情感浓度</option>
+            <option value="强强对抗">强强对抗</option>
+            <option value="暧昧推拉">暧昧推拉</option>
+            <option value="极度压抑">极度压抑</option>
+            <option value="极度暴力">极度暴力</option>
+          </select>
+
+          <select
+            value={stylePace}
+            onChange={e => setStylePace(e.target.value)}
+            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300"
+          >
+            <option value="">叙事节奏</option>
+            <option value="慢燃">慢燃</option>
+            <option value="快切">快切</option>
+            <option value="单幕压缩">单幕压缩</option>
+          </select>
+
+          <div className="relative" ref={optionalMenuRef}>
+            <button
+              onClick={() => setShowOptionalMenu(!showOptionalMenu)}
+              className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50/50 text-pink-600 focus:outline-none focus:border-pink-300 flex items-center gap-1"
+            >
+              <span>可选风格</span>
+              {styleOptional.length > 0 && <span className="bg-pink-500 text-white rounded-full px-1.5 text-[10px]">{styleOptional.length}</span>}
+            </button>
+            {showOptionalMenu && (
+              <div className="absolute bottom-full left-0 mb-1 bg-white border border-pink-100 rounded-lg shadow-lg p-2 min-w-[180px] z-50">
+                {['加一点浪漫', '加一点背叛', '加一点救赎', '加一点牺牲'].map(opt => (
+                  <label key={opt} className="flex items-center gap-2 py-1 text-xs text-gray-700 cursor-pointer hover:bg-pink-50 rounded px-1">
+                    <input
+                      type="checkbox"
+                      checked={styleOptional.includes(opt)}
+                      onChange={e => {
+                        if (e.target.checked) setStyleOptional(prev => [...prev, opt]);
+                        else setStyleOptional(prev => prev.filter(v => v !== opt));
+                      }}
+                      className="rounded border-pink-300 text-pink-500 focus:ring-pink-300"
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer ml-auto">
             <span>思考</span>
             <button
               onClick={() => setThinkingEnabled(!thinkingEnabled)}

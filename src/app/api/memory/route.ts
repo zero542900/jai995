@@ -4,14 +4,10 @@ import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, chatHistory, longTermMemory, personMode, apiKey } = body;
+    const { charInfo, userCard, chatHistory, longTermMemory, apiKey } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
-
-    const personInstruction = personMode === 'third'
-      ? 'Summarize from the THIRD PERSON perspective using {{char}} and {{user}} as names (e.g. "{{char}} noticed that {{user}} was...").'
-      : 'Summarize from the FIRST PERSON perspective of {{char}} (e.g. "I noticed that {{user}} was...").';
 
     const systemPrompt = `You are a roleplay memory summarization assistant for JanitorAI. Generate a long-term memory entry from the CHAR's perspective — this memory will be pasted into the Bot's (Char's) long-term memory field on JanitorAI.
 
@@ -19,7 +15,7 @@ CORE PRINCIPLE: The memory must be written from {{char}}'s point of view, as {{c
 
 IMPORTANT NAMING RULE: Always use {{char}} and {{user}} as placeholders instead of any actual character names. JanitorAI will automatically replace these with the correct names at runtime. Do NOT use any specific names.
 
-${personInstruction}
+PERSPECTIVE: Always use THIRD PERSON perspective with {{char}} and {{user}} as names (e.g. "{{char}} noticed that {{user}} was...", "{{char}} felt a shift in {{user}}'s demeanor..."). Do NOT use first person ("I").
 
 CONTEXT:
 - Character ({{char}}): ${charInfo || '(not provided)'}

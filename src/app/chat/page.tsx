@@ -589,7 +589,6 @@ Always read the recent 5-10 messages for context before responding. If there is 
           userCard: preset.userCard,
           chatHistory: buildChatHistory(),
           longTermMemory: preset.longTermMemory,
-          personMode,
           apiKey,
         }),
       });

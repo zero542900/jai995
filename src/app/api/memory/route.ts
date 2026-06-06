@@ -20,15 +20,17 @@ PERSPECTIVE: Always use THIRD PERSON perspective with {{char}} and {{user}} as n
 CONTEXT:
 - Character ({{char}}): ${charInfo || '(not provided)'}
 - User Persona ({{user}}): ${userCard || '(not provided)'}
-${longTermMemory ? `- Previous Long-term Memory: ${longTermMemory}` : ''}
+${longTermMemory ? `- **Existing Long-term Memory (MUST merge and compress)**:\n${longTermMemory}` : ''}
 
 CURRENT SCENE:
 ${chatHistory || '(This is the beginning of the story)'}
 
 INSTRUCTIONS:
-Generate a concise long-term memory summary in the <Memory_LTM> format commonly used in JanitorAI. The memory should include:
+${longTermMemory ? `MERGE & COMPRESS: You MUST merge the existing long-term memory with the new events from the current scene. Do NOT simply append — integrate old and new information into a single unified summary. Remove redundancies, compress details that are no longer relevant, and keep only what matters for future interactions. Total output MUST NOT exceed 300 words.` : `Generate a concise long-term memory summary.`}
+
+The memory should include:
 - {{user}}'s current emotional/physical state as observed by {{char}}
-- Key events that happened in this session
+- Key events that happened (both old and new)
 - Important interactions between {{char}} and {{user}}
 - Any character development or changes in {{user}}
 - {{char}}'s relationship status with {{user}}

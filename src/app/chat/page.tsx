@@ -169,6 +169,11 @@ export default function ChatPage() {
   const [savedPlotDirections, setSavedPlotDirections] = useState<{ en: string; cn: string; stage?: string; stageCn?: string }[]>([]);
   const [showDirectionCard, setShowDirectionCard] = useState(false);
 
+  // Memory update tracking
+  const [lastMemoryCount, setLastMemoryCount] = useState(0);
+  const [showMemoryReminder, setShowMemoryReminder] = useState(false);
+  const [memoryAutoGenerating, setMemoryAutoGenerating] = useState(false);
+
   // Main storyline summary (shown in plot panel, from AI analysis)
   const [currentMainLine, setCurrentMainLine] = useState('');
   const [currentMainLineCn, setCurrentMainLineCn] = useState('');
@@ -307,6 +312,7 @@ export default function ChatPage() {
         if (pd.selectedStageKeyword) setSelectedStageKeyword(pd.selectedStageKeyword);
         if (pd.savedPlotDirections) setSavedPlotDirections(pd.savedPlotDirections);
         if (pd.suggestedKeywords) setSuggestedKeywords(pd.suggestedKeywords);
+        if (pd.lastMemoryCount !== undefined) setLastMemoryCount(pd.lastMemoryCount);
         if (pd.styleSettings) {
           if (pd.styleSettings.tone) setStyleTone(pd.styleSettings.tone);
           if (pd.styleSettings.genre) setStyleGenre(pd.styleSettings.genre);
@@ -356,15 +362,31 @@ export default function ChatPage() {
     setTimeout(() => setNotification(''), 2000);
   };
 
+  const RECENT_MESSAGES_LIMIT = 20;
+
   const buildChatHistory = useCallback(() => {
-    // Chat history keeps instructions — bot needs to see them
-    return messages.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${m.content}`).join('\n');
-  }, [messages]);
+    // Strategy: long-term memory summary + recent N messages
+    const ltm = currentPreset?.longTermMemory;
+    const recent = messages.slice(-RECENT_MESSAGES_LIMIT);
+    let history = '';
+    if (ltm && messages.length > RECENT_MESSAGES_LIMIT) {
+      history += `[Long-term Memory Summary]\n${ltm}\n\n[Recent Conversation]\n`;
+    }
+    history += recent.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${m.content}`).join('\n');
+    return history;
+  }, [messages, currentPreset?.longTermMemory]);
 
   const buildChatHistoryForMemory = useCallback(() => {
     // Memory/inspiration/expand strip instructions — they shouldn't affect these
-    return messages.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${stripInstructions(m.content)}`).join('\n');
-  }, [messages]);
+    const ltm = currentPreset?.longTermMemory;
+    const recent = messages.slice(-RECENT_MESSAGES_LIMIT);
+    let history = '';
+    if (ltm && messages.length > RECENT_MESSAGES_LIMIT) {
+      history += `[Long-term Memory Summary]\n${ltm}\n\n[Recent Conversation]\n`;
+    }
+    history += recent.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${stripInstructions(m.content)}`).join('\n');
+    return history;
+  }, [messages, currentPreset?.longTermMemory]);
 
   // Build style prompt string for API injection
   const STYLE_OPTIONS = {
@@ -768,6 +790,8 @@ export default function ChatPage() {
     const updated = { ...currentPreset, longTermMemory: memoryResult.en };
     updatePreset(updated);
     setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
+    setLastMemoryCount(messages.length);
+    setShowMemoryReminder(false);
     showNotification('记忆已写入预设');
   };
 
@@ -905,6 +929,7 @@ export default function ChatPage() {
         optionalStyles: styleOptional,
         mixModeNote,
       },
+      lastMemoryCount,
     };
     const updated = { ...preset, plotData, plotDirection: currentDirection };
     updatePreset(updated);
@@ -922,7 +947,7 @@ export default function ChatPage() {
   }, [currentMainLine, currentMainLineCn, currentDirection, currentDirectionCn, plotStage, plotStageCn, progressDesc, progressDescCn,
       selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
       savedPlotDirections, suggestedKeywords,
-      styleTone, styleGenre, styleEmotion, stylePace, styleOptional, mixModeNote]);
+      styleTone, styleGenre, styleEmotion, stylePace, styleOptional, mixModeNote, lastMemoryCount]);
 
   const selectPlotDirection = (idx: number) => {
     const pred = plotPredictions[idx];
@@ -1774,6 +1799,33 @@ export default function ChatPage() {
             <IconSend className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Memory Reminder Banner */}
+        {showMemoryReminder && !memoryAutoGenerating && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 text-xs">
+            <IconBrain className="w-3.5 h-3.5 shrink-0" />
+            <span className="flex-1">距上次记忆已超过 20 轮，建议更新长期记忆</span>
+            <button
+              onClick={handleMemory}
+              disabled={memoryLoading}
+              className="px-2 py-0.5 text-[10px] rounded bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
+            >
+              立即更新
+            </button>
+            <button
+              onClick={() => setShowMemoryReminder(false)}
+              className="text-violet-400 hover:text-violet-600"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        {memoryAutoGenerating && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 border border-violet-200 text-violet-600 text-xs animate-pulse">
+            <IconBrain className="w-3.5 h-3.5 shrink-0" />
+            <span>自动更新长期记忆中...</span>
+          </div>
+        )}
 
         {/* Feature Buttons */}
         <div className="flex items-center gap-2 relative">

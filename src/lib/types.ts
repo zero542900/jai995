@@ -35,6 +35,7 @@ export interface PlotData {
     stage: BilingualText[];
   };
   styleSettings?: StyleSettings;
+  lastMemoryCount?: number;
 }
 
 export interface Preset {

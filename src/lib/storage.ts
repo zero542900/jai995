@@ -265,7 +265,7 @@ const SEED_VERSION_KEY = 'jai_instructions_seed_v';
 
 export function seedInstructions(): void {
   if (typeof window === 'undefined') return;
-  const currentSeedVersion = '2';
+  const currentSeedVersion = '3';
   const storedVersion = localStorage.getItem(SEED_VERSION_KEY);
   // Only seed once; if already seeded with this version, skip
   if (storedVersion === currentSeedVersion) return;
@@ -276,9 +276,16 @@ export function seedInstructions(): void {
   if (existing.length > 0 && storedVersion !== null) {
     const updated = existing.map((inst) => {
       const seed = SEED_INSTRUCTIONS.find((s) => s.name === inst.name);
-      // Only update the 3 changed instructions; leave user-customized ones alone if name doesn't match
+      // Update instructions that changed in newer versions
       if (seed && ['小剧场', '读书笔记', '朋友圈'].includes(inst.name)) {
         return { ...inst, content: seed.content, summary: seed.summary, updatedAt: Date.now() };
+      }
+      // v2→v3: Rename 'OOC 设定' to 'OOC 性别代称' and update content
+      if (inst.name === 'OOC 设定') {
+        const oocSeed = SEED_INSTRUCTIONS.find((s) => s.name === 'OOC 性别代称');
+        if (oocSeed) {
+          return { ...inst, name: oocSeed.name, content: oocSeed.content, summary: oocSeed.summary, updatedAt: Date.now() };
+        }
       }
       return inst;
     });

@@ -1003,59 +1003,60 @@ export default function ChatPage() {
         </select>
       </div>
 
-      {/* Chat Messages - scrollable */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 py-3 md:px-4 space-y-3" onClick={() => setShowInstructionPicker(false)}>
-        {/* Floating direction indicator - click to see current direction */}
-        {currentDirection && (
-          <div className="flex justify-end mb-2">
-            <button
-              onClick={() => setShowDirectionCard(v => !v)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-50/90 border border-amber-200/60 text-amber-600 hover:bg-amber-100 transition-colors text-[11px] max-w-[90%] md:max-w-[80%]"
-            >
-              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-              <span className="truncate">{currentDirection}</span>
-            </button>
-          </div>
-        )}
-        {/* Direction popup card */}
-        {showDirectionCard && currentDirection && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setShowDirectionCard(false)}>
-            <div className="bg-white rounded-2xl shadow-xl border border-amber-100 mx-4 max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
-              <div className="px-4 pt-4 pb-3 border-b border-amber-50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">当前走向</span>
+      {/* Direction indicator - fixed above scroll area */}
+      {currentDirection && (
+        <div className="flex justify-end px-3 md:px-4 pt-1 pb-0.5" onClick={() => setShowInstructionPicker(false)}>
+          <button
+            onClick={() => setShowDirectionCard(v => !v)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50/90 border border-amber-200/60 text-amber-600 hover:bg-amber-100 transition-colors text-[11px] max-w-[95%] md:max-w-[80%]"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+            <span className="truncate">{currentDirection}</span>
+          </button>
+        </div>
+      )}
+      {/* Direction popup card */}
+      {showDirectionCard && currentDirection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setShowDirectionCard(false)}>
+          <div className="bg-white rounded-2xl shadow-xl border border-amber-100 mx-4 max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-4 pt-4 pb-3 border-b border-amber-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">当前走向</span>
+              </div>
+              <button onClick={() => setShowDirectionCard(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-4 py-4 space-y-3">
+              <div>
+                <p className="text-sm text-gray-800 leading-relaxed">{currentDirection}</p>
+              </div>
+              {currentDirectionCn && (
+                <div className="pt-2 border-t border-violet-100">
+                  <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">中文</span>
+                  <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">{currentDirectionCn}</p>
                 </div>
-                <button onClick={() => setShowDirectionCard(false)} className="text-gray-400 hover:text-gray-600 p-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-              <div className="px-4 py-4 space-y-3">
-                <div>
-                  <p className="text-sm text-gray-800 leading-relaxed">{currentDirection}</p>
-                </div>
-                {currentDirectionCn && (
-                  <div className="pt-2 border-t border-violet-100">
-                    <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">中文</span>
-                    <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">{currentDirectionCn}</p>
-                  </div>
-                )}
-              </div>
-              <div className="px-4 py-3 border-t border-gray-50 flex items-center gap-2">
-                <button
-                  onClick={() => { navigator.clipboard.writeText(currentDirection); showNotification('已复制走向'); }}
-                  className="text-[11px] text-pink-500 hover:text-pink-600 flex items-center gap-1"
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
-                  复制
-                </button>
-                <button
-                  onClick={() => { setCurrentDirection(''); setCurrentDirectionCn(''); setShowDirectionCard(false); }}
-                  className="text-[11px] text-gray-400 hover:text-gray-600 ml-auto"
-                >清除走向</button>
-              </div>
+              )}
+            </div>
+            <div className="px-4 py-3 border-t border-gray-50 flex items-center gap-2">
+              <button
+                onClick={() => { navigator.clipboard.writeText(currentDirection); showNotification('已复制走向'); }}
+                className="text-[11px] text-pink-500 hover:text-pink-600 flex items-center gap-1"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+                复制
+              </button>
+              <button
+                onClick={() => { setCurrentDirection(''); setCurrentDirectionCn(''); setShowDirectionCard(false); }}
+                className="text-[11px] text-gray-400 hover:text-gray-600 ml-auto"
+              >清除走向</button>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Chat Messages - scrollable */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 py-3 md:px-4 space-y-3" onClick={() => setShowInstructionPicker(false)}>
         {messages.map(msg => (
           <MessageBubble
             key={msg.id}

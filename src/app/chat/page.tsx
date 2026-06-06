@@ -127,7 +127,7 @@ export default function ChatPage() {
 
   // Feature states
   const [inspirationLoading, setInspirationLoading] = useState(false);
-  const [inspirationItems, setInspirationItems] = useState<Array<{ en: string; cn: string }>>([]);
+  const [inspirationItems, setInspirationItems] = useState<Array<{ en: string; cn?: string; flipped: boolean; translating?: boolean }>>([]);
   const [showInspiration, setShowInspiration] = useState(false);
 
   const [expandLoading, setExpandLoading] = useState(false);
@@ -401,36 +401,14 @@ export default function ChatPage() {
         }
       }
 
-      // Parse items - split by ===CHINESE=== first, then split each half into items
-      const halves = fullText.split('===CHINESE===');
-      const enPart = (halves[0] || '').trim();
-      const cnPart = (halves[1] || '').trim();
-      
-      // Split by ===ITEM=== marker, fallback to numbered list (1. 2. 3.)
-      const splitItems = (text: string): string[] => {
-        // Try ===ITEM=== marker first
-        const markerItems = text.split('===ITEM===').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(s => s);
-        if (markerItems.length >= 3) return markerItems.slice(0, 3);
-        
-        // Fallback: split by numbered list pattern (1. 2. 3. or 1) 2) 3))
-        const numbered = text.split(/\n(?=\d+[\.\)]\s)/).map(s => s.replace(/^\d+[\.\)]\s*/, '').trim()).filter(s => s);
-        if (numbered.length >= 3) return numbered.slice(0, 3);
-        
-        // Last resort: split by double newlines
-        const byParagraph = text.split(/\n\s*\n/).map(s => s.trim()).filter(s => s && s.length > 10);
-        if (byParagraph.length >= 3) return byParagraph.slice(0, 3);
-        
-        // If nothing works, return the whole text as one item
-        return markerItems.length > 0 ? markerItems : [text];
-      };
-      
-      const enItems = splitItems(enPart);
-      const cnItems = splitItems(cnPart);
-      
-      const parsed = [0, 1, 2].map(i => ({
-        en: enItems[i] || '',
-        cn: cnItems[i] || '',
-      })).filter(item => item.en || item.cn);
+      // Parse: output is 3 lines of English, one inspiration per line
+      const lines = fullText.split('\n').map(s => s.replace(/^\d+[\.\)]\s*/, '').trim()).filter(s => s.length > 5);
+      const parsed = lines.slice(0, 3).map(line => ({
+        en: line,
+        cn: undefined as string | undefined,
+        flipped: false,
+        translating: false,
+      }));
       setInspirationItems(parsed);
     } catch {
       showNotification('灵感生成失败');
@@ -637,14 +615,94 @@ export default function ChatPage() {
           ) : (
             <div className="space-y-2">
               {inspirationItems.map((item, i) => (
-                <div
-                  key={i}
-                  className="p-2 rounded-lg bg-pink-50/50 hover:bg-pink-100/50 cursor-pointer transition-colors group"
-                  onClick={() => copyContent(item.en)}
-                >
-                  <p className="text-xs text-gray-800">{item.en}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{item.cn}</p>
-                  <span className="text-[10px] text-pink-400 opacity-0 group-hover:opacity-100 transition-opacity">点击复制英文</span>
+                <div key={i} className="relative">
+                  <div
+                    className={`p-2.5 rounded-lg border transition-colors cursor-pointer ${
+                      item.flipped ? 'bg-pink-50 border-pink-200' : 'bg-white border-pink-100 hover:bg-pink-50/50'
+                    }`}
+                    onClick={() => {
+                      if (!item.flipped) {
+                        // Flip to Chinese - translate if needed
+                        const newItems = [...inspirationItems];
+                        if (!item.cn) {
+                          newItems[i] = { ...item, translating: true };
+                          setInspirationItems(newItems);
+                          // Call translate API
+                          const apiKey = localStorage.getItem('jai_api_key') || '';
+                          fetch('/api/translate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: item.en, apiKey }),
+                          }).then(r => r.json()).then(data => {
+                            const updated = [...inspirationItems];
+                            updated[i] = { ...updated[i], cn: data.translation || '翻译失败', flipped: true, translating: false };
+                            setInspirationItems(updated);
+                          }).catch(() => {
+                            const updated = [...inspirationItems];
+                            updated[i] = { ...updated[i], translating: false, flipped: true, cn: '翻译失败' };
+                            setInspirationItems(updated);
+                          });
+                        } else {
+                          newItems[i] = { ...item, flipped: true };
+                          setInspirationItems(newItems);
+                        }
+                      } else {
+                        // Flip back to English
+                        const newItems = [...inspirationItems];
+                        newItems[i] = { ...item, flipped: false };
+                        setInspirationItems(newItems);
+                      }
+                    }}
+                  >
+                    {item.translating ? (
+                      <p className="text-xs text-gray-400 animate-pulse">翻译中...</p>
+                    ) : item.flipped ? (
+                      <p className="text-xs text-gray-800">{item.cn}</p>
+                    ) : (
+                      <p className="text-xs text-gray-800">{item.en}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); copyContent(item.en); }}
+                      className="text-[10px] text-pink-400 hover:text-pink-600"
+                    >复制</button>
+                    <span className="text-[10px] text-gray-300">|</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!item.flipped) {
+                          const newItems = [...inspirationItems];
+                          if (!item.cn) {
+                            newItems[i] = { ...item, translating: true };
+                            setInspirationItems(newItems);
+                            const apiKey = localStorage.getItem('jai_api_key') || '';
+                            fetch('/api/translate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ text: item.en, apiKey }),
+                            }).then(r => r.json()).then(data => {
+                              const updated = [...inspirationItems];
+                              updated[i] = { ...updated[i], cn: data.translation || '翻译失败', flipped: true, translating: false };
+                              setInspirationItems(updated);
+                            }).catch(() => {
+                              const updated = [...inspirationItems];
+                              updated[i] = { ...updated[i], translating: false, flipped: true, cn: '翻译失败' };
+                              setInspirationItems(updated);
+                            });
+                          } else {
+                            newItems[i] = { ...item, flipped: true };
+                            setInspirationItems(newItems);
+                          }
+                        } else {
+                          const newItems = [...inspirationItems];
+                          newItems[i] = { ...item, flipped: false };
+                          setInspirationItems(newItems);
+                        }
+                      }}
+                      className="text-[10px] text-gray-400 hover:text-gray-600"
+                    >翻转</button>
+                  </div>
                 </div>
               ))}
             </div>

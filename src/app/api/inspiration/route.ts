@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,46 +13,38 @@ export async function POST(request: NextRequest) {
       ? 'Write from the THIRD PERSON perspective (he / she / they / User\'s name).'
       : 'Write from the FIRST PERSON perspective (I / me / my).';
 
-    const systemPrompt = `You are a creative roleplay writing assistant for JanitorAI. Generate 3 creative plot directions from the USER's perspective.
+    const systemPrompt = `[System Prompt: Inspirations]
 
-CORE PRINCIPLE: All suggestions must be from the User's perspective — what the User could say or do next.
-
-${personInstruction}
-
-CONTEXT:
+角色：JanitorAI 创意写作助手
+核心原则：所有建议从 User 视角出发
+人称指令：${personInstruction}
+上下文：
 - Character (Char): ${charInfo || '(not provided)'}
 - User Persona: ${userCard || userPersonality || '(not provided)'}
 ${plotDirection ? `- Current Plot Direction: ${plotDirection}` : ''}
 ${longTermMemory ? `- Long-term Memory: ${longTermMemory}` : ''}
 
-CURRENT SCENE:
+当前场景:
 ${chatHistory || '(This is the beginning of the story)'}
 
-INSTRUCTIONS:
-Generate exactly 3 creative options for what the User could say or do next. Each option should be:
-- A brief but vivid sentence or short paragraph (1-3 sentences)
-- From the User's perspective
-- Consistent with the character dynamics and world
-- Fresh and interesting, not generic
+输出格式：只输出英文。不要中文翻译。不要数字编号。不要空行。不要标题。
 
-Output format (STRICTLY follow this — DO NOT use numbered lists like "1." "2." "3.", use ONLY the markers below):
-===ITEM===
-[First option English]
-===ITEM===
-[Second option English]
-===ITEM===
-[Third option English]
-===CHINESE===
-===ITEM===
-[First option Chinese translation]
-===ITEM===
-[Second option Chinese translation]
-===ITEM===
-[Third option Chinese translation]
+严格输出格式：
+[LINE 1] 第一条灵感：一句话描述。这是基于当前场景的合理推测，是同一事件下的第一种走向。内容克制、不夸张、不戏剧化。
+[LINE 2] 第二条灵感：一句话描述。这是同一事件下的第二种走向，与第一条有明显的逻辑差异（时间、角度、情绪、或行动选择不同）。
+[LINE 3] 第三条灵感：一句话描述。这是同一事件下的第三种走向，与第一、二条均不重复。
 
-IMPORTANT: Each option MUST be preceded by ===ITEM===. Do NOT number the options. Do NOT add any extra text, headers, or explanations outside the markers.
+三个灵感必须彼此独立，每条均为完整的句子。禁止使用"或"、"以及"等连词串联。禁止出现"此外"、"另一方面"等转折词。每条灵感后直接换行。
 
-${CHINESE_OUTPUT_INSTRUCTION}`;
+内容限制：
+- 事件走向必须基于现有剧情逻辑，不强行制造冲突或反转。
+- 禁止出现"突然"、"意外"、"崩溃"、"宿命"等戏剧化词汇。
+- 灵感像电影中某个自然分支的镜头：平静、合理、有逻辑。
+
+输出示例（三行，每行一条）：
+He asks if she wants to stay for coffee, and she checks the time.
+She notices his hands are shaking and chooses to ask why.
+She mentions the weather and waits for his reply.`;
 
     const response = await callDeepSeek({
       apiKey,
@@ -61,7 +53,7 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
       systemPrompt,
       stream: true,
       temperature: 0.9,
-      maxTokens: 2000,
+      maxTokens: 1000,
     });
 
     const stream = response.body!;
@@ -108,8 +100,8 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
       },
     });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Internal error';
-    return new Response(JSON.stringify({ error: msg }), {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

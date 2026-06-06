@@ -28,6 +28,10 @@ export interface ThemeColors {
   'jai-thinking': string;
   /** 卡片阴影色 (rgba) */
   'jai-shadow': string;
+  /** 角色聊天气泡背景 */
+  'jai-bubble': string;
+  /** 用户聊天气泡背景 */
+  'jai-bubble-user': string;
 }
 
 export interface Theme {
@@ -58,6 +62,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#5DA07E',
       'jai-thinking': '#a78bfa',
       'jai-shadow': 'rgba(180, 100, 120, 0.20)',
+      'jai-bubble': '#F5D5DA',
+      'jai-bubble-user': '#D08898',
     },
   },
   {
@@ -78,6 +84,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#5A92AA',
       'jai-thinking': '#8b9ff6',
       'jai-shadow': 'rgba(140, 170, 200, 0.20)',
+      'jai-bubble': '#D8E5F0',
+      'jai-bubble-user': '#98B4D0',
     },
   },
   {
@@ -98,6 +106,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#4AA075',
       'jai-thinking': '#8bb8f6',
       'jai-shadow': 'rgba(140, 195, 160, 0.20)',
+      'jai-bubble': '#D5EBDD',
+      'jai-bubble-user': '#98C8A5',
     },
   },
   {
@@ -118,6 +128,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#6A88AA',
       'jai-thinking': '#8060e8',
       'jai-shadow': 'rgba(170, 140, 200, 0.20)',
+      'jai-bubble': '#E2D5EE',
+      'jai-bubble-user': '#B898D0',
     },
   },
   {
@@ -138,6 +150,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#5AA07A',
       'jai-thinking': '#a78bfa',
       'jai-shadow': 'rgba(195, 160, 130, 0.20)',
+      'jai-bubble': '#EAD8C2',
+      'jai-bubble-user': '#C8A888',
     },
   },
   {
@@ -146,18 +160,20 @@ export const THEMES: Theme[] = [
     nameEn: 'Maple Leaf',
     description: '枫叶色调，秋日层林的暖意',
     colors: {
-      'jai-bg': '#E0C0B0',
-      'jai-secondary': '#C89078',
+      'jai-bg': '#E0B898',
+      'jai-secondary': '#D08858',
       'jai-accent': '#C45A30',
       'jai-card': '#FFFFFF',
-      'jai-card-border': '#D0A090',
-      'jai-input-bg': '#ECD0C0',
-      'jai-text': '#4A2818',
-      'jai-text-secondary': '#8A6850',
-      'jai-muted': '#ECD0C0',
+      'jai-card-border': '#D8A880',
+      'jai-input-bg': '#F0D0B8',
+      'jai-text': '#4A2010',
+      'jai-text-secondary': '#8A5838',
+      'jai-muted': '#F0D0B8',
       'jai-success': '#5AA078',
       'jai-thinking': '#8b9ff6',
-      'jai-shadow': 'rgba(180, 100, 60, 0.20)',
+      'jai-shadow': 'rgba(190, 100, 50, 0.22)',
+      'jai-bubble': '#F0D0B8',
+      'jai-bubble-user': '#D08858',
     },
   },
   {
@@ -166,18 +182,20 @@ export const THEMES: Theme[] = [
     nameEn: 'Sunset',
     description: '夕阳色调，天边最后一抹暖光',
     colors: {
-      'jai-bg': '#F0D0A8',
-      'jai-secondary': '#E0A858',
+      'jai-bg': '#F0C898',
+      'jai-secondary': '#E89838',
       'jai-accent': '#FE8005',
       'jai-card': '#FFFFFF',
-      'jai-card-border': '#E0B888',
-      'jai-input-bg': '#F8DDB0',
+      'jai-card-border': '#E8B878',
+      'jai-input-bg': '#F8DCB0',
       'jai-text': '#3A2008',
       'jai-text-secondary': '#7A5828',
-      'jai-muted': '#F8DDB0',
+      'jai-muted': '#F8DCB0',
       'jai-success': '#5AA078',
       'jai-thinking': '#c898f0',
-      'jai-shadow': 'rgba(200, 140, 40, 0.20)',
+      'jai-shadow': 'rgba(210, 145, 40, 0.22)',
+      'jai-bubble': '#F8DCB0',
+      'jai-bubble-user': '#E89838',
     },
   },
   {
@@ -198,6 +216,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#5AAA78',
       'jai-thinking': '#9080e0',
       'jai-shadow': 'rgba(160, 140, 120, 0.12)',
+      'jai-bubble': '#EDE8E3',
+      'jai-bubble-user': '#E0D8D0',
     },
   },
   {
@@ -206,18 +226,20 @@ export const THEMES: Theme[] = [
     nameEn: 'Cherry Blossom',
     description: '樱粉色调，花瓣飘落的柔美',
     colors: {
-      'jai-bg': '#E8A0B0',
-      'jai-secondary': '#D88898',
-      'jai-accent': '#C87080',
+      'jai-bg': '#E898B8',
+      'jai-secondary': '#D878A0',
+      'jai-accent': '#C85888',
       'jai-card': '#FFFFFF',
-      'jai-card-border': '#E0A0AE',
-      'jai-input-bg': '#F0C0CA',
-      'jai-text': '#4A2228',
-      'jai-text-secondary': '#8A5060',
-      'jai-muted': '#F0C0CA',
+      'jai-card-border': '#E088A8',
+      'jai-input-bg': '#F0B8CC',
+      'jai-text': '#4A1830',
+      'jai-text-secondary': '#8A4060',
+      'jai-muted': '#F0B8CC',
       'jai-success': '#5AAA80',
       'jai-thinking': '#B060F0',
-      'jai-shadow': 'rgba(190, 100, 120, 0.20)',
+      'jai-shadow': 'rgba(200, 90, 135, 0.22)',
+      'jai-bubble': '#F5C0D5',
+      'jai-bubble-user': '#D878A0',
     },
   },
   {
@@ -238,6 +260,8 @@ export const THEMES: Theme[] = [
       'jai-success': '#40A888',
       'jai-thinking': '#7080F0',
       'jai-shadow': 'rgba(100, 175, 155, 0.20)',
+      'jai-bubble': '#C8E5DD',
+      'jai-bubble-user': '#80BCB0',
     },
   },
 ];

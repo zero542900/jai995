@@ -2277,11 +2277,11 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
 
       <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl shadow-sm ${
         isUser
-          ? 'bg-jai-secondary text-white rounded-br-sm'
-          : 'bg-white text-jai-text border border-jai-card-border rounded-bl-sm'
+          ? 'bg-jai-bubble-user text-white rounded-br-sm'
+          : 'bg-jai-bubble text-jai-text border border-jai-card-border rounded-bl-sm'
       }`}>
         {/* Role Label */}
-        <div className={`px-3 pt-2 pb-0.5 text-[10px] font-medium ${isUser ? 'text-jai-secondary/70' : 'text-jai-secondary'}`}>
+        <div className={`px-3 pt-2 pb-0.5 text-[10px] font-medium ${isUser ? 'text-white/70' : 'text-jai-secondary'}`}>
           {isUser ? 'User' : 'Char'}
         </div>
 

@@ -24,73 +24,81 @@ const themeInitScript = `
     var themeId = localStorage.getItem('jai_theme') || 'rose';
     var themes = {
       rose: {
-        'jai-bg': '#E8BABA', 'jai-secondary': '#D49898', 'jai-accent': '#C47878',
+        'jai-bg': '#E0A0AC', 'jai-secondary': '#D08898', 'jai-accent': '#B86878',
         'jai-card': '#FFFFFF', 'jai-card-border': '#D8A0AA', 'jai-input-bg': '#ECC0C8',
         'jai-text': '#4A2028', 'jai-text-secondary': '#8A5060', 'jai-muted': '#ECC0C8',
-        'jai-success': '#5DA07E', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(180,100,120,0.20)'
+        'jai-success': '#5DA07E', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(180,100,120,0.20)',
+        'jai-bubble': '#F5D5DA', 'jai-bubble-user': '#D08898'
       },
       ocean: {
         'jai-bg': '#B8D0E8', 'jai-secondary': '#98B4D0', 'jai-accent': '#7898BE',
         'jai-card': '#FFFFFF', 'jai-card-border': '#B0C4DA', 'jai-input-bg': '#D8E6F0',
         'jai-text': '#2E3A4A', 'jai-text-secondary': '#607085', 'jai-muted': '#D8E6F0',
-        'jai-success': '#5A92AA', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(140,170,200,0.20)'
+        'jai-success': '#5A92AA', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(140,170,200,0.20)',
+        'jai-bubble': '#D8E5F0', 'jai-bubble-user': '#98B4D0'
       },
       forest: {
         'jai-bg': '#B8DAC5', 'jai-secondary': '#98C8A5', 'jai-accent': '#78B088',
         'jai-card': '#FFFFFF', 'jai-card-border': '#B0D0BA', 'jai-input-bg': '#D8ECE0',
         'jai-text': '#2E4A35', 'jai-text-secondary': '#608A65', 'jai-muted': '#D8ECE0',
-        'jai-success': '#4AA075', 'jai-thinking': '#8bb8f6', 'jai-shadow': 'rgba(140,195,160,0.20)'
+        'jai-success': '#4AA075', 'jai-thinking': '#8bb8f6', 'jai-shadow': 'rgba(140,195,160,0.20)',
+        'jai-bubble': '#D5EBDD', 'jai-bubble-user': '#98C8A5'
       },
       dusk: {
         'jai-bg': '#D0B8E0', 'jai-secondary': '#B898D0', 'jai-accent': '#9E78C0',
         'jai-card': '#FFFFFF', 'jai-card-border': '#C8B0DC', 'jai-input-bg': '#E6D6F0',
         'jai-text': '#3A2E4A', 'jai-text-secondary': '#756088', 'jai-muted': '#E6D6F0',
-        'jai-success': '#6A88AA', 'jai-thinking': '#8060e8', 'jai-shadow': 'rgba(170,140,200,0.20)'
+        'jai-success': '#6A88AA', 'jai-thinking': '#8060e8', 'jai-shadow': 'rgba(170,140,200,0.20)',
+        'jai-bubble': '#E2D5EE', 'jai-bubble-user': '#B898D0'
       },
       sand: {
         'jai-bg': '#DAC5B0', 'jai-secondary': '#C8A888', 'jai-accent': '#B88E70',
         'jai-card': '#FFFFFF', 'jai-card-border': '#D4BEA8', 'jai-input-bg': '#EEDCC8',
         'jai-text': '#4A3628', 'jai-text-secondary': '#8A7058', 'jai-muted': '#EEDCC8',
-        'jai-success': '#5AA07A', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(195,160,130,0.20)'
+        'jai-success': '#5AA07A', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(195,160,130,0.20)',
+        'jai-bubble': '#EAD8C2', 'jai-bubble-user': '#C8A888'
       },
       midnight: {
-        'jai-bg': '#E0C0B0', 'jai-secondary': '#C89078', 'jai-accent': '#C45A30',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#D0A090', 'jai-input-bg': '#ECD0C0',
-        'jai-text': '#4A2818', 'jai-text-secondary': '#8A6850', 'jai-muted': '#ECD0C0',
-        'jai-success': '#5AA078', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(180,100,60,0.20)'
+        'jai-bg': '#E0B898', 'jai-secondary': '#D08858', 'jai-accent': '#C45A30',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#D8A880', 'jai-input-bg': '#F0D0B8',
+        'jai-text': '#4A2010', 'jai-text-secondary': '#8A5838', 'jai-muted': '#F0D0B8',
+        'jai-success': '#5AA078', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(190,100,50,0.22)',
+        'jai-bubble': '#F0D0B8', 'jai-bubble-user': '#D08858'
       },
       warmnight: {
-        'jai-bg': '#F0D0A8', 'jai-secondary': '#E0A858', 'jai-accent': '#FE8005',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#E0B888', 'jai-input-bg': '#F8DDB0',
-        'jai-text': '#3A2008', 'jai-text-secondary': '#7A5828', 'jai-muted': '#F8DDB0',
-        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(200,140,40,0.20)'
+        'jai-bg': '#F0C898', 'jai-secondary': '#E89838', 'jai-accent': '#FE8005',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#E8B878', 'jai-input-bg': '#F8DCB0',
+        'jai-text': '#3A2008', 'jai-text-secondary': '#7A5828', 'jai-muted': '#F8DCB0',
+        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(210,145,40,0.22)',
+        'jai-bubble': '#F8DCB0', 'jai-bubble-user': '#E89838'
       },
       daylight: {
         'jai-bg': '#F5F0EC', 'jai-secondary': '#E0D8D0', 'jai-accent': '#B0A090',
         'jai-card': '#FFFFFF', 'jai-card-border': '#E0D8D0', 'jai-input-bg': '#EDE6E0',
         'jai-text': '#3A3230', 'jai-text-secondary': '#8A8078', 'jai-muted': '#EDE6E0',
-        'jai-success': '#5AAA78', 'jai-thinking': '#9080e0', 'jai-shadow': 'rgba(160,140,120,0.12)'
+        'jai-success': '#5AAA78', 'jai-thinking': '#9080e0', 'jai-shadow': 'rgba(160,140,120,0.12)',
+        'jai-bubble': '#EDE8E3', 'jai-bubble-user': '#E0D8D0'
       },
       neonrose: {
-        'jai-bg': '#E8A0B0', 'jai-secondary': '#D88898', 'jai-accent': '#C87080',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#E0A0AE', 'jai-input-bg': '#F0C0CA',
-        'jai-text': '#4A2228', 'jai-text-secondary': '#8A5060', 'jai-muted': '#F0C0CA',
-        'jai-success': '#5AAA80', 'jai-thinking': '#B060F0', 'jai-shadow': 'rgba(190,100,120,0.20)'
+        'jai-bg': '#E898B8', 'jai-secondary': '#D878A0', 'jai-accent': '#C85888',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#E088A8', 'jai-input-bg': '#F0B8CC',
+        'jai-text': '#4A1830', 'jai-text-secondary': '#8A4060', 'jai-muted': '#F0B8CC',
+        'jai-success': '#5AAA80', 'jai-thinking': '#B060F0', 'jai-shadow': 'rgba(200,90,135,0.22)',
+        'jai-bubble': '#F5C0D5', 'jai-bubble-user': '#D878A0'
       },
       neonocean: {
         'jai-bg': '#A0D0C8', 'jai-secondary': '#80BCB0', 'jai-accent': '#60A898',
         'jai-card': '#FFFFFF', 'jai-card-border': '#98C8BE', 'jai-input-bg': '#C0E0D8',
         'jai-text': '#1E3A34', 'jai-text-secondary': '#50786E', 'jai-muted': '#C0E0D8',
-        'jai-success': '#40A888', 'jai-thinking': '#7080F0', 'jai-shadow': 'rgba(100,175,155,0.20)'
+        'jai-success': '#40A888', 'jai-thinking': '#7080F0', 'jai-shadow': 'rgba(100,175,155,0.20)',
+        'jai-bubble': '#C8E5DD', 'jai-bubble-user': '#80BCB0'
       }
     };
     var colors = themes[themeId] || themes.rose;
     var root = document.documentElement;
-    // Set jai-* color variables
     Object.keys(colors).forEach(function(key) {
       root.style.setProperty('--color-' + key, colors[key]);
     });
-    // Sync shadcn/ui :root variables so all components follow theme
     var c = colors;
     root.style.setProperty('--background', c['jai-bg']);
     root.style.setProperty('--foreground', c['jai-text']);

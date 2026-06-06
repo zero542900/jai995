@@ -1833,13 +1833,23 @@ const INSTRUCTION_KEYWORDS = [
   'Want to Do but Dare Not',
   'Random Event',
   'OOC',
+  // Chinese keywords
+  '读者弹幕', '上帝弹幕', '全知弹幕',
+  '小剧场', '剧情日记', '平行宇宙',
+  '阅读笔记', '书名',
+  '朋友圈',
+  '周程表', '周安排',
+  '正在播放',
+  '系统备注', '系统级',
+  '想做但不敢',
+  '随机事件',
+  '出戏',
 ];
 
 function isInstructionParagraph(text: string): boolean {
   const lower = text.toLowerCase();
   return INSTRUCTION_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
 }
-
 // ========== Message Bubble Component ==========
 function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDelete, onCopy, onMarkAsInstruction }: {
   message: ChatMessage;
@@ -1864,8 +1874,10 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
   const displayText = message.flipped && message.chineseTranslation ? message.chineseTranslation : message.content;
   const { main, instructions } = parseContentSections(displayText);
 
-  // Split content into paragraphs for the picker (use original content, not display)
+  // Split content into paragraphs for the picker
   const paragraphs = message.content.split(/\n\n+/).filter(p => p.trim());
+  // Also split translation for display in picker
+  const translationParagraphs = message.chineseTranslation ? message.chineseTranslation.split(/\n\n+/).filter(p => p.trim()) : [];
 
   const handleOpenPicker = () => {
     // Auto-select paragraphs that look like instructions
@@ -1932,6 +1944,9 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                 const isSelected = selectedParagraphs.has(idx);
                 const isAuto = isInstructionParagraph(p);
                 const preview = p.length > 120 ? p.slice(0, 120) + '...' : p;
+                const translationPreview = translationParagraphs[idx]
+                  ? (translationParagraphs[idx].length > 120 ? translationParagraphs[idx].slice(0, 120) + '...' : translationParagraphs[idx])
+                  : null;
                 return (
                   <button
                     key={idx}
@@ -1949,7 +1964,10 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                         {isSelected && <IconCheck className="w-3 h-3 text-white" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-700 whitespace-pre-wrap break-words leading-relaxed">{preview}</p>
+                        <p className="text-xs text-gray-500 whitespace-pre-wrap break-words leading-relaxed">{preview}</p>
+                        {translationPreview && (
+                          <p className="text-xs text-gray-800 whitespace-pre-wrap break-words leading-relaxed mt-0.5">{translationPreview}</p>
+                        )}
                         {isAuto && !isSelected && (
                           <span className="inline-block mt-1 text-[9px] text-pink-400 bg-pink-50 px-1 py-0.5 rounded">建议标记</span>
                         )}
@@ -2025,6 +2043,14 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                         指令
                       </span>
                       <span className="ml-1">{inst}</span>
+                      {message.chineseTranslation && !message.flipped && (() => {
+                        const transParagraphs = message.chineseTranslation.split(/\n\n+/).filter(p => p.trim());
+                        const transInst = transParagraphs.find(tp => {
+                          const clean = tp.trim().replace(/^【|】$/g, '');
+                          return clean.length > 0;
+                        });
+                        return transInst ? <span className="ml-1 text-gray-400 text-[10px] block mt-0.5">{transInst.replace(/^【|】$/g, '')}</span> : null;
+                      })()}
                     </div>
                   ))}
                 </div>

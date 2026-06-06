@@ -33,6 +33,15 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export interface Instruction {
+  id: string;
+  name: string;
+  content: string;
+  summary: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;

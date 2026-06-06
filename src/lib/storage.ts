@@ -1,12 +1,13 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage } from './types';
+import { Preset, Session, ChatMessage, Instruction } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
   SESSIONS: 'jai_sessions',
   API_KEY: 'jai_api_key',
   USER_TEMPLATE: 'jai_user_template',
+  INSTRUCTIONS: 'jai_instructions',
 } as const;
 
 // ========== API Key ==========
@@ -113,6 +114,52 @@ export function saveSession(session: Session): void {
     sessions.push(session);
   }
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+}
+
+// ========== Instructions ==========
+
+export function getInstructions(): Instruction[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(KEYS.INSTRUCTIONS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function getInstruction(id: string): Instruction | undefined {
+  return getInstructions().find((i) => i.id === id);
+}
+
+export function createInstruction(name: string, content: string, summary: string): Instruction {
+  const instruction: Instruction = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    name,
+    content,
+    summary,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  const instructions = getInstructions();
+  instructions.push(instruction);
+  localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(instructions));
+  return instruction;
+}
+
+export function updateInstruction(id: string, updates: Partial<Instruction>): void {
+  const instructions = getInstructions();
+  const idx = instructions.findIndex((i) => i.id === id);
+  if (idx >= 0) {
+    instructions[idx] = { ...instructions[idx], ...updates, updatedAt: Date.now() };
+    localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(instructions));
+  }
+}
+
+export function deleteInstruction(id: string): void {
+  if (typeof window === 'undefined') return;
+  const instructions = getInstructions().filter((i) => i.id !== id);
+  localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(instructions));
 }
 
 

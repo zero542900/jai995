@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { IconMoon, IconGrid, IconChat, IconSettings } from '@/components/icons';
+import { IconMoon, IconGrid, IconChat, IconSettings, IconBook } from '@/components/icons';
 
 const navItems = [
   {
@@ -15,6 +15,11 @@ const navItems = [
     href: '/presets',
     label: '预设库',
     Icon: IconGrid,
+  },
+  {
+    href: '/instructions',
+    label: '指令库',
+    Icon: IconBook,
   },
   {
     href: '/chat',
@@ -31,8 +36,8 @@ const navItems = [
 export default function Nav() {
   const pathname = usePathname();
 
-  // Don't show nav on preset detail pages (they have their own back button)
-  const isDetailPage = pathname.match(/^\/presets\/[^/]+$/);
+  // Don't show nav on detail pages (they have their own back button)
+  const isDetailPage = pathname.match(/^\/presets\/[^/]+$/) || pathname.match(/^\/instructions\/[^/]+$/);
 
   return (
     <>

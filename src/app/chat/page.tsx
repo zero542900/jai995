@@ -326,8 +326,8 @@ export default function ChatPage() {
   const handleJAIInput = (text: string) => {
     setJaiOriginal(text);
     setJaiFlipped(false);
+    setJaiTranslation('');
     if (jaiDebounceRef.current) clearTimeout(jaiDebounceRef.current);
-    jaiDebounceRef.current = setTimeout(() => translateJAI(text), 1500);
   };
 
   // Greeting flip handler - translate on first flip
@@ -732,41 +732,12 @@ Always read the recent 5-10 messages for context before responding. If there is 
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-pink-100 bg-white/80 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-2">
-          <button onClick={handleGoBack} className="p-1.5 rounded-lg hover:bg-pink-50 text-pink-400 transition-colors" title="返回预设库（自动保存）">
-            <IconBack className="w-4 h-4" />
-          </button>
-          <span className="font-medium text-sm text-gray-800 truncate max-w-[120px]">{preset.name}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Person mode toggle */}
-          <div className="flex items-center gap-1 bg-pink-50 rounded-lg px-1 py-0.5">
-            <button
-              onClick={() => setPersonMode('first')}
-              className={`px-2 py-0.5 text-xs rounded-md transition-colors ${personMode === 'first' ? 'bg-pink-500 text-white' : 'text-pink-400 hover:text-pink-600'}`}
-            >
-              第一人称
-            </button>
-            <button
-              onClick={() => setPersonMode('third')}
-              className={`px-2 py-0.5 text-xs rounded-md transition-colors ${personMode === 'third' ? 'bg-pink-500 text-white' : 'text-pink-400 hover:text-pink-600'}`}
-            >
-              第三人称
-            </button>
-          </div>
-          {/* Thinking mode toggle */}
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-400">思考</span>
-            <button
-              onClick={() => setThinkingEnabled(!thinkingEnabled)}
-              className={`relative w-9 h-5 rounded-full transition-colors ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${thinkingEnabled ? 'translate-x-4' : ''}`} />
-            </button>
-          </div>
-        </div>
+      {/* Header - minimal */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-pink-100 bg-white/80 backdrop-blur-sm shrink-0">
+        <button onClick={handleGoBack} className="p-1.5 rounded-lg hover:bg-pink-50 text-pink-400 transition-colors" title="返回预设库（自动保存）">
+          <IconBack className="w-4 h-4" />
+        </button>
+        <span className="font-medium text-sm text-gray-800 truncate max-w-[200px]">{preset.name}</span>
       </div>
 
       {/* First time tip */}
@@ -777,48 +748,38 @@ Always read the recent 5-10 messages for context before responding. If there is 
         </div>
       )}
 
-      {/* JAI Translation Area - below header, above messages */}
-      <div className="px-4 py-2.5 border-b border-pink-100 bg-gradient-to-r from-pink-50/50 to-white shrink-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-pink-400 flex items-center gap-1">
-            <IconFlip className="w-3.5 h-3.5" /> JAI 回复翻译区
-          </span>
-          <div className="flex items-center gap-2">
-            {jaiOriginal.trim() && (
-              <button onClick={() => copyText(jaiOriginal)} className="text-xs text-pink-300 hover:text-pink-500 transition-colors flex items-center gap-0.5">
-                <IconCopy className="w-3 h-3" /> 英
-              </button>
-            )}
-            {jaiTranslation && (
-              <button onClick={() => copyText(jaiTranslation)} className="text-xs text-pink-300 hover:text-pink-500 transition-colors flex items-center gap-0.5">
-                <IconCopy className="w-3 h-3" /> 中
-              </button>
-            )}
-            {jaiTranslation && (
-              <button onClick={() => setJaiFlipped(!jaiFlipped)} className="text-xs text-pink-400 hover:text-pink-600 transition-colors flex items-center gap-1">
-                <IconFlip className="w-3 h-3" />
-                {jaiFlipped ? '看翻译' : '看原文'}
-              </button>
-            )}
-          </div>
-        </div>
-        <textarea
-          value={jaiOriginal}
-          onChange={e => handleJAIInput(e.target.value)}
-          placeholder="粘贴 Char 的英文回复，自动翻译为中文..."
-          className="w-full text-sm p-2.5 rounded-lg border border-pink-100 bg-white focus:border-pink-300 focus:outline-none resize-none placeholder:text-gray-300 min-h-[44px] max-h-[100px]"
-          rows={2}
-        />
-        {(jaiTranslation || jaiTranslating) && (
-          <div className="mt-1.5 p-2.5 rounded-lg bg-white border border-pink-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-[120px] overflow-y-auto">
-            {jaiFlipped ? jaiOriginal : (jaiTranslation || '翻译中...')}
-            {jaiTranslating && <span className="inline-block w-1.5 h-4 bg-pink-400 animate-pulse ml-0.5 align-text-bottom" />}
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {/* JAI Translation result in chat - only show latest */}
+        {jaiOriginal.trim() && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-2.5 bg-blue-50 border border-blue-100 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-blue-400">Char 回复</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => copyText(jaiOriginal)} className="text-xs text-blue-300 hover:text-blue-500 transition-colors flex items-center gap-0.5">
+                    <IconCopy className="w-3 h-3" /> 英
+                  </button>
+                  {jaiTranslation && (
+                    <button onClick={() => copyText(jaiTranslation)} className="text-xs text-blue-300 hover:text-blue-500 transition-colors flex items-center gap-0.5">
+                      <IconCopy className="w-3 h-3" /> 中
+                    </button>
+                  )}
+                  <button onClick={() => setJaiFlipped(!jaiFlipped)} className="text-xs text-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1">
+                    <IconFlip className="w-3 h-3" />
+                    {jaiFlipped ? '英文' : '中文'}
+                  </button>
+                </div>
+              </div>
+              <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                {jaiFlipped ? jaiOriginal : (jaiTranslation || jaiOriginal)}
+                {jaiTranslating && <span className="inline-block w-1.5 h-4 bg-blue-400 animate-pulse ml-0.5 align-text-bottom" />}
+                {!jaiTranslation && !jaiTranslating && jaiOriginal}
+              </div>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Messages + Feature Cards Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {/* Chat Messages */}
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'}`}>
@@ -962,9 +923,67 @@ Always read the recent 5-10 messages for context before responding. If there is 
       )}
 
       {/* Bottom Input Area */}
-      <div className="shrink-0 border-t border-pink-100 bg-white/95 backdrop-blur-sm px-4 py-3">
+      <div className="shrink-0 border-t border-pink-100 bg-white/95 backdrop-blur-sm px-4 py-3 space-y-2">
+        {/* Controls: Person mode dropdown + Thinking toggle */}
+        <div className="flex items-center gap-3">
+          <select
+            value={personMode}
+            onChange={e => setPersonMode(e.target.value as 'first' | 'third')}
+            className="text-xs px-2 py-1 rounded-lg border border-pink-100 bg-pink-50 text-pink-600 focus:outline-none focus:border-pink-300 appearance-none cursor-pointer"
+          >
+            <option value="first">第一人称 (I)</option>
+            <option value="third">第三人称 (He/She)</option>
+          </select>
+
+          <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+            <span>思考</span>
+            <button
+              onClick={() => setThinkingEnabled(!thinkingEnabled)}
+              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+            </button>
+          </label>
+        </div>
+
+        {/* JAI Reply Paste Area */}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            value={jaiOriginal}
+            onChange={e => handleJAIInput(e.target.value)}
+            placeholder="粘贴 JAI 回复（英文）..."
+            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-blue-100 bg-blue-50/50 focus:border-blue-300 focus:outline-none placeholder:text-blue-300"
+          />
+          <button
+            onClick={() => { if (jaiOriginal.trim()) translateJAI(jaiOriginal); }}
+            disabled={!jaiOriginal.trim() || jaiTranslating}
+            className="px-2 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors shrink-0"
+          >
+            翻译
+          </button>
+        </div>
+
+        {/* Chat Input */}
+        <div className="flex items-end gap-2">
+          <textarea
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="输入消息..."
+            className="flex-1 text-sm p-3 rounded-xl border border-pink-100 focus:border-pink-300 focus:outline-none resize-none min-h-[40px] max-h-[120px]"
+            rows={1}
+          />
+          <button
+            onClick={isGenerating ? () => abortRef.current?.abort() : handleSend}
+            className={`p-3 rounded-xl transition-colors shrink-0 ${isGenerating ? 'bg-red-50 text-red-400 hover:bg-red-100' : 'bg-pink-500 text-white hover:bg-pink-600'}`}
+          >
+            {isGenerating ? <IconStop className="w-4 h-4" /> : <IconSend className="w-4 h-4" />}
+          </button>
+        </div>
+
         {/* Feature Buttons */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleInspiration}
             disabled={inspirationLoading}
@@ -985,24 +1004,6 @@ Always read the recent 5-10 messages for context before responding. If there is 
             className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 disabled:opacity-50 transition-colors"
           >
             <IconBrain className="w-3.5 h-3.5" /> 记忆
-          </button>
-        </div>
-
-        {/* Input */}
-        <div className="flex items-end gap-2">
-          <textarea
-            value={inputText}
-            onChange={e => setInputText(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="输入消息..."
-            className="flex-1 text-sm p-3 rounded-xl border border-pink-100 focus:border-pink-300 focus:outline-none resize-none min-h-[40px] max-h-[120px]"
-            rows={1}
-          />
-          <button
-            onClick={isGenerating ? () => abortRef.current?.abort() : handleSend}
-            className={`p-3 rounded-xl transition-colors shrink-0 ${isGenerating ? 'bg-red-50 text-red-400 hover:bg-red-100' : 'bg-pink-500 text-white hover:bg-pink-600'}`}
-          >
-            {isGenerating ? <IconStop className="w-4 h-4" /> : <IconSend className="w-4 h-4" />}
           </button>
         </div>
       </div>

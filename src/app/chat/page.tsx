@@ -401,9 +401,19 @@ export default function ChatPage() {
         }
       }
 
-      // Parse: output is 3 lines of English, one inspiration per line
-      const lines = fullText.split('\n').map(s => s.replace(/^\d+[\.\)]\s*/, '').trim()).filter(s => s.length > 5);
-      const parsed = lines.slice(0, 3).map(line => ({
+      // Parse: split by ===ITEM=== first, then fallback to newlines
+      let items: string[] = [];
+      if (fullText.includes('===ITEM===')) {
+        items = fullText.split('===ITEM===')
+          .map(s => s.trim())
+          .filter(s => s.length > 0 && !s.startsWith('==='));
+      }
+      if (items.length < 3) {
+        items = fullText.split('\n')
+          .map(s => s.replace(/===ITEM===/g, '').replace(/^\d+[\.\)]\s*/, '').trim())
+          .filter(s => s.length > 5 && !s.includes('===ITEM==='));
+      }
+      const parsed = items.slice(0, 3).map(line => ({
         en: line,
         cn: undefined as string | undefined,
         flipped: false,

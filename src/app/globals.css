@@ -50,18 +50,18 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
 
-  /* === Custom JAI Theme Colors (Rose default) === */
-  --color-jai-bg: #E8BABA;
-  --color-jai-secondary: #D49898;
-  --color-jai-accent: #C47878;
+  /* === Custom JAI Theme Colors (Rose Pink default) === */
+  --color-jai-bg: #E0A0AC;
+  --color-jai-secondary: #D08898;
+  --color-jai-accent: #B86878;
   --color-jai-card: #FFFFFF;
-  --color-jai-card-border: #E0B0B0;
-  --color-jai-input-bg: #F2D5D5;
-  --color-jai-text: #4A2E2E;
-  --color-jai-text-secondary: #8A6060;
-  --color-jai-muted: #F2D5D5;
-  --color-jai-shadow: rgba(190, 140, 140, 0.20);
-  --color-jai-shadow-hover: rgba(190, 140, 140, 0.30);
+  --color-jai-card-border: #D8A0AA;
+  --color-jai-input-bg: #ECC0C8;
+  --color-jai-text: #4A2028;
+  --color-jai-text-secondary: #8A5060;
+  --color-jai-muted: #ECC0C8;
+  --color-jai-shadow: rgba(180, 100, 120, 0.20);
+  --color-jai-shadow-hover: rgba(180, 100, 120, 0.30);
   --color-jai-success: #5DA07E;
   --color-jai-thinking: #a78bfa;
 }

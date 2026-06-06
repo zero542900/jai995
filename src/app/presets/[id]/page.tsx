@@ -292,25 +292,25 @@ export default function PresetDetailPage() {
                     <div className="space-y-2 text-xs text-jai-text-secondary">
                       {preset.plotData.plotStage && (
                         <div className="flex items-center gap-1">
-                          <span className="text-[#9A8F8F]">阶段:</span>
+                          <span className="text-jai-text-secondary/70">阶段:</span>
                           <span>{preset.plotData.plotStage}</span>
-                          {preset.plotData.plotStageCn && <span className="text-[#9A8F8F]">({preset.plotData.plotStageCn})</span>}
+                          {preset.plotData.plotStageCn && <span className="text-jai-text-secondary/70">({preset.plotData.plotStageCn})</span>}
                         </div>
                       )}
                       {preset.plotData.progressDesc && (
                         <div>
-                          <span className="text-[#9A8F8F]">进展:</span>
+                          <span className="text-jai-text-secondary/70">进展:</span>
                           <span className="ml-1">{preset.plotData.progressDesc}</span>
-                          {preset.plotData.progressDescCn && <span className="text-[#9A8F8F] ml-1">({preset.plotData.progressDescCn})</span>}
+                          {preset.plotData.progressDescCn && <span className="text-jai-text-secondary/70 ml-1">({preset.plotData.progressDescCn})</span>}
                         </div>
                       )}
                       {preset.plotData.savedPlotDirections && preset.plotData.savedPlotDirections.length > 1 && (
                         <div>
-                          <span className="text-[#9A8F8F]">已保存走向:</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
+                          <span className="text-jai-text-secondary/70">已保存走向:</span>
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {preset.plotData.savedPlotDirections.map((d, i) => (
-                              <span key={i} className={`inline-block px-2 py-0.5 rounded-full text-[10px] ${d.en === preset.plotDirection ? 'bg-jai-card-border text-jai-accent' : 'bg-jai-muted text-jai-text-secondary'}`}>
-                                {d.en} {d.cn && `(${d.cn})`}
+                              <span key={i} className={`inline-block px-2 py-1 rounded-lg text-[11px] leading-tight border ${d.en === preset.plotDirection ? 'bg-jai-secondary/20 border-jai-secondary text-jai-accent' : 'bg-jai-card border-jai-card-border text-jai-text-secondary'}`}>
+                                {d.en} {d.cn && <span className="text-jai-text-secondary/60">({d.cn})</span>}
                               </span>
                             ))}
                           </div>

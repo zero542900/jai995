@@ -1023,7 +1023,7 @@ export default function ChatPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">当前走向</span>
               </div>
-              <button onClick={() => setShowDirectionCard(false)} className="text-[#9A8F8F] hover:text-[#6A5F5F] p-1">
+              <button onClick={() => setShowDirectionCard(false)} className="text-jai-text-secondary hover:text-jai-text p-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -1034,7 +1034,7 @@ export default function ChatPage() {
               {currentDirectionCn && (
                 <div className="pt-2 border-t border-jai-thinking/30">
                   <span className="text-[10px] bg-jai-thinking/20 text-[#8b5cf6] px-1.5 py-0.5 rounded font-medium">中文</span>
-                  <p className="text-sm text-[#6A5F5F] mt-1.5 leading-relaxed">{currentDirectionCn}</p>
+                  <p className="text-sm text-jai-text mt-1.5 leading-relaxed">{currentDirectionCn}</p>
                 </div>
               )}
             </div>
@@ -1048,7 +1048,7 @@ export default function ChatPage() {
               </button>
               <button
                 onClick={() => { setCurrentDirection(''); setCurrentDirectionCn(''); setShowDirectionCard(false); }}
-                className="text-[11px] text-[#9A8F8F] hover:text-[#6A5F5F] ml-auto"
+                className="text-[11px] text-jai-text-secondary hover:text-jai-text ml-auto"
               >清除走向</button>
             </div>
           </div>
@@ -1090,11 +1090,11 @@ export default function ChatPage() {
               <button onClick={handleInspiration} disabled={inspirationLoading} className="p-1 text-jai-secondary hover:text-jai-accent disabled:opacity-50">
                 <IconRefresh className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => setShowInspiration(false)} className="p-1 text-[#9A8F8F] hover:text-[#6A5F5F] text-xs">✕</button>
+              <button onClick={() => setShowInspiration(false)} className="p-1 text-jai-text-secondary hover:text-jai-text text-xs">✕</button>
             </div>
           </div>
           {inspirationLoading ? (
-            <p className="text-xs text-[#9A8F8F] animate-pulse">生成中...</p>
+            <p className="text-xs text-jai-text-secondary animate-pulse">生成中...</p>
           ) : (
             <div className="space-y-2">
               {inspirationItems.map((item, i) => (
@@ -1138,7 +1138,7 @@ export default function ChatPage() {
                     }}
                   >
                     {item.translating ? (
-                      <p className="text-xs text-[#9A8F8F] animate-pulse">翻译中...</p>
+                      <p className="text-xs text-jai-text-secondary animate-pulse">翻译中...</p>
                     ) : item.flipped ? (
                       <p className="text-xs text-jai-text">{item.cn}</p>
                     ) : (
@@ -1183,7 +1183,7 @@ export default function ChatPage() {
                           setInspirationItems(newItems);
                         }
                       }}
-                      className="text-[10px] text-[#9A8F8F] hover:text-[#6A5F5F]"
+                      className="text-[10px] text-jai-text-secondary hover:text-jai-text"
                     >翻转</button>
                   </div>
                 </div>
@@ -1202,7 +1202,7 @@ export default function ChatPage() {
               <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
                 <IconPlot className="w-3.5 h-3.5" /> 剧情助手
               </span>
-              <button onClick={() => setShowPlotPanel(false)} className="p-1 text-[#9A8F8F] hover:text-[#6A5F5F] text-xs">✕</button>
+              <button onClick={() => setShowPlotPanel(false)} className="p-1 text-jai-text-secondary hover:text-jai-text text-xs">✕</button>
             </div>
 
           <div className="p-3 space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 44px)' }}>
@@ -1216,7 +1216,7 @@ export default function ChatPage() {
                 <IconRefresh className={`w-3 h-3 ${plotAnalyzeLoading ? 'animate-spin' : ''}`} />
                 {plotAnalyzeLoading ? 'AI 分析中...' : 'AI 概括主线 + 推荐关键词'}
               </button>
-              <span className="text-[10px] text-[#9A8F8F]">AI 自动概括当前剧情主线和推荐关键词</span>
+              <span className="text-[10px] text-jai-text-secondary">AI 自动概括当前剧情主线和推荐关键词</span>
             </div>
 
             <div className="border-t border-amber-100" />
@@ -1234,7 +1234,7 @@ export default function ChatPage() {
                   </div>
                   {plotStage && (
                     <div className="flex items-center gap-1.5 mb-1">
-                      <span className="text-[10px] text-[#9A8F8F]">阶段:</span>
+                      <span className="text-[10px] text-jai-text-secondary">阶段:</span>
                       <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>
                     </div>
                   )}
@@ -1242,7 +1242,7 @@ export default function ChatPage() {
                     <p className="text-[11px] text-jai-text-secondary">{progressDesc}</p>
                   )}
                   {progressDescCn && (
-                    <p className="text-[10px] text-[#9A8F8F] mt-0.5">{progressDescCn}</p>
+                    <p className="text-[10px] text-jai-text-secondary mt-0.5">{progressDescCn}</p>
                   )}
                 </div>
               ) : (
@@ -1276,7 +1276,7 @@ export default function ChatPage() {
                 </button>
               </div>
               {suggestedKeywords.ending.length === 0 && suggestedKeywords.relation.length === 0 ? (
-                <p className="text-[11px] text-[#9A8F8F]">点击上方"AI 概括主线 + 推荐关键词"按钮生成推荐</p>
+                <p className="text-[11px] text-jai-text-secondary">点击上方"AI 概括主线 + 推荐关键词"按钮生成推荐</p>
               ) : (
               <div className="space-y-2">
                 {/* Ending keywords */}
@@ -1292,7 +1292,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
                         }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-[#9A8F8F] ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1334,7 +1334,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
                         }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-[#9A8F8F] ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1376,7 +1376,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
                         }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-[#9A8F8F] ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1418,7 +1418,7 @@ export default function ChatPage() {
                             ? 'bg-amber-200 border-amber-300 text-amber-800'
                             : 'bg-amber-50/50 border-amber-100 text-jai-text-secondary hover:bg-amber-100'
                         }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-[#9A8F8F] ml-0.5">({kw.cn})</span></button>
+                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
                     ))}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -1450,7 +1450,7 @@ export default function ChatPage() {
                 {/* Selected keywords summary */}
                 {getAllKeywords().length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-1 border-t border-amber-50">
-                    <span className="text-[10px] text-[#9A8F8F]">已选:</span>
+                    <span className="text-[10px] text-jai-text-secondary">已选:</span>
                     {getAllKeywords().map((kw, i) => (
                       <span key={i} className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                         {kw}
@@ -1467,7 +1467,7 @@ export default function ChatPage() {
                     ))}
                     <button
                       onClick={() => { setSelectedEnding([]); setSelectedRelation([]); setSelectedScene([]); setSelectedStageKeyword([]); }}
-                      className="text-[10px] text-[#9A8F8F] hover:text-[#6A5F5F]"
+                      className="text-[10px] text-jai-text-secondary hover:text-jai-text"
                     >清空</button>
                   </div>
                 )}
@@ -1497,7 +1497,7 @@ export default function ChatPage() {
               </div>
 
               {plotPredictLoading ? (
-                <p className="text-xs text-[#9A8F8F] animate-pulse">生成中...</p>
+                <p className="text-xs text-jai-text-secondary animate-pulse">生成中...</p>
               ) : plotPredictions.length > 0 ? (
                 <div className="space-y-2">
                   {plotPredictions.map((pred, i) => {
@@ -1570,7 +1570,7 @@ export default function ChatPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-[11px] text-[#9A8F8F]">点击刷新按钮生成剧情走向预测</p>
+                <p className="text-[11px] text-jai-text-secondary">点击刷新按钮生成剧情走向预测</p>
               )}
             </div>
 
@@ -1588,7 +1588,7 @@ export default function ChatPage() {
                 <span className="text-sm font-medium text-jai-accent flex items-center gap-1.5">
                   <IconPen className="w-4 h-4" /> 扩写
                 </span>
-                <button onClick={() => { setShowExpandModal(false); setExpandResult(null); setExpandBrief(''); }} className="text-[#9A8F8F] hover:text-[#6A5F5F]">✕</button>
+                <button onClick={() => { setShowExpandModal(false); setExpandResult(null); setExpandBrief(''); }} className="text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
 
               {!expandResult ? (
@@ -1637,11 +1637,11 @@ export default function ChatPage() {
                 <span className="text-sm font-medium text-jai-thinking flex items-center gap-1.5">
                   <IconBrain className="w-4 h-4" /> 长期记忆
                 </span>
-                <button onClick={() => { setShowMemoryModal(false); setMemoryResult(null); }} className="text-[#9A8F8F] hover:text-[#6A5F5F]">✕</button>
+                <button onClick={() => { setShowMemoryModal(false); setMemoryResult(null); }} className="text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
 
               {memoryLoading ? (
-                <p className="text-sm text-[#9A8F8F] animate-pulse">生成中...</p>
+                <p className="text-sm text-jai-text-secondary animate-pulse">生成中...</p>
               ) : memoryResult ? (
                 <div className="space-y-3">
                   <div className="p-3 rounded-xl bg-jai-thinking/10 border border-jai-thinking/30">
@@ -1739,7 +1739,7 @@ export default function ChatPage() {
                         className={`w-full text-left px-3 py-1.5 text-xs hover:bg-jai-muted transition-colors ${currentVal === key ? 'bg-jai-muted text-jai-accent font-medium' : 'text-[#5A4F4F]'}`}
                       >
                         <span className="font-medium">{key}</span>
-                        <span className="block text-[10px] text-[#9A8F8F] mt-0.5 line-clamp-2">{desc}</span>
+                        <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
                       </button>
                     ))}
                     {currentVal && (
@@ -1777,7 +1777,7 @@ export default function ChatPage() {
                     />
                     <div>
                       <span className="font-medium">{key}</span>
-                      <span className="block text-[10px] text-[#9A8F8F] mt-0.5">{desc}</span>
+                      <span className="block text-[10px] text-jai-text-secondary mt-0.5">{desc}</span>
                     </div>
                   </label>
                 ))}
@@ -1890,8 +1890,8 @@ export default function ChatPage() {
                 )}
                 {showInstructionPicker && instructionList.length === 0 && (
                   <div className="absolute bottom-full right-0 mb-1 w-44 bg-white rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
-                    <p className="text-xs text-[#9A8F8F]">暂无指令</p>
-                    <p className="text-[10px] text-[#9A8F8F] mt-0.5">前往指令库添加</p>
+                    <p className="text-xs text-jai-text-secondary">暂无指令</p>
+                    <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
                   </div>
                 )}
               </div>
@@ -1907,7 +1907,7 @@ export default function ChatPage() {
                 <span className="text-sm font-medium text-jai-text">
                   {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'genre' ? '经典类型' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
                 </span>
-                <button onClick={() => setExpandedStyleCategory(null)} className="p-1 text-[#9A8F8F] hover:text-[#6A5F5F]">✕</button>
+                <button onClick={() => setExpandedStyleCategory(null)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
               <div className="p-3 space-y-1">
                 {Object.entries(STYLE_OPTIONS[expandedStyleCategory as 'tone' | 'genre' | 'emotion' | 'pace']).map(([key, desc]) => {
@@ -1928,7 +1928,7 @@ export default function ChatPage() {
                       className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-jai-muted border border-jai-accent' : 'hover:bg-jai-bg/50 border border-transparent'}`}
                     >
                       <span className={`text-sm ${currentVal === key ? 'text-jai-accent font-medium' : 'text-jai-text'}`}>{key}</span>
-                      <span className="block text-xs text-[#9A8F8F] mt-0.5 line-clamp-2">{desc}</span>
+                      <span className="block text-xs text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
                     </button>
                   );
                 })}
@@ -1953,7 +1953,7 @@ export default function ChatPage() {
             <div className="bg-white rounded-t-2xl w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
               <div className="sticky top-0 bg-white px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
                 <span className="text-sm font-medium text-jai-text">可选风格</span>
-                <button onClick={() => setShowOptionalMenu(false)} className="p-1 text-[#9A8F8F] hover:text-[#6A5F5F]">✕</button>
+                <button onClick={() => setShowOptionalMenu(false)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
               <div className="p-3 space-y-1">
                 {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
@@ -1969,7 +1969,7 @@ export default function ChatPage() {
                     />
                     <div>
                       <span className="font-medium">{key}</span>
-                      <span className="block text-xs text-[#9A8F8F] mt-0.5">{desc}</span>
+                      <span className="block text-xs text-jai-text-secondary mt-0.5">{desc}</span>
                     </div>
                   </label>
                 ))}
@@ -2044,8 +2044,8 @@ export default function ChatPage() {
             )}
             {showInstructionPicker && instructionList.length === 0 && (
               <div className="absolute bottom-full left-0 mb-1 w-56 bg-white rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
-                <p className="text-xs text-[#9A8F8F]">暂无指令</p>
-                <p className="text-[10px] text-[#9A8F8F] mt-0.5">前往指令库添加</p>
+                <p className="text-xs text-jai-text-secondary">暂无指令</p>
+                <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
               </div>
             )}
           </div>
@@ -2220,9 +2220,9 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                 <span className="text-sm font-medium text-jai-accent flex items-center gap-1.5">
                   <IconBook className="w-4 h-4" /> 标记为指令
                 </span>
-                <button onClick={() => setShowPicker(false)} className="text-[#9A8F8F] hover:text-[#6A5F5F]">✕</button>
+                <button onClick={() => setShowPicker(false)} className="text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
-              <p className="text-[11px] text-[#9A8F8F] mt-1">选择要标记为指令的段落（已自动识别含指令关键词的段落）</p>
+              <p className="text-[11px] text-jai-text-secondary mt-1">选择要标记为指令的段落（已自动识别含指令关键词的段落）</p>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
               {paragraphs.map((p, idx) => {
@@ -2263,9 +2263,9 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
               })}
             </div>
             <div className="p-3 border-t border-jai-card-border flex items-center justify-between">
-              <span className="text-[11px] text-[#9A8F8F]">已选 {selectedParagraphs.size} / {paragraphs.length} 段</span>
+              <span className="text-[11px] text-jai-text-secondary">已选 {selectedParagraphs.size} / {paragraphs.length} 段</span>
               <div className="flex gap-2">
-                <button onClick={() => setShowPicker(false)} className="px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-[#6A5F5F] hover:bg-jai-muted">取消</button>
+                <button onClick={() => setShowPicker(false)} className="px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-text hover:bg-jai-muted">取消</button>
                 <button onClick={handleConfirmPicker} className="px-3 py-1.5 text-xs rounded-lg bg-jai-secondary text-white hover:bg-jai-accent disabled:opacity-50" disabled={selectedParagraphs.size === 0}>
                   确认标记
                 </button>
@@ -2299,7 +2299,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
               />
               <div className="flex gap-1.5">
                 <button onClick={() => onSaveEdit(editContent)} className="text-[10px] px-2 py-0.5 bg-jai-secondary text-white rounded">保存</button>
-                <button onClick={onCancelEdit} className="text-[10px] px-2 py-0.5 bg-jai-muted text-[#6A5F5F] rounded">取消</button>
+                <button onClick={onCancelEdit} className="text-[10px] px-2 py-0.5 bg-jai-muted text-jai-text rounded">取消</button>
               </div>
             </div>
           ) : (
@@ -2319,7 +2319,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                       className={`rounded-lg px-2.5 py-1.5 text-[11px] leading-relaxed whitespace-pre-wrap ${
                         isUser
                           ? 'bg-jai-secondary/30 text-jai-muted'
-                          : 'bg-jai-muted/80 text-[#6A5F5F] border border-jai-card-border/50'
+                          : 'bg-jai-muted/80 text-jai-text border border-jai-card-border/50'
                       }`}
                     >
                       <span className={`inline-block text-[9px] font-medium px-1 py-0.5 rounded mb-1 ${
@@ -2334,7 +2334,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                           const clean = tp.trim().replace(/^【|】$/g, '');
                           return clean.length > 0;
                         });
-                        return transInst ? <span className="ml-1 text-[#9A8F8F] text-[10px] block mt-0.5">{transInst.replace(/^【|】$/g, '')}</span> : null;
+                        return transInst ? <span className="ml-1 text-jai-text-secondary text-[10px] block mt-0.5">{transInst.replace(/^【|】$/g, '')}</span> : null;
                       })()}
                     </div>
                   ))}
@@ -2353,19 +2353,19 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
         {/* Action Buttons - always visible */}
         {!message.editing && (
           <div className={`flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 pb-1.5 md:pb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <button onClick={onFlip} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-[#9A8F8F] hover:text-[#6A5F5F]'}`}>
+            <button onClick={onFlip} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconFlip className="w-3 h-3" />
             </button>
-            <button onClick={onCopy} title="复制" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-[#9A8F8F] hover:text-[#6A5F5F]'}`}>
+            <button onClick={onCopy} title="复制" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconCopy className="w-3 h-3" />
             </button>
-            <button onClick={onEdit} title="编辑" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-[#9A8F8F] hover:text-[#6A5F5F]'}`}>
+            <button onClick={onEdit} title="编辑" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconEdit className="w-3 h-3" />
             </button>
-            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-[#9A8F8F] hover:text-[#6A5F5F]'}`}>
+            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconBook className="w-3 h-3" />
             </button>
-            <button onClick={onDelete} title="删除此条及之后" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-red-300' : 'text-[#9A8F8F] hover:text-red-400'}`}>
+            <button onClick={onDelete} title="删除此条及之后" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-red-300' : 'text-jai-text-secondary hover:text-red-400'}`}>
               <IconTrash className="w-3 h-3" />
             </button>
           </div>

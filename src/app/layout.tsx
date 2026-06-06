@@ -25,9 +25,9 @@ const themeInitScript = `
     var themes = {
       rose: {
         'jai-bg': '#E8BABA', 'jai-secondary': '#D49898', 'jai-accent': '#C47878',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#E0B0B0', 'jai-input-bg': '#F2D5D5',
-        'jai-text': '#4A2E2E', 'jai-text-secondary': '#8A6060', 'jai-muted': '#F2D5D5',
-        'jai-success': '#5DA07E', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(190,140,140,0.20)'
+        'jai-card': '#FFFFFF', 'jai-card-border': '#D8A0AA', 'jai-input-bg': '#ECC0C8',
+        'jai-text': '#4A2028', 'jai-text-secondary': '#8A5060', 'jai-muted': '#ECC0C8',
+        'jai-success': '#5DA07E', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(180,100,120,0.20)'
       },
       ocean: {
         'jai-bg': '#B8D0E8', 'jai-secondary': '#98B4D0', 'jai-accent': '#7898BE',
@@ -54,16 +54,16 @@ const themeInitScript = `
         'jai-success': '#5AA07A', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(195,160,130,0.20)'
       },
       midnight: {
-        'jai-bg': '#A8B8D0', 'jai-secondary': '#8EA0BC', 'jai-accent': '#6E88A8',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#A0B0C8', 'jai-input-bg': '#C0CEDF',
-        'jai-text': '#2A3650', 'jai-text-secondary': '#5A6E88', 'jai-muted': '#C0CEDF',
-        'jai-success': '#5AA098', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(120,150,190,0.20)'
+        'jai-bg': '#D8B090', 'jai-secondary': '#C89870', 'jai-accent': '#B88050',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#D0A888', 'jai-input-bg': '#E8D0B0',
+        'jai-text': '#4A3018', 'jai-text-secondary': '#8A6840', 'jai-muted': '#E8D0B0',
+        'jai-success': '#5AA078', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(170,130,80,0.20)'
       },
       warmnight: {
-        'jai-bg': '#E0C0A0', 'jai-secondary': '#D0A880', 'jai-accent': '#C09068',
-        'jai-card': '#FFFFFF', 'jai-card-border': '#D8B898', 'jai-input-bg': '#ECDCB8',
-        'jai-text': '#4A3420', 'jai-text-secondary': '#8A6848', 'jai-muted': '#ECDCB8',
-        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(180,140,100,0.20)'
+        'jai-bg': '#E0B090', 'jai-secondary': '#D09870', 'jai-accent': '#C08058',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#D8A888', 'jai-input-bg': '#ECD0B0',
+        'jai-text': '#4A3020', 'jai-text-secondary': '#8A6848', 'jai-muted': '#ECD0B0',
+        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(180,130,80,0.20)'
       },
       daylight: {
         'jai-bg': '#F5F0EC', 'jai-secondary': '#E0D8D0', 'jai-accent': '#B0A090',

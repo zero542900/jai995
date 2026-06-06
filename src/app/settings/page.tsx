@@ -101,7 +101,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* 主题描述 */}
-                  <div className="mt-1.5 text-[11px] text-jai-text-secondary leading-tight truncate">
+                  <div className="mt-1.5 text-[11px] text-jai-text-secondary leading-tight line-clamp-2">
                     {theme.description}
                   </div>
                   {/* 主题名称 */}

@@ -38,7 +38,7 @@ export default function PresetsPage() {
     const sessions = getSessionsByPreset(presetId);
     if (sessions.length === 0) return { label: '未打开', color: 'text-muted-foreground' };
     const hasMessages = sessions.some((s) => s.messages.length > 0);
-    if (hasMessages) return { label: '会话进行中（记忆已存）', color: 'text-emerald-500' };
+    if (hasMessages) return { label: '会话进行中（记忆已存）', color: 'text-jai-success' };
     return { label: '未打开', color: 'text-muted-foreground' };
   };
 

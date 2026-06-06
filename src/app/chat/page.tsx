@@ -343,7 +343,7 @@ export default function ChatPage() {
             if (data === '[DONE]') continue;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.type === 'content') fullText += parsed.content;
+              if (parsed.content) fullText += parsed.content;
             } catch { /* skip */ }
           }
         }
@@ -403,7 +403,7 @@ export default function ChatPage() {
             if (data === '[DONE]') continue;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.type === 'content') fullText += parsed.content;
+              if (parsed.content) fullText += parsed.content;
             } catch { /* skip */ }
           }
         }
@@ -456,7 +456,7 @@ export default function ChatPage() {
             if (data === '[DONE]') continue;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.type === 'content') fullText += parsed.content;
+              if (parsed.content) fullText += parsed.content;
             } catch { /* skip */ }
           }
         }

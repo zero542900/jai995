@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { copyToClipboard } from '@/lib/utils';
 import { getApiKey } from '@/lib/storage';
 
@@ -27,6 +27,15 @@ export default function FlipCard({
   const [flipped, setFlipped] = useState(false);
   const [translation, setTranslation] = useState('');
   const [translating, setTranslating] = useState(false);
+  const prevContentRef = useRef(content);
+
+  // 当 content 变化时（编辑保存后），重置翻译缓存
+  useEffect(() => {
+    if (prevContentRef.current !== content) {
+      setTranslation('');
+      prevContentRef.current = content;
+    }
+  }, [content]);
 
   const handleFlip = async () => {
     if (!flipped && !translation && content) {

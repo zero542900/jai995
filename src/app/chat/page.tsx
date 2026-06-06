@@ -524,14 +524,6 @@ export default function ChatPage() {
       const enText = (parts[0] || '').trim();
       const cnText = (parts[1] || '').trim();
       setMemoryResult({ en: enText, cn: cnText });
-
-      // Auto-save to preset
-      if (currentPreset && enText) {
-        const updated = { ...currentPreset, longTermMemory: enText };
-        updatePreset(updated);
-        setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
-        showNotification('记忆已自动写入预设');
-      }
     } catch {
       showNotification('记忆生成失败');
     } finally {
@@ -548,9 +540,6 @@ export default function ChatPage() {
   };
 
   const handleBackToPresets = () => {
-    if (currentPreset && memoryResult) {
-      saveMemoryToPreset();
-    }
     if (currentPresetId) {
       const preset = presets.find(p => p.id === currentPresetId);
       if (preset) saveSession(currentPresetId, messages, preset.longTermMemory);

@@ -184,35 +184,31 @@ Generate a short line (≤ 30 words) describing something a random character wan
   },
   {
     name: '小剧场',
-    summary: '剧情日记 + 上帝弹幕 + AU 场景，每轮必更',
-    content: `[System Note: Small Theaters - Permanent Section]
-Generate the following three parts in a single output, separated by a line of dashes:
+    summary: '剧情日记 + 上帝弹幕 + AU 场景，一次性生成',
+    content: `[System Note: Small Theaters - One-Time Only]
+Generate the following three parts in a single output, separated by a line of dashes. Only generate this in the very next response:
 
 Part 1 - Plot Diary: Write a diary entry from {{char}}'s perspective. Minimum 200 words. Reflect recent events and internal thoughts.
 
 Part 2 - Omniscient Barrage: Write 8 short comments from omniscient bystanders. Each comment ≤ 20 words. They comment on the story like a live audience.
 
-Part 3 - Alternate Universe (Short Theaters): Generate 1-2 AU scenes (150-200 words each). Completely open format. Base them on {{char}}'s original settings. Do not repeat the same AU.
-
-This section must be updated in every response.`,
+Part 3 - Alternate Universe (Short Theaters): Generate 1-2 AU scenes (150-200 words each). Completely open format. Base them on {{char}}'s original settings. Do not repeat the same AU.`,
   },
   {
     name: '读书笔记',
-    summary: '角色读书心得，含书名和摘抄，每轮必更',
-    content: `[System Note: Reading Notes - Permanent Section]
-Generate a "Reading Notes" entry for {{char}}. Include:
+    summary: '角色读书心得，含书名和摘抄，一次性生成',
+    content: `[System Note: Reading Notes - One-Time Only]
+Generate a "Reading Notes" entry for {{char}} in the very next response. Include:
 
 1. Book title: One book per entry. Do not repeat books. Choose based on {{char}}'s profession, interests, experiences, MBTI, or inner world. Books can be popular, niche, or professional.
 
-2. Reading Notes: Minimum 300 words. Focus only on {{char}}'s thoughts. The notes can be unrelated to plot or user. Optional elements: events from {{char}}'s past, cases they handled, people they met, or recent reflections. Must include a favorite quote from the book.
-
-This section must be updated in every response.`,
+2. Reading Notes: Minimum 300 words. Focus only on {{char}}'s thoughts. The notes can be unrelated to plot or user. Optional elements: events from {{char}}'s past, cases they handled, people they met, or recent reflections. Must include a favorite quote from the book.`,
   },
   {
     name: '朋友圈',
-    summary: '社交媒体动态 + NPC 评论，每轮必更',
-    content: `[System Note: Friends' Circle - Permanent Section]
-Generate a "Friends' Circle" section. Each response must include a new social media post. Each post must have at least 3 NPC comments. The person posting can be {{char}}, {{char}}'s family/friends, or {{user}}'s family/friends. Update this section in every response to reflect current plot progress. Format as plain text, separated by lines.`,
+    summary: '社交媒体动态 + NPC 评论，一次性生成',
+    content: `[System Note: Friends' Circle - One-Time Only]
+Generate a "Friends' Circle" section in the very next response. Include a new social media post. Each post must have at least 3 NPC comments. The person posting can be {{char}}, {{char}}'s family/friends, or {{user}}'s family/friends. Format as plain text, separated by lines.`,
   },
   {
     name: '日程表',
@@ -269,19 +265,29 @@ const SEED_VERSION_KEY = 'jai_instructions_seed_v';
 
 export function seedInstructions(): void {
   if (typeof window === 'undefined') return;
-  const currentSeedVersion = '1';
+  const currentSeedVersion = '2';
   const storedVersion = localStorage.getItem(SEED_VERSION_KEY);
   // Only seed once; if already seeded with this version, skip
   if (storedVersion === currentSeedVersion) return;
 
   const existing = getInstructions();
-  // If user already has instructions, don't overwrite — just mark seed version
+
+  // If user already has instructions from a previous version, update changed ones by name
   if (existing.length > 0 && storedVersion !== null) {
+    const updated = existing.map((inst) => {
+      const seed = SEED_INSTRUCTIONS.find((s) => s.name === inst.name);
+      // Only update the 3 changed instructions; leave user-customized ones alone if name doesn't match
+      if (seed && ['小剧场', '读书笔记', '朋友圈'].includes(inst.name)) {
+        return { ...inst, content: seed.content, summary: seed.summary, updatedAt: Date.now() };
+      }
+      return inst;
+    });
+    localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(updated));
     localStorage.setItem(SEED_VERSION_KEY, currentSeedVersion);
     return;
   }
 
-  // Seed all 10 instructions
+  // Fresh seed — no existing instructions
   const now = Date.now();
   const seeded: Instruction[] = SEED_INSTRUCTIONS.map((item, idx) => ({
     id: (now + idx).toString(36) + Math.random().toString(36).slice(2, 7),

@@ -1537,12 +1537,30 @@ export default function ChatPage() {
                           onClick={() => {
                             if (plotTwist) {
                               setCurrentDirection(plotTwist);
-                              setCurrentDirectionCn('');
+                              setCurrentDirectionCn('翻译中...');
                               setSavedPlotDirections(prev => {
                                 if (prev.some(d => d.en === plotTwist)) return prev;
                                 return [...prev, { en: plotTwist, cn: '' }];
                               });
                               showNotification('转折已设为当前走向');
+                              // Auto-translate twist to Chinese
+                              const apiKey = localStorage.getItem('jai_api_key') || '';
+                              fetch('/api/translate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: plotTwist, apiKey }),
+                              }).then(r => r.json()).then(data => {
+                                const cn = data.translation || '翻译失败';
+                                setCurrentDirectionCn(cn);
+                                setSavedPlotDirections(prev =>
+                                  prev.map(d => d.en === plotTwist ? { ...d, cn } : d)
+                                );
+                              }).catch(() => {
+                                setCurrentDirectionCn('翻译失败');
+                                setSavedPlotDirections(prev =>
+                                  prev.map(d => d.en === plotTwist ? { ...d, cn: '翻译失败' } : d)
+                                );
+                              });
                             }
                           }}
                           className="text-[10px] text-violet-500 hover:text-violet-700 font-medium"

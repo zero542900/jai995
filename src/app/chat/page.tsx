@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook } from '@/components/icons';
+import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck } from '@/components/icons';
 
 // ========== Types ==========
 interface ChatMessage {
@@ -599,17 +599,12 @@ export default function ChatPage() {
             onCancelEdit={() => cancelEditMessage(msg.id)}
             onDelete={() => deleteMessageAndAfter(msg.id)}
             onCopy={() => copyContent(msg.flipped && msg.chineseTranslation ? msg.chineseTranslation : msg.content)}
-            onMarkAsInstruction={() => {
-              setMessages(prev => prev.map(m => {
-                if (m.id !== msg.id) return m;
-                const content = m.content;
-                // Toggle: if already fully wrapped in 【】, unwrap; otherwise wrap
-                if (content.startsWith('【') && content.endsWith('】')) {
-                  return { ...m, content: content.slice(1, -1) };
-                }
-                return { ...m, content: `【${content}】` };
-              }));
-              showNotification('已标记为指令内容');
+            onMarkAsInstruction={(selectedIndices: number[]) => {
+              // The actual content rebuild happens inside MessageBubble via onSaveEdit
+              // This callback is just for notification
+              if (selectedIndices.length > 0) {
+                showNotification(`已标记 ${selectedIndices.length} 段为指令`);
+              }
             }}
           />
         ))}
@@ -856,6 +851,25 @@ export default function ChatPage() {
   );
 }
 
+// ========== Instruction keyword detection ==========
+const INSTRUCTION_KEYWORDS = [
+  'Reader Barrage', 'Omniscient Barrage',
+  'Small Theaters', 'Plot Diary', 'Alternate Universe', 'AU',
+  'Reading Notes', 'Book title',
+  "Friends' Circle", 'Friends Circle',
+  'Weekly Schedule',
+  'Now Playing',
+  'System Note', 'System-Level',
+  'Want to Do but Dare Not',
+  'Random Event',
+  'OOC',
+];
+
+function isInstructionParagraph(text: string): boolean {
+  const lower = text.toLowerCase();
+  return INSTRUCTION_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
+}
+
 // ========== Message Bubble Component ==========
 function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDelete, onCopy, onMarkAsInstruction }: {
   message: ChatMessage;
@@ -865,9 +879,11 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
   onCancelEdit: () => void;
   onDelete: () => void;
   onCopy: () => void;
-  onMarkAsInstruction: () => void;
+  onMarkAsInstruction: (selectedIndices: number[]) => void;
 }) {
   const [editContent, setEditContent] = useState(message.content);
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedParagraphs, setSelectedParagraphs] = useState<Set<number>>(new Set());
   const isUser = message.role === 'user';
 
   useEffect(() => {
@@ -878,8 +894,114 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
   const displayText = message.flipped && message.chineseTranslation ? message.chineseTranslation : message.content;
   const { main, instructions } = parseContentSections(displayText);
 
+  // Split content into paragraphs for the picker (use original content, not display)
+  const paragraphs = message.content.split(/\n\n+/).filter(p => p.trim());
+
+  const handleOpenPicker = () => {
+    // Auto-select paragraphs that look like instructions
+    const autoSelected = new Set<number>();
+    paragraphs.forEach((p, idx) => {
+      if (isInstructionParagraph(p)) {
+        autoSelected.add(idx);
+      }
+      // Also keep paragraphs that are already wrapped in 【】
+      if (p.trim().startsWith('【') && p.trim().endsWith('】')) {
+        autoSelected.add(idx);
+      }
+    });
+    setSelectedParagraphs(autoSelected);
+    setShowPicker(true);
+  };
+
+  const handleConfirmPicker = () => {
+    if (selectedParagraphs.size === 0) {
+      setShowPicker(false);
+      return;
+    }
+    // Rebuild content: wrap selected paragraphs in 【】, leave others as-is
+    const rebuilt = paragraphs.map((p, idx) => {
+      const clean = p.trim();
+      // If already wrapped, keep or unwrap based on selection
+      if (clean.startsWith('【') && clean.endsWith('】')) {
+        const inner = clean.slice(1, -1);
+        return selectedParagraphs.has(idx) ? p : inner;
+      }
+      return selectedParagraphs.has(idx) ? `【${clean}】` : p;
+    }).join('\n\n');
+    onMarkAsInstruction(Array.from(selectedParagraphs));
+    onSaveEdit(rebuilt);
+    setShowPicker(false);
+  };
+
+  const toggleParagraph = (idx: number) => {
+    setSelectedParagraphs(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      {/* Paragraph Picker Modal */}
+      {showPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={() => setShowPicker(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-pink-100">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-pink-500 flex items-center gap-1.5">
+                  <IconBook className="w-4 h-4" /> 标记为指令
+                </span>
+                <button onClick={() => setShowPicker(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">选择要标记为指令的段落（已自动识别含指令关键词的段落）</p>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+              {paragraphs.map((p, idx) => {
+                const isSelected = selectedParagraphs.has(idx);
+                const isAuto = isInstructionParagraph(p);
+                const preview = p.length > 120 ? p.slice(0, 120) + '...' : p;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => toggleParagraph(idx)}
+                    className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
+                      isSelected
+                        ? 'border-pink-300 bg-pink-50'
+                        : 'border-gray-100 bg-gray-50/50 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected ? 'border-pink-500 bg-pink-500' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <IconCheck className="w-3 h-3 text-white" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-700 whitespace-pre-wrap break-words leading-relaxed">{preview}</p>
+                        {isAuto && !isSelected && (
+                          <span className="inline-block mt-1 text-[9px] text-pink-400 bg-pink-50 px-1 py-0.5 rounded">建议标记</span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="p-3 border-t border-pink-100 flex items-center justify-between">
+              <span className="text-[11px] text-gray-400">已选 {selectedParagraphs.size} / {paragraphs.length} 段</span>
+              <div className="flex gap-2">
+                <button onClick={() => setShowPicker(false)} className="px-3 py-1.5 text-xs rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">取消</button>
+                <button onClick={handleConfirmPicker} className="px-3 py-1.5 text-xs rounded-lg bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-50" disabled={selectedParagraphs.size === 0}>
+                  确认标记
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={`max-w-[85%] rounded-2xl shadow-sm ${
         isUser
           ? 'bg-pink-500 text-white rounded-br-sm'
@@ -959,7 +1081,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
             <button onClick={onEdit} title="编辑" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconEdit className="w-3 h-3" />
             </button>
-            <button onClick={onMarkAsInstruction} title="标记为指令" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
               <IconBook className="w-3 h-3" />
             </button>
             <button onClick={onDelete} title="删除此条及之后" className={`p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-pink-200 hover:text-red-300' : 'text-gray-400 hover:text-red-400'}`}>

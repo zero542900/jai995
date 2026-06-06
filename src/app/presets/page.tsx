@@ -54,7 +54,7 @@ export default function PresetsPage() {
       </div>
 
       {presets.length === 0 ? (
-        <Card className="border-pink-100">
+        <Card className="border-jai-card-border">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-3">还没有保存的预设</p>
             <Link href="/">
@@ -71,7 +71,7 @@ export default function PresetsPage() {
             return (
               <Card
                 key={preset.id}
-                className="border-pink-100 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group"
+                className="border-jai-card-border hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group"
               >
                 <Link href={`/presets/${preset.id}`}>
                   <CardContent className="p-4 space-y-2">
@@ -106,7 +106,7 @@ export default function PresetsPage() {
                         </p>
                       )}
                     </div>
-                    <div className="pt-1 border-t border-pink-50">
+                    <div className="pt-1 border-t border-jai-muted">
                       <span className={`text-[11px] ${status.color}`}>
                         {status.label}
                       </span>

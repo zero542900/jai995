@@ -224,7 +224,7 @@ export default function GeneratePage() {
         <h1 className="text-lg md:text-xl font-semibold text-foreground">生成 User 面具</h1>
       </div>
 
-      <Card className="border-pink-100">
+      <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">角色卡信息 (Char) <span className="text-muted-foreground font-normal text-xs">— 可选</span></CardTitle>
         </CardHeader>
@@ -238,7 +238,7 @@ export default function GeneratePage() {
         </CardContent>
       </Card>
 
-      <Card className="border-pink-100">
+      <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">开场白 (Greeting) <span className="text-muted-foreground font-normal text-xs">— 可选</span></CardTitle>
         </CardHeader>
@@ -252,7 +252,7 @@ export default function GeneratePage() {
         </CardContent>
       </Card>
 
-      <Card className="border-pink-100">
+      <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">User 性格要求 <span className="text-red-400 font-normal text-xs">— 必填</span></CardTitle>
         </CardHeader>
@@ -283,7 +283,7 @@ export default function GeneratePage() {
             role="switch"
             aria-checked={thinkingEnabled}
             onClick={() => setThinkingEnabled(v => !v)}
-            className={`relative inline-flex h-7 w-12 md:h-6 md:w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-2 ${thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+            className={`relative inline-flex h-7 w-12 md:h-6 md:w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-jai-thinking/50 focus:ring-offset-2 ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
           >
             <span
               className={`pointer-events-none inline-block h-6 w-6 md:h-5 md:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${thinkingEnabled ? 'translate-x-5 md:translate-x-5' : 'translate-x-0'}`}
@@ -293,7 +293,7 @@ export default function GeneratePage() {
       </div>
 
       {englishCard && (
-        <Card className="border-pink-200 overflow-hidden">
+        <Card className="border-jai-secondary overflow-hidden">
           <CardHeader className="pb-2 md:pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm md:text-base flex items-center gap-2">
@@ -306,19 +306,19 @@ export default function GeneratePage() {
                 <span className="text-[11px] md:text-xs text-muted-foreground mr-1">
                   {showFront ? '正面' : '背面'}
                 </span>
-                <div className={`w-2 h-2 rounded-full ${showFront ? 'bg-pink-500' : 'bg-violet-400'}`} />
+                <div className={`w-2 h-2 rounded-full ${showFront ? 'bg-jai-secondary' : 'bg-jai-thinking'}`} />
               </div>
             </div>
           </CardHeader>
           <CardContent className="px-3 md:px-6 pb-3 md:pb-6">
             {/* Thinking content */}
             {thinkingContent && (
-              <div className="mb-3 border border-violet-200 bg-violet-50/50 rounded-lg p-2.5 md:p-3">
-                <div className="text-xs font-medium text-violet-500 mb-1.5 flex items-center gap-1">
+              <div className="mb-3 border border-jai-thinking/50 bg-jai-thinking/10 rounded-lg p-2.5 md:p-3">
+                <div className="text-xs font-medium text-jai-thinking mb-1.5 flex items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><path d="M12 2a7 7 0 0 1 7 7c0 2.6-1.4 4.8-3.5 6v1.5a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5V15C6.4 13.8 5 11.6 5 9a7 7 0 0 1 7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg>
                   思考过程
                 </div>
-                <div className="text-xs text-violet-600/80 leading-relaxed whitespace-pre-wrap max-h-[150px] md:max-h-[200px] overflow-y-auto">{thinkingContent}</div>
+                <div className="text-xs text-jai-thinking/80 leading-relaxed whitespace-pre-wrap max-h-[150px] md:max-h-[200px] overflow-y-auto">{thinkingContent}</div>
               </div>
             )}
             {/* Card content area */}
@@ -338,9 +338,9 @@ export default function GeneratePage() {
                   <span className="text-[11px] md:text-xs text-muted-foreground">
                     — 锁定满意字段，刷新时保留
                   </span>
-                  {hasLocked && <span className="text-xs text-pink-500 font-medium ml-1">已锁定 {Object.keys(lockedFields).length} 项</span>}
+                  {hasLocked && <span className="text-xs text-jai-accent font-medium ml-1">已锁定 {Object.keys(lockedFields).length} 项</span>}
                 </div>
-                <div className="grid gap-1 border border-pink-100 rounded-lg p-1.5 md:p-2 bg-white/50">
+                <div className="grid gap-1 border border-jai-card-border rounded-lg p-1.5 md:p-2 bg-white/50">
                   {(showFront ? parsedFields : parsedChineseFields).map((field, idx) => {
                     const lockKey = parsedFields[idx]?.key || field.key;
                     const locked = isFieldLocked(lockKey);
@@ -349,16 +349,16 @@ export default function GeneratePage() {
                         key={idx}
                         className={`flex items-start gap-1.5 md:gap-2 px-2 md:px-2.5 py-1.5 md:py-2 rounded-md text-xs md:text-sm transition-colors ${
                           locked
-                            ? 'bg-pink-50 border border-pink-300 shadow-sm'
-                            : 'hover:bg-pink-50/40 border border-transparent'
+                            ? 'bg-jai-muted border border-jai-accent shadow-sm'
+                            : 'hover:bg-jai-muted/40 border border-transparent'
                         }`}
                       >
-                        <span className={`font-mono min-w-0 shrink-0 text-[11px] md:text-xs ${locked ? 'text-pink-600' : 'text-muted-foreground'}`}>**{field.key}**:</span>
+                        <span className={`font-mono min-w-0 shrink-0 text-[11px] md:text-xs ${locked ? 'text-jai-accent' : 'text-muted-foreground'}`}>**{field.key}**:</span>
                         <span className="flex-1 text-foreground text-[11px] md:text-sm">{field.value}</span>
                         <button
                           onClick={() => toggleFieldLock(lockKey, parsedFields[idx]?.value || field.value)}
                           className={`shrink-0 transition-transform hover:scale-110 active:scale-95 rounded p-1 md:p-0.5 min-w-[28px] min-h-[28px] md:min-w-0 md:min-h-0 flex items-center justify-center ${
-                            locked ? 'text-pink-500' : 'text-muted-foreground/40 hover:text-pink-300'
+                            locked ? 'text-jai-accent' : 'text-muted-foreground/40 hover:text-jai-accent'
                           }`}
                           title={locked ? '点击取消锁定' : '点击锁定此字段'}
                         >
@@ -395,7 +395,7 @@ export default function GeneratePage() {
       {/* 保存弹窗 */}
       {showSaveDialog && !isGenerating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-background rounded-xl shadow-xl border border-pink-100 p-6 mx-4 max-w-md w-full space-y-4">
+          <div className="bg-background rounded-xl shadow-xl border border-jai-card-border p-6 mx-4 max-w-md w-full space-y-4">
             <h3 className="text-base font-semibold text-foreground">
               是否与当前 Char 信息绑定并保存为预设？
             </h3>

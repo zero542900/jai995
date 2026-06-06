@@ -49,47 +49,65 @@
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
+
+  /* === Custom JAI Theme Colors === */
+  --color-jai-bg: #E8D5D5;
+  --color-jai-secondary: #D4B8B8;
+  --color-jai-accent: #C4A2A2;
+  --color-jai-card: #FFFFFF;
+  --color-jai-card-border: #E0CECE;
+  --color-jai-input-bg: #F2EBEB;
+  --color-jai-text: #4A3F3F;
+  --color-jai-text-secondary: #8A7F7F;
+  --color-jai-muted: #F2EBEB;
+  --color-jai-shadow: rgba(200, 170, 170, 0.15);
+  --color-jai-shadow-hover: rgba(200, 170, 170, 0.25);
+  --color-jai-success: #7DB8A0;
+  --color-jai-thinking: #a78bfa;
 }
 
 :root {
   --radius: 0.75rem;
-  /* Pink-50 background */
-  --background: oklch(0.977 0.014 350);
-  --foreground: oklch(0.195 0.02 260);
-  /* White cards */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.195 0.02 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.195 0.02 260);
-  /* Pink primary */
-  --primary: oklch(0.656 0.241 352);
-  --primary-foreground: oklch(1 0 0);
-  /* Soft pink secondary */
-  --secondary: oklch(0.958 0.028 350);
-  --secondary-foreground: oklch(0.35 0.12 352);
-  --muted: oklch(0.958 0.022 350);
-  --muted-foreground: oklch(0.5 0.02 260);
-  --accent: oklch(0.958 0.028 350);
-  --accent-foreground: oklch(0.35 0.12 352);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.025 350);
-  --input: oklch(0.92 0.025 350);
-  --ring: oklch(0.656 0.241 352);
-  /* Charts - pink palette */
-  --chart-1: oklch(0.656 0.241 352);
-  --chart-2: oklch(0.72 0.18 20);
-  --chart-3: oklch(0.6 0.15 310);
-  --chart-4: oklch(0.82 0.12 80);
-  --chart-5: oklch(0.68 0.2 330);
-  /* Sidebar - pink tinted */
-  --sidebar: oklch(0.98 0.012 350);
-  --sidebar-foreground: oklch(0.195 0.02 260);
-  --sidebar-primary: oklch(0.656 0.241 352);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.958 0.028 350);
-  --sidebar-accent-foreground: oklch(0.35 0.12 352);
-  --sidebar-border: oklch(0.92 0.025 350);
-  --sidebar-ring: oklch(0.656 0.241 352);
+  /* Main background: 浅烟粉 #E8D5D5 */
+  --background: #E8D5D5;
+  --foreground: #4A3F3F;
+  /* Cards: 白色 + 淡粉边框 */
+  --card: #FFFFFF;
+  --card-foreground: #4A3F3F;
+  --popover: #FFFFFF;
+  --popover-foreground: #4A3F3F;
+  /* Primary: 柔雾粉 #D4B8B8 (buttons) */
+  --primary: #D4B8B8;
+  --primary-foreground: #FFFFFF;
+  /* Secondary: 灰粉 #C4A2A2 */
+  --secondary: #C4A2A2;
+  --secondary-foreground: #FFFFFF;
+  /* Muted: 极淡粉 #F2EBEB */
+  --muted: #F2EBEB;
+  --muted-foreground: #8A7F7F;
+  /* Accent: 灰粉 #C4A2A2 */
+  --accent: #C4A2A2;
+  --accent-foreground: #FFFFFF;
+  --destructive: #D47575;
+  /* Borders */
+  --border: #E0CECE;
+  --input: #D4B8B8;
+  --ring: #C4A2A2;
+  /* Charts */
+  --chart-1: #C4A2A2;
+  --chart-2: #D4B8B8;
+  --chart-3: #B89292;
+  --chart-4: #E0CECE;
+  --chart-5: #A88888;
+  /* Sidebar */
+  --sidebar: #EDE0E0;
+  --sidebar-foreground: #4A3F3F;
+  --sidebar-primary: #C4A2A2;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #D4B8B8;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #E0CECE;
+  --sidebar-ring: #C4A2A2;
 }
 
 @layer base {
@@ -98,10 +116,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    line-height: 1.5;
   }
 }
 
-/* Custom scrollbar for pink theme */
+/* Custom scrollbar for desaturated pink theme */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -109,11 +128,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.85 0.06 350);
+  background: #C4A2A2;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.72 0.12 350);
+  background: #B89292;
 }
 
 /* Typing cursor animation */
@@ -125,7 +144,7 @@
 .typing-cursor::after {
   content: '|';
   animation: blink 0.8s infinite;
-  color: oklch(0.656 0.241 352);
+  color: #C4A2A2;
   font-weight: 300;
 }
 
@@ -171,4 +190,67 @@
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* === JAI Card Style === */
+.jai-card {
+  background: #FFFFFF;
+  border: 1px solid #E0CECE;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(200, 170, 170, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.jai-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 6px 16px rgba(200, 170, 170, 0.25);
+}
+
+/* === JAI Button Style === */
+.jai-btn {
+  background: #D4B8B8;
+  color: #FFFFFF;
+  border-radius: 20px;
+  border: none;
+  transition: background-color 0.3s ease, transform 0.15s ease;
+  cursor: pointer;
+}
+.jai-btn:hover {
+  background: #C4A2A2;
+}
+.jai-btn:active {
+  transform: scale(0.98);
+}
+
+/* === JAI Input Style === */
+.jai-input {
+  background: #F2EBEB;
+  border: 1px solid #D4B8B8;
+  border-radius: 12px;
+  color: #4A3F3F;
+  transition: border-color 0.3s ease;
+}
+.jai-input:focus {
+  border-color: #C4A2A2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(196, 162, 162, 0.2);
+}
+.jai-input::placeholder {
+  color: #8A7F7F;
+}
+
+/* === JAI Plot Display Area === */
+.jai-plot-area {
+  background: #F2EBEB;
+  border: 1px dashed #D4B8B8;
+  border-radius: 12px;
+}
+
+/* === Copy success flash === */
+@keyframes copyFlash {
+  0% { box-shadow: 0 0 0 0 rgba(212, 184, 184, 0.4); }
+  50% { box-shadow: 0 0 12px 4px rgba(212, 184, 184, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 184, 184, 0); }
+}
+.copy-flash {
+  animation: copyFlash 0.6s ease-out;
 }

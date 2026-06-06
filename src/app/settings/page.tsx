@@ -41,9 +41,9 @@ export default function SettingsPage() {
     <div className="page-enter space-y-6">
       <h1 className="text-xl font-semibold text-foreground">设置</h1>
 
-      <Card className="border-pink-100">
+      <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-1.5"><IconKey className="w-4 h-4 text-pink-400" /> DeepSeek API Key</CardTitle>
+          <CardTitle className="text-base flex items-center gap-1.5"><IconKey className="w-4 h-4 text-jai-secondary" /> DeepSeek API Key</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">

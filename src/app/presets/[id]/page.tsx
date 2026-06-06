@@ -111,7 +111,7 @@ export default function PresetDetailPage() {
       {/* Session Settings */}
       <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-gray-500">人称视角</span>
+          <span className="text-jai-text-secondary">人称视角</span>
           <select
             value={preset.personMode || 'third'}
             onChange={(e) => {
@@ -119,21 +119,21 @@ export default function PresetDetailPage() {
               savePreset(updated);
               setPreset(updated);
             }}
-            className="border border-pink-200 rounded-md px-2 py-1 text-sm bg-white"
+            className="border border-jai-secondary rounded-md px-2 py-1 text-sm bg-white"
           >
             <option value="third">第三人称</option>
             <option value="first">第一人称</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-gray-500">思考模式</span>
+          <span className="text-jai-text-secondary">思考模式</span>
           <button
             onClick={() => {
               const updated = { ...preset, thinkingEnabled: !preset.thinkingEnabled, updatedAt: Date.now() };
               savePreset(updated);
               setPreset(updated);
             }}
-            className={`relative w-10 h-5 rounded-full transition-colors ${preset.thinkingEnabled ? 'bg-violet-400' : 'bg-gray-200'}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${preset.thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${preset.thinkingEnabled ? 'translate-x-5' : ''}`} />
           </button>
@@ -151,7 +151,7 @@ export default function PresetDetailPage() {
 
         {/* Char Tab */}
         <TabsContent value="char">
-          <Card className="border-pink-100">
+          <Card className="border-jai-card-border">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">角色卡 (Char)</CardTitle>
@@ -192,7 +192,7 @@ export default function PresetDetailPage() {
 
         {/* User Tab */}
         <TabsContent value="user">
-          <Card className="border-pink-100">
+          <Card className="border-jai-card-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">User 卡</CardTitle>
             </CardHeader>
@@ -212,7 +212,7 @@ export default function PresetDetailPage() {
 
         {/* Greeting Tab */}
         <TabsContent value="greeting">
-          <Card className="border-pink-100">
+          <Card className="border-jai-card-border">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">开场白 (Greeting)</CardTitle>
@@ -253,7 +253,7 @@ export default function PresetDetailPage() {
 
         {/* Plot Tab */}
         <TabsContent value="plot">
-          <Card className="border-pink-100">
+          <Card className="border-jai-card-border">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">剧情走向</CardTitle>
@@ -289,27 +289,27 @@ export default function PresetDetailPage() {
                     onContentChanged={() => clearTranslation('plotDirection')}
                   />
                   {preset.plotData && (
-                    <div className="space-y-2 text-xs text-gray-500">
+                    <div className="space-y-2 text-xs text-jai-text-secondary">
                       {preset.plotData.plotStage && (
                         <div className="flex items-center gap-1">
-                          <span className="text-gray-400">阶段:</span>
+                          <span className="text-[#9A8F8F]">阶段:</span>
                           <span>{preset.plotData.plotStage}</span>
-                          {preset.plotData.plotStageCn && <span className="text-gray-400">({preset.plotData.plotStageCn})</span>}
+                          {preset.plotData.plotStageCn && <span className="text-[#9A8F8F]">({preset.plotData.plotStageCn})</span>}
                         </div>
                       )}
                       {preset.plotData.progressDesc && (
                         <div>
-                          <span className="text-gray-400">进展:</span>
+                          <span className="text-[#9A8F8F]">进展:</span>
                           <span className="ml-1">{preset.plotData.progressDesc}</span>
-                          {preset.plotData.progressDescCn && <span className="text-gray-400 ml-1">({preset.plotData.progressDescCn})</span>}
+                          {preset.plotData.progressDescCn && <span className="text-[#9A8F8F] ml-1">({preset.plotData.progressDescCn})</span>}
                         </div>
                       )}
                       {preset.plotData.savedPlotDirections && preset.plotData.savedPlotDirections.length > 1 && (
                         <div>
-                          <span className="text-gray-400">已保存走向:</span>
+                          <span className="text-[#9A8F8F]">已保存走向:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {preset.plotData.savedPlotDirections.map((d, i) => (
-                              <span key={i} className={`inline-block px-2 py-0.5 rounded-full text-[10px] ${d.en === preset.plotDirection ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-500'}`}>
+                              <span key={i} className={`inline-block px-2 py-0.5 rounded-full text-[10px] ${d.en === preset.plotDirection ? 'bg-jai-card-border text-jai-accent' : 'bg-jai-muted text-jai-text-secondary'}`}>
                                 {d.en} {d.cn && `(${d.cn})`}
                               </span>
                             ))}
@@ -326,7 +326,7 @@ export default function PresetDetailPage() {
 
         {/* Memory Tab */}
         <TabsContent value="memory">
-          <Card className="border-pink-100">
+          <Card className="border-jai-card-border">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">长期记忆</CardTitle>

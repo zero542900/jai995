@@ -77,9 +77,16 @@ export default function FlipCard({
     setFlipped(!flipped);
   };
 
+  const handleCopy = () => {
+    const text = (!flipped ? content : translation) || '';
+    if (text) {
+      copyToClipboard(text);
+    }
+  };
+
   if (!content) {
     return (
-      <div className="bg-muted/30 rounded-lg p-4 text-center text-sm text-muted-foreground">
+      <div className="bg-jai-muted/30 rounded-xl p-4 text-center text-sm text-jai-text-secondary">
         {emptyText}
       </div>
     );
@@ -91,31 +98,34 @@ export default function FlipCard({
   return (
     <div className="space-y-2">
       <div
-        className={`relative rounded-lg border transition-all duration-300 ${
-          flipped ? 'border-violet-200 bg-violet-50/30' : 'border-pink-100 bg-muted/30'
+        className={`relative rounded-xl border transition-all duration-500 ease-in-out ${
+          flipped
+            ? 'border-jai-thinking/30 bg-jai-thinking/5'
+            : 'border-jai-card-border bg-jai-muted/20'
         }`}
+        style={{ boxShadow: '0px 4px 12px rgba(200, 170, 170, 0.15)' }}
       >
         {/* Language badge */}
         <div className="flex items-center justify-between px-3 pt-2">
           <span
             className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
               flipped
-                ? 'bg-violet-100 text-violet-600'
-                : 'bg-pink-100 text-pink-600'
+                ? 'bg-jai-thinking/15 text-jai-thinking'
+                : 'bg-jai-secondary/20 text-jai-accent'
             }`}
           >
             {flipped ? '中文' : 'English'}
           </span>
-          <span className="text-[11px] text-muted-foreground">{title}</span>
+          <span className="text-[11px] text-jai-text-secondary">{title}</span>
         </div>
 
         {/* Content */}
         <div
-          className={`p-3 overflow-y-auto ${mono ? 'font-mono text-[13px]' : 'text-sm'} leading-relaxed whitespace-pre-wrap`}
+          className={`p-3 overflow-y-auto ${mono ? 'font-mono text-[13px]' : 'text-sm'} leading-[1.5] whitespace-pre-wrap`}
           style={{ maxHeight }}
         >
           {translating ? (
-            <span className="text-muted-foreground animate-pulse">翻译中...</span>
+            <span className="text-jai-text-secondary animate-pulse">翻译中...</span>
           ) : (
             displayContent
           )}
@@ -127,7 +137,7 @@ export default function FlipCard({
         <button
           onClick={handleFlip}
           disabled={translating}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors disabled:opacity-50"
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[20px] text-xs font-medium border border-jai-secondary text-jai-accent hover:bg-jai-secondary hover:text-white transition-all duration-300 disabled:opacity-50 active:scale-[0.98]"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
@@ -138,9 +148,9 @@ export default function FlipCard({
           {flipped ? '查看原文' : '查看中文'}
         </button>
         <button
-          onClick={() => copyToClipboard(isEnglish ? content : translation)}
+          onClick={handleCopy}
           disabled={!displayContent}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors disabled:opacity-50"
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[20px] text-xs font-medium border border-jai-secondary text-jai-accent hover:bg-jai-secondary hover:text-white transition-all duration-300 disabled:opacity-50 active:scale-[0.98]"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />

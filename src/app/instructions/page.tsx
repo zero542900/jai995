@@ -148,8 +148,8 @@ export default function InstructionsPage() {
                   >
                     {copiedId === instruction.id ? (
                       <>
-                        <IconCheck className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-emerald-500">已复制</span>
+                        <IconCheck className="w-3.5 h-3.5 text-jai-success" />
+                        <span className="text-jai-success">已复制</span>
                       </>
                     ) : (
                       <>

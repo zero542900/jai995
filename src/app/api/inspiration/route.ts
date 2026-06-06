@@ -35,10 +35,20 @@ Generate exactly 3 creative options for what the User could say or do next. Each
 - Consistent with the character dynamics and world
 - Fresh and interesting, not generic
 
-Format as numbered list:
-1. [First option]
-2. [Second option]
-3. [Third option]
+Output format (STRICTLY follow this, use the exact markers):
+===ITEM===
+[First option English]
+===ITEM===
+[Second option English]
+===ITEM===
+[Third option English]
+===CHINESE===
+===ITEM===
+[First option Chinese translation]
+===ITEM===
+[Second option Chinese translation]
+===ITEM===
+[Third option Chinese translation]
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 

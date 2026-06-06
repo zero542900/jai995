@@ -349,12 +349,18 @@ export default function ChatPage() {
         }
       }
 
-      // Parse items - split by ===ITEM=== or numbered format
-      const items = fullText.split(/===ITEM===|(?=\d+\.\s*\*\*)/).filter(s => s.trim());
-      const parsed = items.slice(0, 3).map(item => {
-        const parts = item.split('===CHINESE===');
-        return { en: (parts[0] || '').replace(/^\d+\.\s*/, '').trim(), cn: (parts[1] || '').trim() };
-      });
+      // Parse items - split by ===ITEM===, then separate English and Chinese by ===CHINESE===
+      const halves = fullText.split('===CHINESE===');
+      const enPart = (halves[0] || '').trim();
+      const cnPart = (halves[1] || '').trim();
+      
+      const enItems = enPart.split('===ITEM===').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(s => s);
+      const cnItems = cnPart.split('===ITEM===').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(s => s);
+      
+      const parsed = [0, 1, 2].map(i => ({
+        en: enItems[i] || '',
+        cn: cnItems[i] || '',
+      }));
       setInspirationItems(parsed);
     } catch {
       showNotification('灵感生成失败');

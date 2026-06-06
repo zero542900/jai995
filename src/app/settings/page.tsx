@@ -80,48 +80,33 @@ export default function SettingsPage() {
                     }
                   `}
                 >
-                  {/* 大色块预览 - 模拟卡片外观 */}
+                  {/* 横向色条预览 */}
                   <div
-                    className="w-full aspect-[4/3] rounded-lg overflow-hidden mb-2 relative"
+                    className="w-full h-8 rounded-lg flex items-center gap-1 px-2"
                     style={{ backgroundColor: theme.colors['jai-bg'] }}
                   >
-                    {/* 模拟卡片 */}
-                    <div
-                      className="absolute top-1.5 left-1.5 right-1.5 bottom-2.5 rounded-md border"
-                      style={{
-                        backgroundColor: theme.colors['jai-card'],
-                        borderColor: theme.colors['jai-card-border'],
-                      }}
-                    >
-                      {/* 模拟标题行 */}
-                      <div className="p-1.5 space-y-1">
-                        <div className="h-1 w-3/5 rounded-full" style={{ backgroundColor: theme.colors['jai-accent'] }} />
-                        <div className="h-0.5 w-4/5 rounded-full" style={{ backgroundColor: theme.colors['jai-text-secondary'], opacity: 0.4 }} />
-                        <div className="h-0.5 w-2/3 rounded-full" style={{ backgroundColor: theme.colors['jai-text-secondary'], opacity: 0.3 }} />
-                      </div>
-                      {/* 模拟按钮 */}
-                      <div className="absolute bottom-1 right-1.5 h-1.5 w-1/3 rounded-full" style={{ backgroundColor: theme.colors['jai-secondary'] }} />
-                    </div>
-                    {/* 模拟输入框 */}
-                    <div
-                      className="absolute bottom-0.5 left-1.5 right-1.5 h-1.5 rounded-sm"
-                      style={{ backgroundColor: theme.colors['jai-input-bg'] }}
-                    />
-                  </div>
-
-                  {/* 主题名称 */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-medium text-jai-text leading-tight">{theme.name}</div>
-                      <div className="text-[10px] text-jai-text-secondary leading-tight">{theme.nameEn}</div>
-                    </div>
+                    {/* 色块序列 */}
+                    <div className="h-4 w-4 rounded" style={{ backgroundColor: theme.colors['jai-secondary'] }} />
+                    <div className="h-4 w-4 rounded" style={{ backgroundColor: theme.colors['jai-accent'] }} />
+                    <div className="h-4 w-4 rounded border" style={{ backgroundColor: theme.colors['jai-card'], borderColor: theme.colors['jai-card-border'] }} />
+                    <div className="h-4 w-4 rounded" style={{ backgroundColor: theme.colors['jai-input-bg'] }} />
+                    <div className="flex-1" />
                     {isActive && (
-                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-jai-success flex items-center justify-center">
+                      <div className="h-4 w-4 rounded-full bg-jai-success flex items-center justify-center">
                         <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </div>
                     )}
+                  </div>
+
+                  {/* 主题描述 */}
+                  <div className="mt-1.5 text-[11px] text-jai-text-secondary leading-tight truncate">
+                    {theme.description}
+                  </div>
+                  {/* 主题名称 */}
+                  <div className="mt-0.5 text-xs font-medium text-jai-text leading-tight">
+                    {theme.name}
                   </div>
                 </button>
               );

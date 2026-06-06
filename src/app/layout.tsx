@@ -54,16 +54,16 @@ const themeInitScript = `
         'jai-success': '#5AA07A', 'jai-thinking': '#a78bfa', 'jai-shadow': 'rgba(195,160,130,0.20)'
       },
       midnight: {
-        'jai-bg': '#1E2433', 'jai-secondary': '#3A4560', 'jai-accent': '#6880A8',
-        'jai-card': '#2A3248', 'jai-card-border': '#2E3750', 'jai-input-bg': '#323B52',
-        'jai-text': '#D0D8EA', 'jai-text-secondary': '#90A0B8', 'jai-muted': '#323B52',
-        'jai-success': '#5AAA90', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(20,30,50,0.35)'
+        'jai-bg': '#A8B8D0', 'jai-secondary': '#8EA0BC', 'jai-accent': '#6E88A8',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#A0B0C8', 'jai-input-bg': '#C0CEDF',
+        'jai-text': '#2A3650', 'jai-text-secondary': '#5A6E88', 'jai-muted': '#C0CEDF',
+        'jai-success': '#5AA098', 'jai-thinking': '#8b9ff6', 'jai-shadow': 'rgba(120,150,190,0.20)'
       },
       warmnight: {
-        'jai-bg': '#2A2320', 'jai-secondary': '#4A3E38', 'jai-accent': '#A07858',
-        'jai-card': '#342C28', 'jai-card-border': '#38302C', 'jai-input-bg': '#3A3230',
-        'jai-text': '#E8D8C8', 'jai-text-secondary': '#B8A898', 'jai-muted': '#3A3230',
-        'jai-success': '#6AAA78', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(30,20,15,0.35)'
+        'jai-bg': '#E0C0A0', 'jai-secondary': '#D0A880', 'jai-accent': '#C09068',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#D8B898', 'jai-input-bg': '#ECDCB8',
+        'jai-text': '#4A3420', 'jai-text-secondary': '#8A6848', 'jai-muted': '#ECDCB8',
+        'jai-success': '#5AA078', 'jai-thinking': '#c898f0', 'jai-shadow': 'rgba(180,140,100,0.20)'
       },
       daylight: {
         'jai-bg': '#F5F0EC', 'jai-secondary': '#E0D8D0', 'jai-accent': '#B0A090',
@@ -72,16 +72,16 @@ const themeInitScript = `
         'jai-success': '#5AAA78', 'jai-thinking': '#9080e0', 'jai-shadow': 'rgba(160,140,120,0.12)'
       },
       neonrose: {
-        'jai-bg': '#1A1520', 'jai-secondary': '#3A2848', 'jai-accent': '#E060A0',
-        'jai-card': '#252030', 'jai-card-border': '#2E2438', 'jai-input-bg': '#2E2238',
-        'jai-text': '#EED8F5', 'jai-text-secondary': '#B898C8', 'jai-muted': '#2E2238',
-        'jai-success': '#50D898', 'jai-thinking': '#B060F0', 'jai-shadow': 'rgba(180,60,120,0.25)'
+        'jai-bg': '#E8A0B0', 'jai-secondary': '#D88898', 'jai-accent': '#C87080',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#E0A0AE', 'jai-input-bg': '#F0C0CA',
+        'jai-text': '#4A2228', 'jai-text-secondary': '#8A5060', 'jai-muted': '#F0C0CA',
+        'jai-success': '#5AAA80', 'jai-thinking': '#B060F0', 'jai-shadow': 'rgba(190,100,120,0.20)'
       },
       neonocean: {
-        'jai-bg': '#121A28', 'jai-secondary': '#283848', 'jai-accent': '#40B8D8',
-        'jai-card': '#1A2435', 'jai-card-border': '#1E2A3C', 'jai-input-bg': '#1E2838',
-        'jai-text': '#D8E8F8', 'jai-text-secondary': '#88B0D0', 'jai-muted': '#1E2838',
-        'jai-success': '#40D8A0', 'jai-thinking': '#7080F0', 'jai-shadow': 'rgba(40,140,180,0.25)'
+        'jai-bg': '#A0D0C8', 'jai-secondary': '#80BCB0', 'jai-accent': '#60A898',
+        'jai-card': '#FFFFFF', 'jai-card-border': '#98C8BE', 'jai-input-bg': '#C0E0D8',
+        'jai-text': '#1E3A34', 'jai-text-secondary': '#50786E', 'jai-muted': '#C0E0D8',
+        'jai-success': '#40A888', 'jai-thinking': '#7080F0', 'jai-shadow': 'rgba(100,175,155,0.20)'
       }
     };
     var colors = themes[themeId] || themes.rose;
@@ -91,10 +91,7 @@ const themeInitScript = `
       root.style.setProperty('--color-' + key, colors[key]);
     });
     // Sync shadcn/ui :root variables so all components follow theme
-    // Dark themes use light text on buttons, light themes use card color
-    var isDark = ['midnight','warmnight','neonrose','neonocean'].indexOf(themeId) >= 0;
     var c = colors;
-    var onDark = isDark ? c['jai-text'] : c['jai-card'];
     root.style.setProperty('--background', c['jai-bg']);
     root.style.setProperty('--foreground', c['jai-text']);
     root.style.setProperty('--card', c['jai-card']);
@@ -102,9 +99,9 @@ const themeInitScript = `
     root.style.setProperty('--popover', c['jai-card']);
     root.style.setProperty('--popover-foreground', c['jai-text']);
     root.style.setProperty('--primary', c['jai-secondary']);
-    root.style.setProperty('--primary-foreground', onDark);
+    root.style.setProperty('--primary-foreground', c['jai-card']);
     root.style.setProperty('--secondary', c['jai-accent']);
-    root.style.setProperty('--secondary-foreground', onDark);
+    root.style.setProperty('--secondary-foreground', c['jai-card']);
     root.style.setProperty('--muted', c['jai-muted']);
     root.style.setProperty('--muted-foreground', c['jai-text-secondary']);
     root.style.setProperty('--accent', c['jai-accent']);

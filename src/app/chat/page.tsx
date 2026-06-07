@@ -778,7 +778,7 @@ function ChatPageInner() {
                 <button onClick={() => { setShowExpandModal(false); setExpandResult(null); setExpandBrief(''); }} className="text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
 
-              {!expandResult ? (
+              {!expandResult && !expandLoading ? (
                 <div className="space-y-3">
                   <textarea
                     value={expandBrief}
@@ -789,13 +789,17 @@ function ChatPageInner() {
                   />
                   <button
                     onClick={handleExpand}
-                    disabled={!expandBrief.trim() || expandLoading}
+                    disabled={!expandBrief.trim()}
                     className="w-full py-2 text-sm bg-jai-secondary/60 text-jai-btn-text rounded-xl hover:bg-jai-secondary/80 disabled:opacity-50 transition-colors"
                   >
-                    {expandLoading ? '生成中...' : '扩写'}
+                    扩写
                   </button>
                 </div>
-              ) : (
+              ) : expandLoading && !expandResult ? (
+                <div className="flex items-center justify-center py-8 text-sm text-jai-secondary">
+                  <IconRefresh className="w-4 h-4 animate-spin mr-2" /> 生成中...
+                </div>
+              ) : expandResult ? (
                 <div className="space-y-3">
                   {thinkingContent && (
                     <div className="border border-jai-thinking/50 bg-jai-thinking/10 rounded-lg p-2.5">
@@ -844,12 +848,15 @@ function ChatPageInner() {
                     <button onClick={() => setExpandFlipped(!expandFlipped)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
                       <IconFlip className="w-3 h-3" /> {expandFlipped ? '英文' : '中文'}
                     </button>
+                    <button onClick={handleExpand} disabled={expandLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50">
+                      <IconRefresh className="w-3 h-3" /> 重新生成
+                    </button>
                     <button onClick={() => { setExpandResult(null); setThinkingContent(''); }} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
                       <IconEdit className="w-3 h-3" /> 重新编辑
                     </button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

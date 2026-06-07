@@ -17,6 +17,11 @@ IMPORTANT NAMING RULE: Always use {{char}} and {{user}} as placeholders instead 
 
 PERSPECTIVE: Always use THIRD PERSON perspective with {{char}} and {{user}} as names (e.g. "{{char}} noticed that {{user}} was...", "{{char}} felt a shift in {{user}}'s demeanor..."). Do NOT use first person ("I").
 
+COGNITIVE BOUNDARY (STRICT):
+- Record only what {{char}} directly perceives through senses: what {{char}} sees, hears, feels (physical touch), or smells/tastes in the scene.
+- If {{user}} is hiding something from {{char}}, {{char}} can only record the observable behavioral cues (e.g., "{{user}} avoided eye contact," "{{user}}'s voice wavered"), NOT the hidden truth itself. {{char}} does NOT know what {{user}} is concealing.
+- If {{char}} speculates or suspects something, clearly frame it as {{char}}'s speculation (e.g., "{{char}} suspected {{user}} was holding something back"), not as known fact.
+
 CONTEXT:
 - Character ({{char}}): ${charInfo || '(not provided)'}
 - User Persona ({{user}}): ${userCard || '(not provided)'}

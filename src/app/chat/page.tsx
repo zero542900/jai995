@@ -1227,7 +1227,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
             <button onClick={handleOpenPicker} title="标记为指令" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconBook className="w-3 h-3" />
             </button>
-            <button onClick={onDelete} title="删除此条及之后" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-red-300' : 'text-jai-text-secondary hover:text-red-400'}`}>
+            <button onClick={onDelete} title="删除此条及之后" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text hover:text-red-300' : 'text-jai-text-secondary hover:text-red-400'}`}>
               <IconTrash className="w-3 h-3" />
             </button>
           </div>

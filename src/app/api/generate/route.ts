@@ -4,7 +4,7 @@ import { callDeepSeek, createSSEStream, handleAPIError, validateApiKey, streamRe
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userPersonality, greeting, apiKey, lockedFields, thinkingEnabled } = body;
+    const { charInfo, userPersonality, greeting, apiKey, thinkingEnabled } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
 1. Char 信息（非必填）：用户粘贴的角色卡原始设定，用于提取世界观和身份参考。
 2. 开场白（非必填）：Jaibot 的初始场景描述或互动起点。
 3. 用户性格要求（必填）：用户对自己扮演角色的简短描述（如："冷面杀手、话少、会照顾人、童年创伤"）。
-4. 锁定字段（非必填）：用户标记的满意字段，刷新时这些字段内容必须保持不变。
 
 [处理规则 - 请严格遵循]
 1. 基于世界观：如果用户提供了"Char 信息"，你必须利用其中的世界观和角色身份来反推 User 的合理身份。例如：如果 Char 是巫师世界的猎魔人，User 应设定为吟游诗人、佣兵或旅店老板，而非现代上班族。
@@ -34,7 +33,6 @@ export async function POST(request: NextRequest) {
 3. 无 Char 信息时的处理：如果用户仅提供了"用户性格要求"，则基于该性格泛生成一个通用但合理的 User 卡（不关联特定世界观，但保持写实风格）。
 4. 欧美写实风唯一准则：输出的语气像美剧设定或电影剧本，描述直白、写实、有画面感。禁止使用二次元词汇（如"萌"、"攻略"、"傲娇"），禁止中文古风（如"在下"、"妾身"）。
 5. 格式遵守：必须严格按照下方【输出模板】格式输出英文版 User 卡，使用纯文本，不要使用 YAML 或 JSON 代码块。
-6. 锁定字段规则：如果用户提供了"锁定字段"，你必须原封不动地保留这些字段的值，仅重新生成未锁定的字段。
 
 [翻译要求 - 必须严格遵守]
 你的中文翻译不仅是语言转换，更是文化与情感的传递。
@@ -96,13 +94,6 @@ export async function POST(request: NextRequest) {
 - 中文翻译部分也使用纯文本格式，字段名翻译为中文，内容翻译为中文，保持一一对应。`;
 
     let userMessage = `${charInfo ? `【Char 信息】\n${charInfo}\n\n` : ''}${greeting ? `【Jaibot 开场白】\n${greeting}\n\n` : ''}【用户性格要求】\n${userPersonality}`;
-
-    if (lockedFields && Object.keys(lockedFields).length > 0) {
-      const lockedText = Object.entries(lockedFields as Record<string, string>)
-        .map(([key, value]) => `**${key}**: ${value}`)
-        .join('\n');
-      userMessage += `\n\n【锁定字段 - 以下字段内容必须原封不动保留】\n${lockedText}`;
-    }
 
     userMessage += '\n\n请根据以上信息，严格按照输出模板生成英文 User 卡，然后输出 ===CHINESE=== 分隔符，再输出中文翻译。';
 

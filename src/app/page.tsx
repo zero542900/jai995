@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { copyToClipboard } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { IconCopy, IconFlip, IconRefresh, IconSave, IconLock, IconUnlock } from '@/components/icons';
+import { IconCopy, IconFlip, IconRefresh, IconSave } from '@/components/icons';
 import { getApiKey, createPreset, savePreset } from '@/lib/storage';
 
 /** 解析 User 卡文本为字段列表 */
@@ -59,7 +59,6 @@ export default function GeneratePage() {
   const [chineseCard, setChineseCard] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showFront, setShowFront] = useState(true);
-  const [lockedFields, setLockedFields] = useState<Record<string, string>>({});
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [presetName, setPresetName] = useState('');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
@@ -69,21 +68,7 @@ export default function GeneratePage() {
   const parsedFields = useMemo(() => parseFields(englishCard), [englishCard]);
   const parsedChineseFields = useMemo(() => parseFields(chineseCard), [chineseCard]);
 
-  const isFieldLocked = useCallback((key: string) => key in lockedFields, [lockedFields]);
-
-  const toggleFieldLock = useCallback((key: string, value: string) => {
-    setLockedFields(prev => {
-      const next = { ...prev };
-      if (key in next) {
-        delete next[key];
-      } else {
-        next[key] = value;
-      }
-      return next;
-    });
-  }, []);
-
-  const handleGenerate = useCallback(async (withLocked = false) => {
+  const handleGenerate = useCallback(async () => {
     const apiKey = getApiKey();
     if (!apiKey) {
       alert('请先在设置页面配置 DeepSeek API Key');
@@ -105,16 +90,13 @@ export default function GeneratePage() {
     abortRef.current = new AbortController();
 
     try {
-      const body: Record<string, string | Record<string, string> | boolean> = {
+      const body: Record<string, string | boolean> = {
         charInfo: charInfo.trim(),
         userPersonality: userPersonality.trim(),
         greeting: greeting.trim(),
         apiKey,
         thinkingEnabled,
       };
-      if (withLocked && Object.keys(lockedFields).length > 0) {
-        body.lockedFields = lockedFields;
-      }
 
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -177,9 +159,6 @@ export default function GeneratePage() {
         setChineseCard(fullText.slice(sepIdx + '===CHINESE==='.length).trim());
       }
 
-      if (!withLocked) {
-        setLockedFields({});
-      }
       setShowSaveDialog(true);
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
@@ -188,7 +167,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [charInfo, userPersonality, greeting, lockedFields, router]);
+  }, [charInfo, userPersonality, greeting, router]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -196,9 +175,8 @@ export default function GeneratePage() {
   }, []);
 
   const handleRefresh = useCallback(() => {
-    const hasLocked = Object.keys(lockedFields).length > 0;
-    handleGenerate(hasLocked);
-  }, [handleGenerate, lockedFields]);
+    handleGenerate();
+  }, [handleGenerate]);
 
   const handleCopy = useCallback(() => {
     copyToClipboard(englishCard);
@@ -215,8 +193,6 @@ export default function GeneratePage() {
     savePreset(preset);
     router.push('/presets');
   }, [presetName, charInfo, englishCard, chineseCard, userPersonality, greeting, router]);
-
-  const hasLocked = Object.keys(lockedFields).length > 0;
 
   return (
     <div className="page-enter space-y-4 md:space-y-6">
@@ -268,7 +244,7 @@ export default function GeneratePage() {
 
       <div className="flex items-center gap-3">
         {!isGenerating ? (
-          <Button onClick={() => handleGenerate(false)} className="flex-1 h-11 md:h-10" size="lg">
+          <Button onClick={() => handleGenerate()} className="flex-1 h-11 md:h-10" size="lg">
             生成 User 卡
           </Button>
         ) : (
@@ -330,47 +306,6 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* Field locking - both sides, when not generating */}
-            {!isGenerating && (showFront ? parsedFields : parsedChineseFields).length > 0 && (
-              <div className="mt-3 md:mt-4 space-y-2">
-                <div className="flex items-center gap-2 px-1 flex-wrap">
-                  <span className="text-xs font-medium text-foreground">字段锁定</span>
-                  <span className="text-[11px] md:text-xs text-muted-foreground">
-                    — 锁定满意字段，刷新时保留
-                  </span>
-                  {hasLocked && <span className="text-xs text-jai-accent font-medium ml-1">已锁定 {Object.keys(lockedFields).length} 项</span>}
-                </div>
-                <div className="grid gap-1 border border-jai-card-border rounded-lg p-1.5 md:p-2 bg-jai-card/50">
-                  {(showFront ? parsedFields : parsedChineseFields).map((field, idx) => {
-                    const lockKey = parsedFields[idx]?.key || field.key;
-                    const locked = isFieldLocked(lockKey);
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex items-start gap-1.5 md:gap-2 px-2 md:px-2.5 py-1.5 md:py-2 rounded-md text-xs md:text-sm transition-colors ${
-                          locked
-                            ? 'bg-jai-muted border border-jai-accent shadow-sm'
-                            : 'hover:bg-jai-muted/40 border border-transparent'
-                        }`}
-                      >
-                        <span className={`font-mono min-w-0 shrink-0 text-[11px] md:text-xs ${locked ? 'text-jai-accent' : 'text-muted-foreground'}`}>**{field.key}**:</span>
-                        <span className="flex-1 text-foreground text-[11px] md:text-sm">{field.value}</span>
-                        <button
-                          onClick={() => toggleFieldLock(lockKey, parsedFields[idx]?.value || field.value)}
-                          className={`shrink-0 transition-transform hover:scale-110 active:scale-95 rounded p-1 md:p-0.5 min-w-[28px] min-h-[28px] md:min-w-0 md:min-h-0 flex items-center justify-center ${
-                            locked ? 'text-jai-accent' : 'text-muted-foreground/40 hover:text-jai-accent'
-                          }`}
-                          title={locked ? '点击取消锁定' : '点击锁定此字段'}
-                        >
-                          {locked ? <IconLock className="w-4 h-4" /> : <IconUnlock className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Action buttons */}
             {!isGenerating && (
               <div className="mt-3 md:mt-4 flex gap-2 flex-wrap">
@@ -380,8 +315,8 @@ export default function GeneratePage() {
                 <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconFlip className="w-4 h-4" /> {showFront ? '中文' : 'EN'}
                 </Button>
-                <Button onClick={handleRefresh} variant="outline" size="sm" title={hasLocked ? '保留标记项，重新生成其余' : '重新生成整卡'} className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
-                  <IconRefresh className="w-4 h-4" /> {hasLocked ? '局部刷新' : '刷新'}
+                <Button onClick={handleRefresh} variant="outline" size="sm" title="重新生成整卡" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
+                  <IconRefresh className="w-4 h-4" /> 刷新
                 </Button>
                 <Button onClick={() => setShowSaveDialog(true)} size="sm" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconSave className="w-4 h-4" /> 保存预设

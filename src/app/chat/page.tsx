@@ -1474,7 +1474,7 @@ function ChatPageInner() {
       )}
 
       {/* Bottom Input Area */}
-      <div className="shrink-0 border-t border-jai-card-border bg-jai-card/90 backdrop-blur-sm px-3 md:px-4 pt-2 pb-2 md:pb-3 space-y-1.5 md:space-y-2 safe-area-bottom">
+      <div className="shrink-0 border-t border-jai-card-border bg-jai-card px-3 md:px-4 pt-2 pb-2 md:pb-3 space-y-1.5 md:space-y-2 safe-area-bottom">
 
         {/* Memory Reminder Banner */}
         {showMemoryReminder && !memoryAutoGenerating && (

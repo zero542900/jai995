@@ -7,7 +7,6 @@ export interface BilingualText {
 
 export interface StyleSettings {
   tone: string;
-  genre: string;
   intensity: string;
   rhythm: string;
   optionalStyles: string[];

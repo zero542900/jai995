@@ -138,7 +138,6 @@ function ChatPageInner() {
 
   // Style selector states
   const [styleTone, setStyleTone] = useState<string>(''); // 剧集调性
-  const [styleGenre, setStyleGenre] = useState<string>(''); // 经典类型
   const [styleEmotion, setStyleEmotion] = useState<string>(''); // 情感浓度
   const [stylePace, setStylePace] = useState<string>(''); // 叙事节奏
   const [styleOptional, setStyleOptional] = useState<string[]>([]); // 可选风格(多选)
@@ -324,7 +323,6 @@ function ChatPageInner() {
         if (pd.lastMemoryCount !== undefined) setLastMemoryCount(pd.lastMemoryCount);
         if (pd.styleSettings) {
           if (pd.styleSettings.tone) setStyleTone(pd.styleSettings.tone);
-          if (pd.styleSettings.genre) setStyleGenre(pd.styleSettings.genre);
           if (pd.styleSettings.intensity) setStyleEmotion(pd.styleSettings.intensity);
           if (pd.styleSettings.rhythm) setStylePace(pd.styleSettings.rhythm);
           if (pd.styleSettings.optionalStyles) setStyleOptional(pd.styleSettings.optionalStyles);
@@ -404,17 +402,6 @@ function ChatPageInner() {
       '电影质感': '画面感强，镜头叙事，节奏更紧凑。场景切换明显，对话密度低，动作和环境描述占比更高。画面感和张力优先。适合高潮段落或单幕收束。',
       '混合模式': '以电影质感为主，但保留剧集的长线推进感。',
     },
-    genre: {
-      '黑色电影': '光影阴暗，道德模糊，旁白冷峻。冷调、阴影、雨夜。对话简练、暗示多。权力博弈以低语和眼神完成。适合背叛、潜伏、调查线。',
-      '西部片': '空旷、孤寂、沉默的对抗，荒野法则。话少，靠动作和眼神推进。荣誉、复仇、清算作为核心驱动。适合孤立场景、最后通牒、决斗。',
-      '战争/军事': '纪律、压迫、战场上的情感交错。战术动作为主，感情交流被压缩成暗示和短句。服从、忠诚、牺牲、崩坏。适合小队、任务、撤退、溃败线。',
-      '黑帮/犯罪': '雨夜、枪声、背叛的低语。暴力美学与信义并存。层级分明，每个位置都有代价。适合上位、背叛、收编线。',
-      '法庭/律政': '言辞交锋，逻辑与情感的博弈。每句话都有攻防。外表冷静内里燃烧。适合审讯、谈判、当面对质。',
-      '文艺/公路': '缓慢、孤独、宿命式的相遇。大量留白和环境描写。情感在沉默和风景中流淌。适合逃离、寻找、回归线。',
-      '青春痛/校园': '男大、宿舍、暗恋、迷茫、成长痛。言语直白但不成熟，冲动但不后悔。身份还在形成，一切都在试。',
-      '街头/废土': '辍学、流浪、底层生存、混迹边缘。粗粝、直白、不装。生存本能驱动一切。适合同类相吸、底层联盟。',
-      '叛逆/坠落': '反抗权威、自毁倾向、甜心陷阱/糖宝关系。越界是日常，崩溃是必然。适合越陷越深、毁人毁己线。',
-    },
     emotion: {
       '强强对抗': '双方势均力敌，互不相让。对话如击剑，每句都是试探。试探、压制、反杀交替出现。谁先软谁输。适合权力换手、底线博弈。',
       '暧昧推拉': '欲言又止，靠近又撤离。每句话都带未完成的重量。肢体和视线描写替代码头。适合持续拉扯、立场渐染。',
@@ -456,7 +443,6 @@ function ChatPageInner() {
     } else if (styleTone) {
       parts.push(`[剧集调性: ${styleTone}] ${STYLE_OPTIONS.tone[styleTone as keyof typeof STYLE_OPTIONS.tone]}`);
     }
-    if (styleGenre) parts.push(`[经典类型: ${styleGenre}] ${STYLE_OPTIONS.genre[styleGenre as keyof typeof STYLE_OPTIONS.genre]}`);
     if (styleEmotion) parts.push(`[情感浓度: ${styleEmotion}] ${STYLE_OPTIONS.emotion[styleEmotion as keyof typeof STYLE_OPTIONS.emotion]}`);
     if (stylePace) parts.push(`[叙事节奏: ${stylePace}] ${STYLE_OPTIONS.pace[stylePace as keyof typeof STYLE_OPTIONS.pace]}`);
     styleOptional.forEach(s => {
@@ -467,7 +453,7 @@ function ChatPageInner() {
     return parts.length > 1
       ? `\n\n[风格指令 - 请严格遵循以下风格进行创作]\n${parts.join('\n')}`
       : '';
-  }, [styleTone, styleGenre, styleEmotion, stylePace, styleOptional, mixModeNote]);
+  }, [styleTone, styleEmotion, stylePace, styleOptional, mixModeNote]);
 
   const toggleKeyword = (category: 'ending' | 'relation' | 'scene' | 'stage', keyword: string) => {
     const setters: Record<string, React.Dispatch<React.SetStateAction<string[]>>> = {
@@ -855,7 +841,6 @@ function ChatPageInner() {
       suggestedKeywords,
       styleSettings: {
         tone: styleTone,
-        genre: styleGenre,
         intensity: styleEmotion,
         rhythm: stylePace,
         optionalStyles: styleOptional,
@@ -879,7 +864,7 @@ function ChatPageInner() {
   }, [currentMainLine, currentMainLineCn, currentDirection, currentDirectionCn, plotStage, plotStageCn, progressDesc, progressDescCn,
       selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
       savedPlotDirections, suggestedKeywords,
-      styleTone, styleGenre, styleEmotion, stylePace, styleOptional, mixModeNote, lastMemoryCount]);
+      styleTone, styleEmotion, stylePace, styleOptional, mixModeNote, lastMemoryCount]);
 
   const selectPlotDirection = (idx: number) => {
     const pred = plotPredictions[idx];
@@ -1523,10 +1508,10 @@ function ChatPageInner() {
           </select>
 
           {/* Style Category Buttons - Desktop */}
-          {(['tone', 'genre', 'emotion', 'pace'] as const).map(cat => {
-            const labels: Record<string, string> = { tone: '剧集调性', genre: '经典类型', emotion: '情感浓度', pace: '叙事节奏' };
-            const currentVal = cat === 'tone' ? styleTone : cat === 'genre' ? styleGenre : cat === 'emotion' ? styleEmotion : stylePace;
-            const setter = cat === 'tone' ? setStyleTone : cat === 'genre' ? setStyleGenre : cat === 'emotion' ? setStyleEmotion : setStylePace;
+          {(['tone', 'emotion', 'pace'] as const).map(cat => {
+            const labels: Record<string, string> = { tone: '剧集调性', emotion: '情感浓度', pace: '叙事节奏' };
+            const currentVal = cat === 'tone' ? styleTone : cat === 'emotion' ? styleEmotion : stylePace;
+            const setter = cat === 'tone' ? setStyleTone : cat === 'emotion' ? setStyleEmotion : setStylePace;
             const options = STYLE_OPTIONS[cat];
             const isExpanded = expandedStyleCategory === cat;
             return (
@@ -1627,9 +1612,9 @@ function ChatPageInner() {
               </select>
 
               {/* Mobile style buttons - open as bottom sheet */}
-              {(['tone', 'genre', 'emotion', 'pace'] as const).map(cat => {
-                const labels: Record<string, string> = { tone: '调性', genre: '类型', emotion: '情感', pace: '节奏' };
-                const currentVal = cat === 'tone' ? styleTone : cat === 'genre' ? styleGenre : cat === 'emotion' ? styleEmotion : stylePace;
+              {(['tone', 'emotion', 'pace'] as const).map(cat => {
+                const labels: Record<string, string> = { tone: '调性', emotion: '情感', pace: '节奏' };
+                const currentVal = cat === 'tone' ? styleTone : cat === 'emotion' ? styleEmotion : stylePace;
                 const isExpanded = expandedStyleCategory === cat;
                 return (
                   <button
@@ -1718,14 +1703,14 @@ function ChatPageInner() {
             <div className="bg-jai-card rounded-t-2xl w-full max-h-[60vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
               <div className="sticky top-0 bg-jai-card px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
                 <span className="text-sm font-medium text-jai-text">
-                  {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'genre' ? '经典类型' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
+                  {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
                 </span>
                 <button onClick={() => setExpandedStyleCategory(null)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
               </div>
               <div className="p-3 space-y-1">
-                {Object.entries(STYLE_OPTIONS[expandedStyleCategory as 'tone' | 'genre' | 'emotion' | 'pace']).map(([key, desc]) => {
-                  const currentVal = expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'genre' ? styleGenre : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace;
-                  const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'genre' ? setStyleGenre : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
+                {Object.entries(STYLE_OPTIONS[expandedStyleCategory as 'tone' | 'emotion' | 'pace']).map(([key, desc]) => {
+                  const currentVal = expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace;
+                  const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
                   return (
                     <button
                       key={key}
@@ -1745,10 +1730,10 @@ function ChatPageInner() {
                     </button>
                   );
                 })}
-                {(expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'genre' ? styleGenre : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace) && (
+                {(expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace) && (
                   <button
                     onClick={() => {
-                      const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'genre' ? setStyleGenre : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
+                      const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
                       setter('');
                       setExpandedStyleCategory(null);
                     }}

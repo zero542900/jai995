@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
 CORE PRINCIPLE: The expanded content must be from the User's perspective — what the User says or does.
 
 ${personInstruction}
+- 禁止 OOC（Out of Character）。扩写内容必须严格保持在角色设定内，不得跳出角色、打破第四面墙或以作者身份发言。
+- 如果原文是第三人称，保持第三人称；如果原文是第一人称，保持第一人称。始终以 {{user}} 的视角叙述，使内容更符合其口吻。
 ${stylePrompt ? `\nSTYLE INSTRUCTION:\n${stylePrompt}` : ''}${mainLinePrompt ? `\nMAIN STORYLINE:\n${mainLinePrompt}` : ''}
 
 CONTEXT:
@@ -47,6 +49,8 @@ Expand this brief outline into a complete, vivid passage (2-5 paragraphs) from t
 - Environmental details
 
 Write naturally and cinematically, like a Western RP novel. No anime/manga style.
+
+${WRITING_STYLE_INSTRUCTION}
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 

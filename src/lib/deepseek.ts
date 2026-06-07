@@ -169,25 +169,17 @@ export function handleAPIError(error: unknown): Response {
   });
 }
 
-// Shared writing style instructions for Chinese translation
+// Shared writing style instructions - applies to ALL API routes globally
 export const WRITING_STYLE_INSTRUCTION = `
-[翻译/写作风格强制指令]
-- 语言自然、有共情，少用逻辑跳板句式。
-- 禁止使用以下句式：
-  - "不是……而是……"
-  - "在……的过程中"
-  - "总而言之""综上所述"
-  - "不仅……更……"
-  - "不是……是……是……"
-  - "不是……不是……是……"
-  - "是……的基石/关键/必修课"
+[文风约束 - 全局通用]
+以下约束同时适用于英文和中文输出中的叙述性段落。在需要将原文展开为完整句子时必须遵守。简短的要害式短语（如单个形容词列举）不需要套用这些规则。
+- 禁用词汇：你不得在任何上下文中使用以下词语——"兜住"、"接住"、"稳"、"守"、"极其"。
+- 禁止使用以下句式："不是……而是……"、"在……的过程中"、"总而言之"、"综上所述"、"不仅……更……"、"不是……是……是……"、"不是……不是……是……"、"是……的基石/关键/必修课"。
 - 禁止使用排比句、对偶句、反复等修辞性排叠结构。
 - 禁止使用"不x，不y，不z，就"格式。
 - 禁止使用"这就够了"、"很…，但很…"等总结性短判断。
 - 禁止使用任何以"不是"开头的否定句式。
-- 每个观点后面必须跟一个画面、声音、气味或触感描写。
-- 禁用词汇："兜住"、"接住"、"稳"、"守"、"极其"。
-- 如果出现了"不是...而是..."、"在...的过程中"、"总而言之"这三种句式，请立刻删除该句，并用描写具体画面或动作的句子替换。`;
+- 如果你发现某段输出中出现了上述禁用句式，不得以删除内容作为处理方式。你必须用一段新的、符合以上约束的完整描写来替换它。`;
 
 export const CHINESE_OUTPUT_INSTRUCTION = `
 Output format: First output the English content, then on a new line write exactly "===CHINESE===" (this exact marker), then output the Chinese translation below.

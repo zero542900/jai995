@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, createSSEStream, handleAPIError, validateApiKey, streamResponse } from '@/lib/deepseek';
+import { WRITING_STYLE_INSTRUCTION, callDeepSeek, createSSEStream, handleAPIError, validateApiKey, streamResponse } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,15 +40,7 @@ export async function POST(request: NextRequest) {
 - 术语统一：对"AU"、"Canon Divergence"等圈内共识术语，使用通用译法，首次出现时保留英文原词。
 - 禁止 AI 翻译腔：避免生硬的直译句式，让中文读起来自然、有人味。
 
-[文风约束 - 全局通用，适用于英文和中文输出]
-以下约束同时适用于英文输出和中文翻译中的 Background、Personality、Motivation 等叙述性段落。在需要将原文展开为完整句子时必须遵守。简短的要害式短语（如 Personality 中的单个形容词列举）不需要套用这些规则。
-- 禁用词汇：你不得在任何上下文中使用以下词语——"兜住"、"接住"、"稳"、"守"、"极其"。
-- 禁止使用以下句式："不是……而是……"、"在……的过程中"、"总而言之"、"综上所述"、"不仅……更……"、"不是……是……是……"、"不是……不是……是……"、"是……的基石/关键/必修课"。
-- 禁止使用排比句、对偶句、反复等修辞性排叠结构。
-- 禁止使用"不x，不y，不z，就"格式。
-- 禁止使用"这就够了"、"很…，但很…"等总结性短判断。
-- 禁止使用任何以"不是"开头的否定句式。
-- 如果你发现某段输出中出现了上述禁用句式，不得以删除内容作为处理方式。你必须用一段新的、符合以上约束的完整描写来替换它。
+${WRITING_STYLE_INSTRUCTION}
 
 [输出格式]
 你必须分两段输出，用 ===CHINESE=== 作为分隔标记：

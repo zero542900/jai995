@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt, styleEmotion, stylePace } = body;
+    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -42,9 +42,9 @@ Format:
 
 Keep it concise but comprehensive — this will be used as context for the Bot in future conversations.
 
-${styleEmotion || stylePace ? `[风格上下文] 当前故事的情感基调为：${styleEmotion || '未指定'}，叙事节奏为：${stylePace || '未指定'}。请在记忆书写中自然呼应这种氛围，但不改变记忆的事实性内容。` : ''}
-
 ${mainLinePrompt || ''}
+
+${WRITING_STYLE_INSTRUCTION}
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 

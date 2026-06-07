@@ -57,6 +57,8 @@ CRITICAL RULES FOR KEYWORDS:
 
 ${WRITING_STYLE_INSTRUCTION}
 
+${WRITING_STYLE_INSTRUCTION}
+
 OUTPUT FORMAT: Return ONLY a JSON object, no markdown, no code blocks, no extra text:
 {
   "mainLineName": "...",

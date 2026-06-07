@@ -1538,7 +1538,7 @@ function ChatPageInner() {
             return (
               <div key={cat} className="relative">
                 <button
-                  onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
+                  onClick={() => { alert('btn: cat=' + cat + ' expanded=' + expandedStyleCategory); setExpandedStyleCategory(isExpanded ? null : cat); }}
                   className={`text-xs px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
                 >
                   <span>{currentVal ? shortenLabel(currentVal) : labels[cat]}</span>
@@ -1550,7 +1550,7 @@ function ChatPageInner() {
                       <button
                         key={key}
                         onClick={() => {
-                          if (cat === 'tone' && key === '混合模式') {
+                          alert('opt: cat=' + cat + ' key=' + key + ' setter=' + typeof setter); if (cat === 'tone' if (cat === 'tone' && key === '混合模式') {if (cat === 'tone' && key === '混合模式') { key === '混合模式') {
                             setter(key);
                             setShowMixModal(true);
                           } else {

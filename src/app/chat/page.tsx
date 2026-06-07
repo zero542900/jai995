@@ -1035,14 +1035,14 @@ function ChatPageInner() {
         </div>
 
         {/* Input Row */}
-        <div className="flex items-center gap-1.5">
-          <input
-            type="text"
+        <div className="flex items-end gap-1.5">
+          <textarea
             value={jaiInput}
             onChange={e => setJaiInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendBotMessage(); } }}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBotMessage(); } }}
             placeholder="粘贴 Char 回复..."
-            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-jai-card-border bg-jai-input-bg/50 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary min-w-0"
+            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-jai-card-border bg-jai-input-bg/50 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary min-w-0 resize-none min-h-[30px] max-h-[100px]"
+            rows={1}
           />
           <button
             onClick={sendBotMessage}
@@ -1268,10 +1268,10 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
               <textarea
                 value={editContent}
                 onChange={e => setEditContent(e.target.value)}
-                className={`w-full text-sm p-2 rounded-lg border resize-none min-h-[60px] ${
+                className={`w-full text-sm p-2.5 rounded-lg border resize-none min-h-[120px] ${
                   isUser ? 'bg-jai-secondary/30 border-jai-accent text-jai-bubble-user-text placeholder:text-jai-bubble-user-text/50' : 'bg-jai-muted border-jai-secondary text-jai-text'
                 } focus:outline-none`}
-                rows={3}
+                rows={5}
               />
               <div className="flex gap-1.5">
                 <button onClick={() => onSaveEdit(editContent)} className="text-[10px] px-2 py-0.5 bg-jai-secondary/70 text-jai-btn-text rounded">保存</button>

@@ -55,8 +55,6 @@ export async function POST(request: NextRequest) {
 第二段：中文翻译（保持与英文字段一一对应，翻译字段名和值）
 
 [英文输出模板]
-[System Note: This card defines the user's persona. Do not break character. Keep responses grounded in the events and details below.]
-
 # Basic Information
 **Name**: 
 **Age**: 
@@ -84,7 +82,6 @@ export async function POST(request: NextRequest) {
 **Key Past Event**: 
 
 # Interaction & Dialogue Rules
-*[Style guideline: Keep it realistic, no godmodding]*
 **Speech Pattern**: 
 **Dialogue Style**:
 

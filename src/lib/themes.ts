@@ -32,6 +32,8 @@ export interface ThemeColors {
   'jai-bubble': string;
   /** 用户聊天气泡背景 */
   'jai-bubble-user': string;
+  /** 用户聊天气泡上的文字/按钮颜色 */
+  'jai-bubble-user-text': string;
 }
 
 export interface Theme {
@@ -64,6 +66,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(180, 100, 120, 0.20)',
       'jai-bubble': '#F5D5DA',
       'jai-bubble-user': '#D08898',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -86,6 +89,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(140, 170, 200, 0.20)',
       'jai-bubble': '#D8E5F0',
       'jai-bubble-user': '#98B4D0',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -108,6 +112,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(140, 195, 160, 0.20)',
       'jai-bubble': '#D5EBDD',
       'jai-bubble-user': '#98C8A5',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -130,6 +135,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(170, 140, 200, 0.20)',
       'jai-bubble': '#E2D5EE',
       'jai-bubble-user': '#B898D0',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -152,6 +158,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(195, 160, 130, 0.20)',
       'jai-bubble': '#EAD8C2',
       'jai-bubble-user': '#C8A888',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -174,6 +181,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(190, 100, 50, 0.22)',
       'jai-bubble': '#F0D0B8',
       'jai-bubble-user': '#D08858',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -196,6 +204,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(210, 145, 40, 0.22)',
       'jai-bubble': '#F8DCB0',
       'jai-bubble-user': '#E89838',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -218,6 +227,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(160, 140, 120, 0.12)',
       'jai-bubble': '#EDE8E3',
       'jai-bubble-user': '#E0D8D0',
+      'jai-bubble-user-text': '#3A3230',
     },
   },
   {
@@ -240,6 +250,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(200, 90, 135, 0.22)',
       'jai-bubble': '#F5C0D5',
       'jai-bubble-user': '#D878A0',
+      'jai-bubble-user-text': '#FFFFFF',
     },
   },
   {
@@ -262,6 +273,7 @@ export const THEMES: Theme[] = [
       'jai-shadow': 'rgba(100, 175, 155, 0.20)',
       'jai-bubble': '#C8E5DD',
       'jai-bubble-user': '#80BCB0',
+      'jai-bubble-user-text': '#1E3A34',
     },
   },
 ];

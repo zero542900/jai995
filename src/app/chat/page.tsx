@@ -1139,11 +1139,11 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
 
       <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl shadow-sm ${
         isUser
-          ? 'bg-jai-bubble-user text-white rounded-br-sm'
+          ? 'bg-jai-bubble-user text-jai-bubble-user-text rounded-br-sm'
           : 'bg-jai-bubble text-jai-text border border-jai-card-border rounded-bl-sm'
       }`}>
         {/* Role Label */}
-        <div className={`px-3 pt-2 pb-0.5 text-[10px] font-medium ${isUser ? 'text-white/70' : 'text-jai-secondary'}`}>
+        <div className={`px-3 pt-2 pb-0.5 text-[10px] font-medium ${isUser ? 'text-jai-bubble-user-text/70' : 'text-jai-secondary'}`}>
           {isUser ? 'User' : 'Char'}
         </div>
 
@@ -1155,7 +1155,7 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
                 value={editContent}
                 onChange={e => setEditContent(e.target.value)}
                 className={`w-full text-sm p-2 rounded-lg border resize-none min-h-[60px] ${
-                  isUser ? 'bg-jai-secondary/30 border-jai-accent text-white placeholder:text-jai-secondary/70' : 'bg-jai-muted border-jai-secondary text-jai-text'
+                  isUser ? 'bg-jai-secondary/30 border-jai-accent text-jai-bubble-user-text placeholder:text-jai-bubble-user-text/50' : 'bg-jai-muted border-jai-secondary text-jai-text'
                 } focus:outline-none`}
                 rows={3}
               />
@@ -1215,16 +1215,16 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
         {/* Action Buttons - always visible */}
         {!message.editing && (
           <div className={`flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 pb-1.5 md:pb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <button onClick={onFlip} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
+            <button onClick={onFlip} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconFlip className="w-3 h-3" />
             </button>
-            <button onClick={onCopy} title="复制" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
+            <button onClick={onCopy} title="复制" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconCopy className="w-3 h-3" />
             </button>
-            <button onClick={onEdit} title="编辑" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
+            <button onClick={onEdit} title="编辑" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconEdit className="w-3 h-3" />
             </button>
-            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-white' : 'text-jai-text-secondary hover:text-jai-text'}`}>
+            <button onClick={handleOpenPicker} title="标记为指令" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconBook className="w-3 h-3" />
             </button>
             <button onClick={onDelete} title="删除此条及之后" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-secondary/70 hover:text-red-300' : 'text-jai-text-secondary hover:text-red-400'}`}>

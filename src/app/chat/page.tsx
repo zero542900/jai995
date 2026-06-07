@@ -136,15 +136,7 @@ function ChatPageInner() {
   const [personMode, setPersonMode] = useState<'first' | 'third'>('third');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
 
-  // Style selector states
-  const [styleTone, setStyleTone] = useState<string>(''); // 剧集调性
-  const [styleEmotion, setStyleEmotion] = useState<string>(''); // 情感浓度
-  const [stylePace, setStylePace] = useState<string>(''); // 叙事节奏
-  const [styleOptional, setStyleOptional] = useState<string[]>([]); // 可选风格(多选)
-  const [mixModeNote, setMixModeNote] = useState(''); // 混合模式主基调
-  const [showMixModal, setShowMixModal] = useState(false); // 混合模式弹窗
-  const [expandedStyleCategory, setExpandedStyleCategory] = useState<string | null>(null);
-  const [showOptionalMenu, setShowOptionalMenu] = useState(false);
+
 
   // Mobile toolbar state
   const [showMobileToolbar, setShowMobileToolbar] = useState(false);
@@ -224,26 +216,12 @@ function ChatPageInner() {
     }
   }, [showInstructionPicker]);
 
-  // Close optional menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (optionalMenuRef.current && !optionalMenuRef.current.contains(e.target as Node)) {
-        setShowOptionalMenu(false);
-      }
-      if (expandedStyleCategory) {
-        setExpandedStyleCategory(null);
-      }
-    };
-    if (showOptionalMenu || expandedStyleCategory) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showOptionalMenu, expandedStyleCategory]);
+
 
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const optionalMenuRef = useRef<HTMLDivElement>(null);
+
 
   // ========== Load data ==========
   useEffect(() => {
@@ -321,12 +299,7 @@ function ChatPageInner() {
         if (pd.savedPlotDirections) setSavedPlotDirections(pd.savedPlotDirections);
         if (pd.suggestedKeywords) setSuggestedKeywords(pd.suggestedKeywords);
         if (pd.lastMemoryCount !== undefined) setLastMemoryCount(pd.lastMemoryCount);
-        if (pd.styleSettings) {
-          if (pd.styleSettings.tone) setStyleTone(pd.styleSettings.tone);
-          if (pd.styleSettings.intensity) setStyleEmotion(pd.styleSettings.intensity);
-          if (pd.styleSettings.rhythm) setStylePace(pd.styleSettings.rhythm);
-          if (pd.styleSettings.optionalStyles) setStyleOptional(pd.styleSettings.optionalStyles);
-        }
+
       } else if (preset.plotDirection) {
         // Legacy: migrate from plotDirection (was used as both summary and direction)
         setCurrentMainLine(preset.plotDirection);
@@ -395,65 +368,9 @@ function ChatPageInner() {
     return history;
   }, [messages, currentPreset?.longTermMemory]);
 
-  // Build style prompt string for API injection
-  const STYLE_OPTIONS = {
-    tone: {
-      '欧美剧集': '日常叙事感，情节逐步展开。多线叙事，分幕节奏。对话克制但有重量。每轮对话推动一个情绪节点。适合长线发展。',
-      '电影质感': '画面感强，镜头叙事，节奏更紧凑。场景切换明显，对话密度低，动作和环境描述占比更高。画面感和张力优先。适合高潮段落或单幕收束。',
-      '混合模式': '以电影质感为主，但保留剧集的长线推进感。',
-    },
-    emotion: {
-      '强强对抗': '双方势均力敌，互不相让。对话如击剑，每句都是试探。试探、压制、反杀交替出现。谁先软谁输。适合权力换手、底线博弈。',
-      '暧昧推拉': '欲言又止，靠近又撤离。每句话都带未完成的重量。肢体和视线描写替代码头。适合持续拉扯、立场渐染。',
-      '极度压抑': '沉默比嘶吼更狠，隐忍成病。静默段落占主导。情绪通过动作泄露。对话断句多、间隙长。适合创伤、废墟、对峙。',
-      '极度暴力': '身体或心理上的痛感，真实不遮掩。行动优先于语言。对话纯粹功能性，全为推进动作。身体语言给出全部信息。适合围猎、清算、反杀。',
-      '极致占有': '偏见、控制、只属于我的执念。封锁、监视、不允许任何人靠近。占有欲从占有到吞噬。适合囚禁、监视、独占线。',
-      '病态依赖': '从利用到离不开，双刃剑。一方是毒药也是解药。离开会死，留下会疯。适合共生、崩坏、无法切割线。',
-      '年少轻狂': '冲动、不顾后果、热烈但短暂。没有退路也没有后悔药。燃烧感优先。适合青春暴走、一意孤行线。',
-      '迷惘沦陷': '不知道自己想要什么，却已经陷进去。方向感丧失，但身体在靠近。适合身份错位、不知不觉线。',
-      '玩世不恭': '用轻浮保护自己，其实比谁都怕受伤。笑着说出最痛的话。什么都不当真，但什么都看在眼里。适合伪装崩塌线。',
-    },
-    pace: {
-      '快切': '事件紧凑，节奏迅猛，适合动作/惊险线。每轮对话切换场景或时间点。推进迅速，冲突提早暴露。适合闪回/多线穿插。',
-      '慢热': '情绪的缓慢铺陈，一点一滴积累张力。前几轮只有铺垫和氛围。细节堆叠。情绪在沉默中积累。适合建立关系、倒叙展开。',
-      '单幕压缩': '高密度叙事，一集内完成起承转合。所有事件在一轮完整场景内发生。最紧凑的结构。适合短线收束、一次爆发。',
-      '篇章递进': '分幕式叙事，每阶段明确主题。每个篇章有自己的高潮和收束。整体推进感强。适合长线发展、多线收束。',
-      '即兴感': '没有明确剧本，跟着直觉走，像一场不成熟的冒险。方向随时可能偏转。适合意外相遇、计划外线。',
-    },
-    optional: {
-      '加一点浪漫': '在强硬外壳下，细碎的、沉默的温柔。对话软一点。手与眼。对看变成事件。',
-      '加一点背叛': '信任被撕开，关系陷入重新洗牌。所有对话都可以是伏笔。沉默不可信。谁先回头谁输。',
-      '加一点救赎': '赎罪、放下、重新站起来。对方是伤口也是方向。一步远或者一步晚。动作比语言更接近答案。',
-      '加一点牺牲': '等价交换或无法挽回的让渡。台词不全。心里话只有一半。另一部分用动作替掉。',
-      '加一点宿命感': '他们相遇本身就是一种注定。无论怎么绕都会回到同一个地方。适合轮回、重逢线。',
-      '加一点战损': '身体或心理的伤痕，不掩饰脆弱。伤疤是叙事的一部分。疼痛让沉默更有重量。',
-      '加一点地狱笑话': '在压抑情境中冷幽默。笑着说出最不该笑的事。用荒诞感破局。',
-      '加一点不可言说': '留白，不说破，更烫人。最关键的话永远不说出口。沉默比台词更有信息量。',
-      '加一点疯感': '不理智、不计后果的冲动。理智在关键时刻下线。适合失控、暴走、赌徒线。',
-      '加一点躁动': '荷尔蒙、不安分、坐不住的年轻感。身体比脑子先动。空气里都是张力。适合年轻角色、夏天线。',
-      '加一点破碎感': '原生家庭问题、自我认同危机、脆弱但逞强。裂痕在外表下。每一次逞强都在碎一点。适合自毁、伪装崩塌线。',
-      '加一点街头气': '粗粝、直白、不装、生存本能。话糙理不糙。活下来才是第一位。适合底层、边缘线。',
-    },
-  } as const;
-
   const buildStylePrompt = useCallback(() => {
-    const parts: string[] = [];
-    if (styleTone === '混合模式') {
-      parts.push(`[剧集调性: 混合模式] ${STYLE_OPTIONS.tone['混合模式']}${mixModeNote ? ' ' + mixModeNote : ''}`);
-    } else if (styleTone) {
-      parts.push(`[剧集调性: ${styleTone}] ${STYLE_OPTIONS.tone[styleTone as keyof typeof STYLE_OPTIONS.tone]}`);
-    }
-    if (styleEmotion) parts.push(`[情感浓度: ${styleEmotion}] ${STYLE_OPTIONS.emotion[styleEmotion as keyof typeof STYLE_OPTIONS.emotion]}`);
-    if (stylePace) parts.push(`[叙事节奏: ${stylePace}] ${STYLE_OPTIONS.pace[stylePace as keyof typeof STYLE_OPTIONS.pace]}`);
-    styleOptional.forEach(s => {
-      const key = s as keyof typeof STYLE_OPTIONS.optional;
-      if (STYLE_OPTIONS.optional[key]) parts.push(`[可选风格: ${s}] ${STYLE_OPTIONS.optional[key]}`);
-    });
-    parts.push(`[隐形适配规则] 所有生成内容默认适配：成人向、强强关系、耽美叙事。角色年龄层默认29-55岁男性为主（可根据设定自动匹配）。类型影响场景和氛围描写；情感浓度影响对话张力与心理描写；节奏影响推进速度和场景切换频率；可选风格作为调味料嵌入每一段生成的细节中。在生成关键剧情时必须匹配选定的风格组合。`);
-    return parts.length > 1
-      ? `\n\n[风格指令 - 请严格遵循以下风格进行创作]\n${parts.join('\n')}`
-      : '';
-  }, [styleTone, styleEmotion, stylePace, styleOptional, mixModeNote]);
+    return '';
+  }, []);
 
   const toggleKeyword = (category: 'ending' | 'relation' | 'scene' | 'stage', keyword: string) => {
     const setters: Record<string, React.Dispatch<React.SetStateAction<string[]>>> = {
@@ -665,8 +582,6 @@ function ChatPageInner() {
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
           mainLinePrompt: buildMainLinePrompt(),
-          styleEmotion: styleEmotion || undefined,
-          stylePace: stylePace || undefined
         })
       });
 
@@ -839,13 +754,6 @@ function ChatPageInner() {
       selectedStageKeyword,
       savedPlotDirections,
       suggestedKeywords,
-      styleSettings: {
-        tone: styleTone,
-        intensity: styleEmotion,
-        rhythm: stylePace,
-        optionalStyles: styleOptional,
-        mixModeNote,
-      },
       lastMemoryCount,
     };
     const updated = { ...preset, plotData, plotDirection: currentDirection };
@@ -863,8 +771,7 @@ function ChatPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMainLine, currentMainLineCn, currentDirection, currentDirectionCn, plotStage, plotStageCn, progressDesc, progressDescCn,
       selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
-      savedPlotDirections, suggestedKeywords,
-      styleTone, styleEmotion, stylePace, styleOptional, mixModeNote, lastMemoryCount]);
+      savedPlotDirections, suggestedKeywords, lastMemoryCount]);
 
   const selectPlotDirection = (idx: number) => {
     const pred = plotPredictions[idx];
@@ -1507,85 +1414,6 @@ function ChatPageInner() {
             <option value="third">第三人称 (He/She)</option>
           </select>
 
-          {/* Style Category Buttons - Desktop */}
-          {(['tone', 'emotion', 'pace'] as const).map(cat => {
-            const labels: Record<string, string> = { tone: '剧集调性', emotion: '情感浓度', pace: '叙事节奏' };
-            const currentVal = cat === 'tone' ? styleTone : cat === 'emotion' ? styleEmotion : stylePace;
-            const setter = cat === 'tone' ? setStyleTone : cat === 'emotion' ? setStyleEmotion : setStylePace;
-            const options = STYLE_OPTIONS[cat];
-            const isExpanded = expandedStyleCategory === cat;
-            return (
-              <div key={cat} className="relative">
-                <button
-                  onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                  className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${currentVal ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
-                >
-                  <span>{currentVal || labels[cat]}</span>
-                  <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                </button>
-                {isExpanded && (
-                  <div className="absolute bottom-full left-0 mb-1 bg-jai-card border border-jai-card-border rounded-lg shadow-lg py-1 min-w-[220px] z-50 max-h-60 overflow-y-auto">
-                    {Object.entries(options).map(([key, desc]) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          if (cat === 'tone' && key === '混合模式') {
-                            setter(key);
-                            setShowMixModal(true);
-                          } else {
-                            setter(key);
-                          }
-                          setExpandedStyleCategory(null);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-jai-muted transition-colors ${currentVal === key ? 'bg-jai-muted text-jai-accent font-medium' : 'text-jai-text'}`}
-                      >
-                        <span className="font-medium">{key}</span>
-                        <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
-                      </button>
-                    ))}
-                    {currentVal && (
-                      <button
-                        onClick={() => { setter(''); setExpandedStyleCategory(null); }}
-                        className="w-full text-left px-3 py-1 text-xs text-red-400 hover:bg-red-50 border-t border-jai-muted"
-                      >清除选择</button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Optional Styles - Desktop */}
-          <div className="relative" ref={optionalMenuRef}>
-            <button
-              onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-              className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${styleOptional.length > 0 ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
-            >
-              <span>{styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选风格'}</span>
-            </button>
-            {showOptionalMenu && (
-              <div className="absolute bottom-full left-0 mb-1 bg-jai-card border border-jai-card-border rounded-lg shadow-lg p-2 min-w-[220px] z-50 max-h-64 overflow-y-auto">
-                {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
-                  <label key={key} className="flex items-start gap-2 py-1 text-xs text-jai-text cursor-pointer hover:bg-jai-muted rounded px-1">
-                    <input
-                      type="checkbox"
-                      checked={styleOptional.includes(key)}
-                      onChange={e => {
-                        if (e.target.checked) setStyleOptional(prev => [...prev, key]);
-                        else setStyleOptional(prev => prev.filter(v => v !== key));
-                      }}
-                      className="rounded border-jai-accent text-jai-accent focus:ring-jai-accent mt-0.5 shrink-0"
-                    />
-                    <div>
-                      <span className="font-medium">{key}</span>
-                      <span className="block text-[10px] text-jai-text-secondary mt-0.5">{desc}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
           <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer ml-auto">
             <span>思考</span>
             <button
@@ -1611,28 +1439,6 @@ function ChatPageInner() {
                 <option value="third">第三人称</option>
               </select>
 
-              {/* Mobile style buttons - open as bottom sheet */}
-              {(['tone', 'emotion', 'pace'] as const).map(cat => {
-                const labels: Record<string, string> = { tone: '调性', emotion: '情感', pace: '节奏' };
-                const currentVal = cat === 'tone' ? styleTone : cat === 'emotion' ? styleEmotion : stylePace;
-                const isExpanded = expandedStyleCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                    className={`text-xs px-2 py-1.5 rounded-lg border transition-colors flex items-center gap-0.5 ${currentVal ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
-                  >
-                    <span>{currentVal || labels[cat]}</span>
-                    <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-                className={`text-xs px-2 py-1.5 rounded-lg border transition-colors ${styleOptional.length > 0 ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
-              >
-                {styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选'}
-              </button>
               <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer ml-auto">
                 <span>思考</span>
                 <button
@@ -1692,104 +1498,6 @@ function ChatPageInner() {
                     <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile: Style bottom sheet */}
-        {expandedStyleCategory && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setExpandedStyleCategory(null)}>
-            <div className="bg-jai-card rounded-t-2xl w-full max-h-[60vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 bg-jai-card px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
-                <span className="text-sm font-medium text-jai-text">
-                  {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
-                </span>
-                <button onClick={() => setExpandedStyleCategory(null)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
-              </div>
-              <div className="p-3 space-y-1">
-                {Object.entries(STYLE_OPTIONS[expandedStyleCategory as 'tone' | 'emotion' | 'pace']).map(([key, desc]) => {
-                  const currentVal = expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace;
-                  const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        if (expandedStyleCategory === 'tone' && key === '混合模式') {
-                          setter(key);
-                          setShowMixModal(true);
-                        } else {
-                          setter(key);
-                        }
-                        setExpandedStyleCategory(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-jai-muted border border-jai-accent' : 'hover:bg-jai-bg/50 border border-transparent'}`}
-                    >
-                      <span className={`text-sm ${currentVal === key ? 'text-jai-accent font-medium' : 'text-jai-text'}`}>{key}</span>
-                      <span className="block text-xs text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
-                    </button>
-                  );
-                })}
-                {(expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace) && (
-                  <button
-                    onClick={() => {
-                      const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
-                      setter('');
-                      setExpandedStyleCategory(null);
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-50 rounded-xl"
-                  >清除选择</button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile: Optional styles bottom sheet */}
-        {showOptionalMenu && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setShowOptionalMenu(false)}>
-            <div className="bg-jai-card rounded-t-2xl w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 bg-jai-card px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
-                <span className="text-sm font-medium text-jai-text">可选风格</span>
-                <button onClick={() => setShowOptionalMenu(false)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
-              </div>
-              <div className="p-3 space-y-1">
-                {Object.entries(STYLE_OPTIONS.optional).map(([key, desc]) => (
-                  <label key={key} className="flex items-start gap-3 py-2.5 px-3 text-sm text-jai-text cursor-pointer hover:bg-jai-muted rounded-xl">
-                    <input
-                      type="checkbox"
-                      checked={styleOptional.includes(key)}
-                      onChange={e => {
-                        if (e.target.checked) setStyleOptional(prev => [...prev, key]);
-                        else setStyleOptional(prev => prev.filter(v => v !== key));
-                      }}
-                      className="rounded border-jai-accent text-jai-accent focus:ring-jai-accent mt-0.5 shrink-0 w-4 h-4"
-                    />
-                    <div>
-                      <span className="font-medium">{key}</span>
-                      <span className="block text-xs text-jai-text-secondary mt-0.5">{desc}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mix Mode Modal */}
-        {showMixModal && styleTone === '混合模式' && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4" onClick={() => setShowMixModal(false)}>
-            <div className="bg-jai-card rounded-xl shadow-lg p-4 w-full max-w-80 space-y-3" onClick={e => e.stopPropagation()}>
-              <div className="text-sm font-medium text-jai-text">混合模式 - 请指定主基调</div>
-              <div className="text-xs text-jai-text-secondary">例：电影质感为主，但保留剧集的慢热推进感。</div>
-              <textarea
-                value={mixModeNote}
-                onChange={e => setMixModeNote(e.target.value)}
-                placeholder="描述你想要的混合效果..."
-                className="w-full text-xs border border-jai-card-border rounded-lg p-2 h-20 resize-none focus:outline-none focus:border-jai-accent"
-              />
-              <div className="flex gap-2 justify-end">
-                <button onClick={() => setShowMixModal(false)} className="text-xs px-3 py-1.5 rounded-lg bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary">确认</button>
               </div>
             </div>
           </div>

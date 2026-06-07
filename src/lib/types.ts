@@ -6,11 +6,7 @@ export interface BilingualText {
 }
 
 export interface StyleSettings {
-  tone: string;
-  intensity: string;
-  rhythm: string;
-  optionalStyles: string[];
-  mixModeNote?: string;
+  personMode: string;
 }
 
 export interface PlotData {

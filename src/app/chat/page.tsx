@@ -1518,7 +1518,7 @@ function ChatPageInner() {
               <div key={cat} className="relative">
                 <button
                   onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                  className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${currentVal ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
+                  className={`text-xs px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
                 >
                   <span>{currentVal || labels[cat]}</span>
                   <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -1537,7 +1537,7 @@ function ChatPageInner() {
                           }
                           setExpandedStyleCategory(null);
                         }}
-                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-jai-muted transition-colors ${currentVal === key ? 'bg-jai-muted text-jai-accent font-medium' : 'text-jai-text'}`}
+                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${currentVal === key ? 'bg-jai-accent/15 text-jai-accent font-medium' : 'text-jai-text hover:bg-jai-muted'}`}
                       >
                         <span className="font-medium">{key}</span>
                         <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
@@ -1559,7 +1559,7 @@ function ChatPageInner() {
           <div className="relative" ref={optionalMenuRef}>
             <button
               onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-              className={`text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1 ${styleOptional.length > 0 ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
+              className={`text-xs px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 font-medium ${styleOptional.length > 0 ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
             >
               <span>{styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选风格'}</span>
             </button>
@@ -1620,7 +1620,7 @@ function ChatPageInner() {
                   <button
                     key={cat}
                     onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                    className={`text-xs px-2 py-1.5 rounded-lg border transition-colors flex items-center gap-0.5 ${currentVal ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
+                    className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all flex items-center gap-0.5 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
                   >
                     <span>{currentVal || labels[cat]}</span>
                     <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -1629,7 +1629,7 @@ function ChatPageInner() {
               })}
               <button
                 onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-                className={`text-xs px-2 py-1.5 rounded-lg border transition-colors ${styleOptional.length > 0 ? 'bg-jai-secondary/70 text-jai-btn-text border-jai-secondary' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
+                className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all font-medium ${styleOptional.length > 0 ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
               >
                 {styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选'}
               </button>
@@ -1723,7 +1723,7 @@ function ChatPageInner() {
                         }
                         setExpandedStyleCategory(null);
                       }}
-                      className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-jai-muted border border-jai-accent' : 'hover:bg-jai-bg/50 border border-transparent'}`}
+                      className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-jai-accent/15 border border-jai-accent' : 'hover:bg-jai-bg/50 border border-transparent'}`}
                     >
                       <span className={`text-sm ${currentVal === key ? 'text-jai-accent font-medium' : 'text-jai-text'}`}>{key}</span>
                       <span className="block text-xs text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>

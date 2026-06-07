@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IconBack, IconSparkle, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown } from '@/components/icons';
+import { IconBack, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown } from '@/components/icons';
 import { copyToClipboard } from '@/lib/utils';
 import type { PlotData } from '@/lib/types';
 
@@ -151,9 +151,7 @@ function ChatPageInner() {
   const [showMobileToolbar, setShowMobileToolbar] = useState(false);
 
   // Feature states
-  const [inspirationLoading, setInspirationLoading] = useState(false);
-  const [inspirationItems, setInspirationItems] = useState<Array<{ en: string; cn?: string; flipped: boolean; translating?: boolean }>>([]);
-  const [showInspiration, setShowInspiration] = useState(false);
+
 
   const [expandLoading, setExpandLoading] = useState(false);
   const [showExpandModal, setShowExpandModal] = useState(false);
@@ -603,83 +601,6 @@ function ChatPageInner() {
   };
 
   // ========== AI Features ==========
-  const handleInspiration = async () => {
-    if (!currentPreset) { showNotification('请选择预设'); return; }
-    const apiKey = localStorage.getItem('jai_api_key');
-    if (!apiKey) { showNotification('请先配置 API Key'); return; }
-
-    setInspirationLoading(true);
-    setShowInspiration(true);
-    setInspirationItems([]);
-
-    try {
-      const personInstruction = personMode === 'first'
-        ? 'Use first person (I/me/my) for all suggestions.'
-        : 'Use third person (he/she/they) for all suggestions.';
-
-      const res = await fetch('/api/inspiration', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          charInfo: currentPreset.charInfo,
-          userCard: currentPreset.userCard,
-          chatHistory: buildChatHistoryForMemory(),
-          longTermMemory: currentPreset.longTermMemory,
-          apiKey,
-          personMode,
-          stylePrompt: buildStylePrompt(),
-          mainLinePrompt: buildMainLinePrompt()
-        })
-      });
-
-      if (!res.ok) throw new Error('灵感生成失败');
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error('No reader');
-
-      let fullText = '';
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split('\n')) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) fullText += parsed.content;
-            } catch { /* skip */ }
-          }
-        }
-      }
-
-      // Parse: split by ===ITEM=== first, then fallback to newlines
-      let items: string[] = [];
-      if (fullText.includes('===ITEM===')) {
-        items = fullText.split('===ITEM===')
-          .map(s => s.trim())
-          .filter(s => s.length > 0 && !s.startsWith('==='));
-      }
-      if (items.length < 3) {
-        items = fullText.split('\n')
-          .map(s => s.replace(/===ITEM===/g, '').replace(/^\d+[\.\)]\s*/, '').trim())
-          .filter(s => s.length > 5 && !s.includes('===ITEM==='));
-      }
-      const parsed = items.slice(0, 3).map(line => ({
-        en: line,
-        cn: undefined as string | undefined,
-        flipped: false,
-        translating: false,
-      }));
-      setInspirationItems(parsed);
-    } catch {
-      showNotification('灵感生成失败');
-    } finally {
-      setInspirationLoading(false);
-    }
-  };
-
   const handleExpand = async () => {
     if (!expandBrief.trim() || !currentPreset) return;
     const apiKey = localStorage.getItem('jai_api_key');
@@ -1087,119 +1008,6 @@ function ChatPageInner() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Inspiration Panel */}
-      {showInspiration && (
-        <div className="shrink-0 mx-3 md:mx-4 mb-2 bg-jai-card rounded-xl border border-jai-card-border shadow-sm p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-jai-accent flex items-center gap-1">
-              <IconSparkle className="w-3.5 h-3.5" /> 灵感
-            </span>
-            <div className="flex items-center gap-1">
-              <button onClick={handleInspiration} disabled={inspirationLoading} className="p-1 text-jai-secondary hover:text-jai-accent disabled:opacity-50">
-                <IconRefresh className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={() => setShowInspiration(false)} className="p-1 text-jai-text-secondary hover:text-jai-text text-xs">✕</button>
-            </div>
-          </div>
-          {inspirationLoading ? (
-            <p className="text-xs text-jai-text-secondary animate-pulse">生成中...</p>
-          ) : (
-            <div className="space-y-2">
-              {inspirationItems.map((item, i) => (
-                <div key={i} className="relative">
-                  <div
-                    className={`p-2.5 rounded-lg border transition-colors cursor-pointer ${
-                      item.flipped ? 'bg-jai-muted border-jai-secondary' : 'bg-jai-card border-jai-card-border hover:bg-jai-bg/50'
-                    }`}
-                    onClick={() => {
-                      if (!item.flipped) {
-                        // Flip to Chinese - translate if needed
-                        const newItems = [...inspirationItems];
-                        if (!item.cn) {
-                          newItems[i] = { ...item, translating: true };
-                          setInspirationItems(newItems);
-                          // Call translate API
-                          const apiKey = localStorage.getItem('jai_api_key') || '';
-                          fetch('/api/translate', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ text: item.en, apiKey }),
-                          }).then(r => r.json()).then(data => {
-                            const updated = [...inspirationItems];
-                            updated[i] = { ...updated[i], cn: data.translation || '翻译失败', flipped: true, translating: false };
-                            setInspirationItems(updated);
-                          }).catch(() => {
-                            const updated = [...inspirationItems];
-                            updated[i] = { ...updated[i], translating: false, flipped: true, cn: '翻译失败' };
-                            setInspirationItems(updated);
-                          });
-                        } else {
-                          newItems[i] = { ...item, flipped: true };
-                          setInspirationItems(newItems);
-                        }
-                      } else {
-                        // Flip back to English
-                        const newItems = [...inspirationItems];
-                        newItems[i] = { ...item, flipped: false };
-                        setInspirationItems(newItems);
-                      }
-                    }}
-                  >
-                    {item.translating ? (
-                      <p className="text-xs text-jai-text-secondary animate-pulse">翻译中...</p>
-                    ) : item.flipped ? (
-                      <p className="text-xs text-jai-text">{item.cn}</p>
-                    ) : (
-                      <p className="text-xs text-jai-text">{item.en}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); copyContent(item.en); }}
-                      className="text-[10px] text-jai-secondary hover:text-jai-accent"
-                    >复制</button>
-                    <span className="text-[10px] text-jai-text-secondary">|</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!item.flipped) {
-                          const newItems = [...inspirationItems];
-                          if (!item.cn) {
-                            newItems[i] = { ...item, translating: true };
-                            setInspirationItems(newItems);
-                            const apiKey = localStorage.getItem('jai_api_key') || '';
-                            fetch('/api/translate', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ text: item.en, apiKey }),
-                            }).then(r => r.json()).then(data => {
-                              const updated = [...inspirationItems];
-                              updated[i] = { ...updated[i], cn: data.translation || '翻译失败', flipped: true, translating: false };
-                              setInspirationItems(updated);
-                            }).catch(() => {
-                              const updated = [...inspirationItems];
-                              updated[i] = { ...updated[i], translating: false, flipped: true, cn: '翻译失败' };
-                              setInspirationItems(updated);
-                            });
-                          } else {
-                            newItems[i] = { ...item, flipped: true };
-                            setInspirationItems(newItems);
-                          }
-                        } else {
-                          const newItems = [...inspirationItems];
-                          newItems[i] = { ...item, flipped: false };
-                          setInspirationItems(newItems);
-                        }
-                      }}
-                      className="text-[10px] text-jai-text-secondary hover:text-jai-text"
-                    >翻转</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Plot Assistant Panel */}
       {showPlotPanel && (
@@ -1853,9 +1661,6 @@ function ChatPageInner() {
 
             {/* Feature buttons - mobile */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <button onClick={handleInspiration} disabled={inspirationLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
-                <IconSparkle className="w-3 h-3" /> 灵感
-              </button>
               <button onClick={() => setShowExpandModal(true)} disabled={expandLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
                 <IconPen className="w-3 h-3" /> 扩写
               </button>
@@ -2007,9 +1812,6 @@ function ChatPageInner() {
 
         {/* Desktop Feature Buttons */}
         <div className="hidden md:flex items-center gap-2 relative">
-          <button onClick={handleInspiration} disabled={inspirationLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
-            <IconSparkle className="w-3.5 h-3.5" /> 灵感
-          </button>
           <button onClick={() => setShowExpandModal(true)} disabled={expandLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
             <IconPen className="w-3.5 h-3.5" /> 扩写
           </button>

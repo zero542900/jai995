@@ -26,7 +26,6 @@ interface Preset {
   userCard: string;
   userPersonality: string;
   greeting: string;
-  plotDirection: string;
   longTermMemory: string;
   personMode: 'first' | 'third';
   thinkingEnabled: boolean;
@@ -154,17 +153,6 @@ function ChatPageInner() {
 
   // Plot Assistant states
   const [showPlotPanel, setShowPlotPanel] = useState(false);
-  const [plotPredictions, setPlotPredictions] = useState<{ en: string; cn: string }[]>([]);
-  const [plotTwist, setPlotTwist] = useState<string | null>(null);
-  const [plotPredictLoading, setPlotPredictLoading] = useState(false);
-  const [plotDirectionKeyword, setPlotDirectionKeyword] = useState('');
-  const [selectedPredictionIdx, setSelectedPredictionIdx] = useState<number | null>(null);
-
-  // Current plot direction (shown in top bar, switched between saved directions)
-  const [currentDirection, setCurrentDirection] = useState('');
-  const [currentDirectionCn, setCurrentDirectionCn] = useState('');
-  const [savedPlotDirections, setSavedPlotDirections] = useState<{ en: string; cn: string; stage?: string; stageCn?: string }[]>([]);
-  const [showDirectionCard, setShowDirectionCard] = useState(false);
 
   // Memory update tracking
   const [lastMemoryCount, setLastMemoryCount] = useState(0);
@@ -174,26 +162,9 @@ function ChatPageInner() {
   // Main storyline summary (shown in plot panel, from AI analysis)
   const [currentMainLine, setCurrentMainLine] = useState('');
   const [currentMainLineCn, setCurrentMainLineCn] = useState('');
-  const [plotStage, setPlotStage] = useState('');
-  const [plotStageCn, setPlotStageCn] = useState('');
-  const [progressDesc, setProgressDesc] = useState('');
-  const [progressDescCn, setProgressDescCn] = useState('');
 
   // AI analysis state
   const [plotAnalyzeLoading, setPlotAnalyzeLoading] = useState(false);
-
-  // Keyword library states (dynamic AI suggestions + free input)
-  const [suggestedKeywords, setSuggestedKeywords] = useState<{
-    ending: { en: string; cn: string }[];
-    relation: { en: string; cn: string }[];
-    scene: { en: string; cn: string }[];
-    stage: { en: string; cn: string }[];
-  }>({ ending: [], relation: [], scene: [], stage: [] });
-  const [selectedEnding, setSelectedEnding] = useState<string[]>([]);
-  const [selectedRelation, setSelectedRelation] = useState<string[]>([]);
-  const [selectedScene, setSelectedScene] = useState<string[]>([]);
-  const [selectedStageKeyword, setSelectedStageKeyword] = useState<string[]>([]);
-  const [customKeyword, setCustomKeyword] = useState({ ending: '', relation: '', scene: '', stage: '' });
 
   const [notification, setNotification] = useState('');
   const [showInstructionPicker, setShowInstructionPicker] = useState(false);
@@ -283,25 +254,8 @@ function ChatPageInner() {
         const pd = preset.plotData;
         if (pd.currentMainLine) setCurrentMainLine(pd.currentMainLine);
         if (pd.currentMainLineCn) setCurrentMainLineCn(pd.currentMainLineCn);
-        if (pd.currentDirection) setCurrentDirection(pd.currentDirection);
-        if (pd.currentDirectionCn) setCurrentDirectionCn(pd.currentDirectionCn);
-        if (pd.plotStage) setPlotStage(pd.plotStage);
-        if (pd.plotStageCn) setPlotStageCn(pd.plotStageCn);
-        if (pd.progressDesc) setProgressDesc(pd.progressDesc);
-        if (pd.progressDescCn) setProgressDescCn(pd.progressDescCn);
-        if (pd.selectedEnding) setSelectedEnding(pd.selectedEnding);
-        if (pd.selectedRelation) setSelectedRelation(pd.selectedRelation);
-        if (pd.selectedScene) setSelectedScene(pd.selectedScene);
-        if (pd.selectedStageKeyword) setSelectedStageKeyword(pd.selectedStageKeyword);
-        if (pd.savedPlotDirections) setSavedPlotDirections(pd.savedPlotDirections);
-        if (pd.suggestedKeywords) setSuggestedKeywords(pd.suggestedKeywords);
         if (pd.lastMemoryCount !== undefined) setLastMemoryCount(pd.lastMemoryCount);
 
-      } else if (preset.plotDirection) {
-        // Legacy: migrate from plotDirection (was used as both summary and direction)
-        setCurrentMainLine(preset.plotDirection);
-        setCurrentDirection(preset.plotDirection);
-        setSavedPlotDirections([{ en: preset.plotDirection, cn: '' }]);
       }
     }
   }, [currentPresetId]);
@@ -369,39 +323,10 @@ function ChatPageInner() {
     return '';
   }, []);
 
-  const toggleKeyword = (category: 'ending' | 'relation' | 'scene' | 'stage', keyword: string) => {
-    const setters: Record<string, React.Dispatch<React.SetStateAction<string[]>>> = {
-      ending: setSelectedEnding,
-      relation: setSelectedRelation,
-      scene: setSelectedScene,
-      stage: setSelectedStageKeyword,
-    };
-    const getter: Record<string, string[]> = {
-      ending: selectedEnding,
-      relation: selectedRelation,
-      scene: selectedScene,
-      stage: selectedStageKeyword,
-    };
-    const current = getter[category];
-    const setter = setters[category];
-    setter(current.includes(keyword) ? current.filter(k => k !== keyword) : [...current, keyword]);
-  };
-
-  const getAllKeywords = () => [...selectedEnding, ...selectedRelation, ...selectedScene, ...selectedStageKeyword];
-
   const buildMainLinePrompt = useCallback(() => {
-    if (!currentMainLine.trim() && !currentDirection.trim() && getAllKeywords().length === 0) return '';
-    const parts: string[] = [];
-    if (currentMainLine.trim()) parts.push(`[主线概括: ${currentMainLine}]`);
-    if (currentDirection.trim()) parts.push(`[当前剧情走向: ${currentDirection}]`);
-    const allKw = getAllKeywords();
-    if (allKw.length > 0) parts.push(`[主线关键词: ${allKw.join('、')}]`);
-    if (plotStage) parts.push(`[当前阶段: ${plotStage}]`);
-    if (progressDesc) parts.push(`[进展描述: ${progressDesc}]`);
-    return parts.length > 0
-      ? `\n\n[主线指令 - 灵感和扩写必须向此方向靠拢]\n${parts.join('\n')}\n所有后续生成的灵感、扩写内容都应推动剧情向主线方向发展。`
-      : '';
-  }, [currentMainLine, currentDirection, selectedEnding, selectedRelation, selectedScene, selectedStageKeyword, plotStage, progressDesc]);
+    if (!currentMainLine.trim()) return '';
+    return `\n\n[主线指令 - 灵感和扩写必须向此方向靠拢]\n[主线概括: ${currentMainLine}]\n所有后续生成的灵感、扩写内容都应推动剧情向主线方向发展。`;
+  }, [currentMainLine]);
 
   // ========== Message Actions ==========
   const sendUserMessage = () => {
@@ -642,7 +567,6 @@ function ChatPageInner() {
           userCard: currentPreset.userCard,
           chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
-          plotDirection: currentPreset.plotDirection,
           apiKey,
           stylePrompt: buildStylePrompt(),
           mainLinePrompt: buildMainLinePrompt()
@@ -657,77 +581,12 @@ function ChatPageInner() {
         setCurrentMainLine(data.mainLineName);
         setCurrentMainLineCn(data.mainLineNameCn || '');
       }
-      if (data.stage) {
-        setPlotStage(data.stage);
-        setPlotStageCn(data.stageCn || '');
-      }
-      if (data.progressDesc) {
-        setProgressDesc(data.progressDesc);
-        setProgressDescCn(data.progressDescCn || '');
-      }
-      // Fill in AI-suggested keywords
-      if (data.suggestedKeywords) {
-        setSuggestedKeywords({
-          ending: data.suggestedKeywords.ending || [],
-          relation: data.suggestedKeywords.relation || [],
-          scene: data.suggestedKeywords.scene || [],
-          stage: data.suggestedKeywords.stage || [],
-        });
-      }
 
-      showNotification('AI 已概括主线并推荐关键词');
+      showNotification('AI 已概括主线剧情');
     } catch {
       showNotification('剧情分析失败');
     } finally {
       setPlotAnalyzeLoading(false);
-    }
-  };
-
-  const handlePlotPredict = async () => {
-    if (!currentPreset) { showNotification('请选择预设'); return; }
-    const apiKey = localStorage.getItem('jai_api_key');
-    if (!apiKey) { showNotification('请先配置 API Key'); return; }
-
-    setPlotPredictLoading(true);
-    setPlotPredictions([]);
-    setPlotTwist(null);
-    setSelectedPredictionIdx(null);
-
-    try {
-      const res = await fetch('/api/plot-predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          charInfo: currentPreset.charInfo,
-          userCard: currentPreset.userCard,
-          chatHistory: buildChatHistoryForMemory(),
-          longTermMemory: currentPreset.longTermMemory,
-          plotDirection: currentPreset.plotDirection,
-          messageCount: messages.filter(m => m.id !== 'greeting-' + currentPresetId).length,
-          directionKeyword: plotDirectionKeyword || undefined,
-          personMode,
-          apiKey,
-          stylePrompt: buildStylePrompt(),
-          mainLinePrompt: buildMainLinePrompt()
-        })
-      });
-
-      if (!res.ok) throw new Error('预测生成失败');
-      const data = await res.json();
-
-      if (data.predictions && Array.isArray(data.predictions)) {
-        const preds = data.predictions.map((p: { en: string; cn: string } | string) =>
-          typeof p === 'string' ? { en: p, cn: '' } : p
-        );
-        setPlotPredictions(preds);
-      }
-      if (data.twist) {
-        setPlotTwist(data.twist);
-      }
-    } catch {
-      showNotification('预测生成失败');
-    } finally {
-      setPlotPredictLoading(false);
     }
   };
 
@@ -739,21 +598,9 @@ function ChatPageInner() {
     const plotData: PlotData = {
       currentMainLine,
       currentMainLineCn,
-      currentDirection,
-      currentDirectionCn,
-      plotStage,
-      plotStageCn,
-      progressDesc,
-      progressDescCn,
-      selectedEnding,
-      selectedRelation,
-      selectedScene,
-      selectedStageKeyword,
-      savedPlotDirections,
-      suggestedKeywords,
       lastMemoryCount,
     };
-    const updated = { ...preset, plotData, plotDirection: currentDirection };
+    const updated = { ...preset, plotData };
     updatePreset(updated);
     setPresets(prev => prev.map(p => p.id === currentPresetId ? updated : p));
   };
@@ -766,21 +613,7 @@ function ChatPageInner() {
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMainLine, currentMainLineCn, currentDirection, currentDirectionCn, plotStage, plotStageCn, progressDesc, progressDescCn,
-      selectedEnding, selectedRelation, selectedScene, selectedStageKeyword,
-      savedPlotDirections, suggestedKeywords, lastMemoryCount]);
-
-  const selectPlotDirection = (idx: number) => {
-    const pred = plotPredictions[idx];
-    if (!pred) return;
-    setSelectedPredictionIdx(idx);
-    setCurrentDirection(pred.en);
-    setCurrentDirectionCn(pred.cn);
-    setSavedPlotDirections(prev => {
-      if (prev.some(d => d.en === pred.en)) return prev;
-      return [...prev, { en: pred.en, cn: pred.cn, stage: plotStage, stageCn: plotStageCn }];
-    });
-  };
+  }, [currentMainLine, currentMainLineCn, lastMemoryCount]);
 
   const handleBackToPresets = () => {
     if (currentPresetId) {
@@ -821,55 +654,16 @@ function ChatPageInner() {
         </select>
       </div>
 
-      {/* Direction indicator - fixed above scroll area */}
-      {currentDirection && (
+      {/* Plot summary indicator - fixed above scroll area */}
+      {currentMainLine && (
         <div className="flex justify-end px-3 md:px-4 pt-1 pb-0.5" onClick={() => setShowInstructionPicker(false)}>
           <button
-            onClick={() => setShowDirectionCard(v => !v)}
+            onClick={() => setShowPlotPanel(true)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-jai-muted/90 border border-jai-secondary/60 text-jai-accent hover:bg-jai-muted transition-colors text-[11px] max-w-[95%] md:max-w-[80%]"
           >
             <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-            <span className="truncate">{currentDirection}</span>
+            <span className="truncate">{currentMainLineCn || currentMainLine}</span>
           </button>
-        </div>
-      )}
-      {/* Direction popup card */}
-      {showDirectionCard && currentDirection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setShowDirectionCard(false)}>
-          <div className="bg-jai-card rounded-2xl shadow-xl border border-jai-card-border mx-4 max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-4 pt-4 pb-3 border-b border-jai-card-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-jai-muted text-jai-accent px-2 py-0.5 rounded-full font-medium">当前走向</span>
-              </div>
-              <button onClick={() => setShowDirectionCard(false)} className="text-jai-text-secondary hover:text-jai-text p-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="px-4 py-4 space-y-3">
-              <div>
-                <p className="text-sm text-jai-text leading-relaxed">{currentDirection}</p>
-              </div>
-              {currentDirectionCn && (
-                <div className="pt-2 border-t border-jai-thinking/30">
-                  <span className="text-[10px] bg-jai-thinking/20 text-[#8b5cf6] px-1.5 py-0.5 rounded font-medium">中文</span>
-                  <p className="text-sm text-jai-text mt-1.5 leading-relaxed">{currentDirectionCn}</p>
-                </div>
-              )}
-            </div>
-            <div className="px-4 py-3 border-t border-jai-muted flex items-center gap-2">
-              <button
-                onClick={() => { navigator.clipboard.writeText(currentDirection); showNotification('已复制走向'); }}
-                className="text-[11px] text-jai-accent hover:text-jai-accent flex items-center gap-1"
-              >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
-                复制
-              </button>
-              <button
-                onClick={() => { setCurrentDirection(''); setCurrentDirectionCn(''); setShowDirectionCard(false); }}
-                className="text-[11px] text-jai-text-secondary hover:text-jai-text ml-auto"
-              >清除走向</button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -911,374 +705,32 @@ function ChatPageInner() {
             </div>
 
           <div className="p-3 space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 44px)' }}>
-            {/* Section 0: AI Analyze Button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handlePlotAnalyze}
-                disabled={plotAnalyzeLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary disabled:opacity-50 transition-colors"
-              >
-                <IconRefresh className={`w-3 h-3 ${plotAnalyzeLoading ? 'animate-spin' : ''}`} />
-                {plotAnalyzeLoading ? 'AI 分析中...' : 'AI 概括主线 + 推荐关键词'}
-              </button>
-              <span className="text-[10px] text-jai-text-secondary">AI 自动概括当前剧情主线和推荐关键词</span>
-            </div>
-
-            <div className="border-t border-jai-card-border" />
-
-            {/* Section 1: Main Line Summary (from AI analysis, direction switching is in the top bar) */}
+            {/* AI Summary */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide">剧情概括</span>
-              </div>
-              {currentMainLine ? (
-                <div className="p-2.5 rounded-lg border bg-jai-muted/50 border-jai-secondary">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-jai-accent">{currentMainLine}</span>
-                    {currentMainLineCn && <span className="text-[11px] text-jai-text-secondary">({currentMainLineCn})</span>}
-                  </div>
-                  {plotStage && (
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="text-[10px] text-jai-text-secondary">阶段:</span>
-                      <span className="text-[10px] bg-jai-muted text-jai-accent px-1.5 py-0.5 rounded">{plotStageCn || plotStage}</span>
-                    </div>
-                  )}
-                  {progressDesc && (
-                    <p className="text-[11px] text-jai-text-secondary">{progressDesc}</p>
-                  )}
-                  {progressDescCn && (
-                    <p className="text-[10px] text-jai-text-secondary mt-0.5">{progressDescCn}</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      value={currentMainLine}
-                      onChange={e => setCurrentMainLine(e.target.value)}
-                      placeholder="手动输入概括，或点上方 AI 按钮自动概括"
-                      className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-jai-card-border" />
-
-            {/* Section 2: Keyword Library */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide">关键词库</span>
                 <button
                   onClick={handlePlotAnalyze}
                   disabled={plotAnalyzeLoading}
-                  className="p-1 text-jai-secondary hover:text-jai-accent disabled:opacity-50"
-                  title="刷新推荐关键词"
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-lg bg-jai-secondary/70 text-jai-btn-text hover:bg-jai-secondary disabled:opacity-50 transition-colors"
                 >
                   <IconRefresh className={`w-3 h-3 ${plotAnalyzeLoading ? 'animate-spin' : ''}`} />
+                  {plotAnalyzeLoading ? '概括中...' : '重新概括'}
                 </button>
               </div>
-              {suggestedKeywords.ending.length === 0 && suggestedKeywords.relation.length === 0 ? (
-                <p className="text-[11px] text-jai-text-secondary">点击上方"AI 概括主线 + 推荐关键词"按钮生成推荐</p>
-              ) : (
-              <div className="space-y-2">
-                {/* Ending keywords */}
-                <div>
-                  <span className="text-[10px] text-jai-accent font-medium">结局走向</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {suggestedKeywords.ending.map(kw => (
-                      <button
-                        key={kw.en}
-                        onClick={() => toggleKeyword('ending', kw.en)}
-                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedEnding.includes(kw.en)
-                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
-                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
-                        }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
-                    ))}
+              {currentMainLine ? (
+                <div className="p-2.5 rounded-lg border bg-jai-muted/50 border-jai-secondary">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-jai-accent">{currentMainLine}</span>
                   </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <input
-                      type="text"
-                      value={customKeyword.ending}
-                      onChange={e => setCustomKeyword(prev => ({ ...prev, ending: e.target.value }))}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && customKeyword.ending.trim()) {
-                          setSelectedEnding(prev => prev.includes(customKeyword.ending.trim()) ? prev : [...prev, customKeyword.ending.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, ending: '' }));
-                        }
-                      }}
-                      placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
-                    />
-                    <button
-                      onClick={() => {
-                        if (customKeyword.ending.trim()) {
-                          setSelectedEnding(prev => prev.includes(customKeyword.ending.trim()) ? prev : [...prev, customKeyword.ending.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, ending: '' }));
-                        }
-                      }}
-                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
-                    >+</button>
-                  </div>
-                </div>
-
-                {/* Relation keywords */}
-                <div>
-                  <span className="text-[10px] text-jai-accent font-medium">关系动态</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {suggestedKeywords.relation.map(kw => (
-                      <button
-                        key={kw.en}
-                        onClick={() => toggleKeyword('relation', kw.en)}
-                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedRelation.includes(kw.en)
-                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
-                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
-                        }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <input
-                      type="text"
-                      value={customKeyword.relation}
-                      onChange={e => setCustomKeyword(prev => ({ ...prev, relation: e.target.value }))}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && customKeyword.relation.trim()) {
-                          setSelectedRelation(prev => prev.includes(customKeyword.relation.trim()) ? prev : [...prev, customKeyword.relation.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, relation: '' }));
-                        }
-                      }}
-                      placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
-                    />
-                    <button
-                      onClick={() => {
-                        if (customKeyword.relation.trim()) {
-                          setSelectedRelation(prev => prev.includes(customKeyword.relation.trim()) ? prev : [...prev, customKeyword.relation.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, relation: '' }));
-                        }
-                      }}
-                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
-                    >+</button>
-                  </div>
-                </div>
-
-                {/* Scene keywords */}
-                <div>
-                  <span className="text-[10px] text-jai-accent font-medium">场景</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {suggestedKeywords.scene.map(kw => (
-                      <button
-                        key={kw.en}
-                        onClick={() => toggleKeyword('scene', kw.en)}
-                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedScene.includes(kw.en)
-                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
-                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
-                        }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <input
-                      type="text"
-                      value={customKeyword.scene}
-                      onChange={e => setCustomKeyword(prev => ({ ...prev, scene: e.target.value }))}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && customKeyword.scene.trim()) {
-                          setSelectedScene(prev => prev.includes(customKeyword.scene.trim()) ? prev : [...prev, customKeyword.scene.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, scene: '' }));
-                        }
-                      }}
-                      placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
-                    />
-                    <button
-                      onClick={() => {
-                        if (customKeyword.scene.trim()) {
-                          setSelectedScene(prev => prev.includes(customKeyword.scene.trim()) ? prev : [...prev, customKeyword.scene.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, scene: '' }));
-                        }
-                      }}
-                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
-                    >+</button>
-                  </div>
-                </div>
-
-                {/* Stage keywords */}
-                <div>
-                  <span className="text-[10px] text-jai-accent font-medium">阶段</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {suggestedKeywords.stage.map(kw => (
-                      <button
-                        key={kw.en}
-                        onClick={() => toggleKeyword('stage', kw.en)}
-                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                          selectedStageKeyword.includes(kw.en)
-                            ? 'bg-jai-secondary border-jai-accent text-jai-accent'
-                            : 'bg-jai-muted/50 border-jai-card-border text-jai-text-secondary hover:bg-jai-muted'
-                        }`}
-                      ><span className="text-[8px] text-jai-secondary bg-jai-muted px-0.5 rounded mr-0.5">AI</span>{kw.en}<span className="text-[9px] text-jai-text-secondary ml-0.5">({kw.cn})</span></button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <input
-                      type="text"
-                      value={customKeyword.stage}
-                      onChange={e => setCustomKeyword(prev => ({ ...prev, stage: e.target.value }))}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && customKeyword.stage.trim()) {
-                          setSelectedStageKeyword(prev => prev.includes(customKeyword.stage.trim()) ? prev : [...prev, customKeyword.stage.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, stage: '' }));
-                        }
-                      }}
-                      placeholder="自定义..."
-                      className="flex-1 text-[10px] px-2 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
-                    />
-                    <button
-                      onClick={() => {
-                        if (customKeyword.stage.trim()) {
-                          setSelectedStageKeyword(prev => prev.includes(customKeyword.stage.trim()) ? prev : [...prev, customKeyword.stage.trim()]);
-                          setCustomKeyword(prev => ({ ...prev, stage: '' }));
-                        }
-                      }}
-                      className="text-[10px] px-1.5 py-0.5 bg-jai-muted text-jai-accent rounded hover:bg-jai-secondary"
-                    >+</button>
-                  </div>
-                </div>
-
-                {/* Selected keywords summary */}
-                {getAllKeywords().length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1 border-t border-jai-card-border">
-                    <span className="text-[10px] text-jai-text-secondary">已选:</span>
-                    {getAllKeywords().map((kw, i) => (
-                      <span key={i} className="text-[10px] bg-jai-muted text-jai-accent px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                        {kw}
-                        <button
-                          onClick={() => {
-                            setSelectedEnding(prev => prev.filter(k => k !== kw));
-                            setSelectedRelation(prev => prev.filter(k => k !== kw));
-                            setSelectedScene(prev => prev.filter(k => k !== kw));
-                            setSelectedStageKeyword(prev => prev.filter(k => k !== kw));
-                          }}
-                          className="text-jai-secondary hover:text-jai-accent ml-0.5"
-                        >×</button>
-                      </span>
-                    ))}
-                    <button
-                      onClick={() => { setSelectedEnding([]); setSelectedRelation([]); setSelectedScene([]); setSelectedStageKeyword([]); }}
-                      className="text-[10px] text-jai-text-secondary hover:text-jai-text"
-                    >清空</button>
-                  </div>
-                )}
-              </div>
-              )}
-            </div>
-
-            <div className="border-t border-jai-card-border" />
-
-            {/* Section 3: Plot Prediction (God's Eye View) */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide">剧情走向（上帝视角）</span>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={plotDirectionKeyword}
-                    onChange={e => setPlotDirectionKeyword(e.target.value)}
-                    placeholder="补充方向..."
-                    className="text-[10px] w-20 px-1.5 py-0.5 rounded border border-jai-card-border bg-jai-muted/30 focus:border-jai-accent focus:outline-none placeholder:text-jai-text-secondary"
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handlePlotPredict(); } }}
-                  />
-                  <button onClick={handlePlotPredict} disabled={plotPredictLoading} className="p-1 text-jai-secondary hover:text-jai-accent disabled:opacity-50">
-                    <IconRefresh className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-
-              {plotPredictLoading ? (
-                <p className="text-xs text-jai-text-secondary animate-pulse">生成中...</p>
-              ) : plotPredictions.length > 0 ? (
-                <div className="space-y-2">
-                  {plotPredictions.map((pred, i) => {
-                    const isSelected = currentDirection === pred.en;
-                    return (
-                      <div key={i} className={`rounded-lg border p-2 transition-colors ${isSelected ? 'border-jai-accent bg-jai-muted' : 'border-jai-card-border bg-jai-card hover:bg-jai-muted/30'}`}>
-                        <p className="text-xs text-jai-text">{pred.en}</p>
-                        {pred.cn && <p className="text-[11px] text-jai-text-secondary mt-0.5">{pred.cn}</p>}
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <button
-                            onClick={() => copyContent(pred.en)}
-                            className="text-[10px] text-jai-accent hover:text-jai-accent"
-                          >复制</button>
-                          <span className="text-[10px] text-jai-text-secondary">|</span>
-                          <button
-                            onClick={() => selectPlotDirection(i)}
-                            className={`text-[10px] font-medium ${isSelected ? 'text-jai-accent' : 'text-jai-accent hover:text-jai-accent'}`}
-                          >{isSelected ? '✓ 当前走向' : '选为走向'}</button>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Twist prediction */}
-                  {plotTwist && (
-                    <div className="rounded-lg border border-jai-thinking/50 bg-jai-thinking/10 p-2">
-                      <div className="flex items-center gap-1 mb-1">
-                        <span className="text-[9px] font-medium text-jai-thinking bg-jai-thinking/20 px-1 py-0.5 rounded">阶段性转折</span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-jai-text">{plotTwist}</p>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <button onClick={() => copyContent(plotTwist || '')} className="text-[10px] text-jai-thinking hover:text-jai-thinking/80">复制</button>
-                        <span className="text-[10px] text-jai-text-secondary">|</span>
-                        <button
-                          onClick={() => {
-                            if (plotTwist) {
-                              setCurrentDirection(plotTwist);
-                              setCurrentDirectionCn('翻译中...');
-                              setSavedPlotDirections(prev => {
-                                if (prev.some(d => d.en === plotTwist)) return prev;
-                                return [...prev, { en: plotTwist, cn: '' }];
-                              });
-                              showNotification('转折已设为当前走向');
-                              // Auto-translate twist to Chinese
-                              const apiKey = localStorage.getItem('jai_api_key') || '';
-                              fetch('/api/translate', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ text: plotTwist, apiKey }),
-                              }).then(r => r.json()).then(data => {
-                                const cn = data.translation || '翻译失败';
-                                setCurrentDirectionCn(cn);
-                                setSavedPlotDirections(prev =>
-                                  prev.map(d => d.en === plotTwist ? { ...d, cn } : d)
-                                );
-                              }).catch(() => {
-                                setCurrentDirectionCn('翻译失败');
-                                setSavedPlotDirections(prev =>
-                                  prev.map(d => d.en === plotTwist ? { ...d, cn: '翻译失败' } : d)
-                                );
-                              });
-                            }
-                          }}
-                          className="text-[10px] text-jai-thinking hover:text-jai-thinking/80 font-medium"
-                        >选为走向</button>
-                      </div>
-                    </div>
+                  {currentMainLineCn && (
+                    <p className="text-[11px] text-jai-text-secondary mt-1">{currentMainLineCn}</p>
                   )}
                 </div>
               ) : (
-                <p className="text-[11px] text-jai-text-secondary">点击刷新按钮生成剧情走向预测</p>
+                <p className="text-[11px] text-jai-text-secondary">点击"重新概括"按钮，AI 将自动分析当前剧情主线</p>
               )}
             </div>
-
           </div>
           </div>
         </div>

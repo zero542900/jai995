@@ -12,24 +12,6 @@ export interface StyleSettings {
 export interface PlotData {
   currentMainLine: string;
   currentMainLineCn: string;
-  currentDirection: string;
-  currentDirectionCn: string;
-  plotStage: string;
-  plotStageCn: string;
-  progressDesc: string;
-  progressDescCn: string;
-  selectedEnding: string[];
-  selectedRelation: string[];
-  selectedScene: string[];
-  selectedStageKeyword: string[];
-  savedPlotDirections: BilingualText[];
-  suggestedKeywords: {
-    ending: BilingualText[];
-    relation: BilingualText[];
-    scene: BilingualText[];
-    stage: BilingualText[];
-  };
-  styleSettings?: StyleSettings;
   lastMemoryCount?: number;
 }
 

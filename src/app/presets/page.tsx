@@ -99,10 +99,10 @@ export default function PresetsPage() {
                         <span className="text-foreground/60">User:</span>{' '}
                         {truncate(preset.userCard, 60)}
                       </p>
-                      {preset.plotDirection && (
+                      {(preset.plotData?.currentMainLineCn || preset.plotData?.currentMainLine) && (
                         <p>
                           <span className="text-foreground/60">剧情:</span>{' '}
-                          {truncate(preset.plotDirection, 40)}
+                          {truncate(preset.plotData.currentMainLineCn || preset.plotData.currentMainLine, 40)}
                         </p>
                       )}
                     </div>

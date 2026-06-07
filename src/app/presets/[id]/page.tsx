@@ -17,11 +17,9 @@ export default function PresetDetailPage() {
   const presetId = params.id as string;
 
   const [preset, setPreset] = useState<Preset | null>(null);
-  const [editPlot, setEditPlot] = useState('');
   const [editMemory, setEditMemory] = useState('');
   const [editGreeting, setEditGreeting] = useState('');
   const [editCharInfo, setEditCharInfo] = useState('');
-  const [isEditingPlot, setIsEditingPlot] = useState(false);
   const [isEditingMemory, setIsEditingMemory] = useState(false);
   const [isEditingGreeting, setIsEditingGreeting] = useState(false);
   const [isEditingCharInfo, setIsEditingCharInfo] = useState(false);
@@ -30,7 +28,6 @@ export default function PresetDetailPage() {
     const p = getPreset(presetId);
     if (p) {
       setPreset(p);
-      setEditPlot(p.plotDirection);
       setEditMemory(p.longTermMemory);
       setEditGreeting(p.greeting);
       setEditCharInfo(p.charInfo);
@@ -255,70 +252,15 @@ export default function PresetDetailPage() {
         <TabsContent value="plot">
           <Card className="border-jai-card-border">
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">剧情走向</CardTitle>
-                {!isEditingPlot && (
-                  <Button onClick={() => setIsEditingPlot(true)} variant="outline" size="sm">
-                    编辑
-                  </Button>
-                )}
-              </div>
+              <CardTitle className="text-sm">剧情概括</CardTitle>
             </CardHeader>
             <CardContent>
-              {isEditingPlot ? (
-                <div className="space-y-2">
-                  <Textarea
-                    value={editPlot}
-                    onChange={(e) => setEditPlot(e.target.value)}
-                    className="min-h-[120px] text-sm"
-                    placeholder="输入当前剧情走向..."
-                  />
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleSave('plotDirection', editPlot, setIsEditingPlot)} size="sm">保存</Button>
-                    <Button onClick={() => { setEditPlot(preset.plotDirection); setIsEditingPlot(false); }} variant="outline" size="sm">取消</Button>
-                  </div>
-                </div>
+              {preset.plotData?.currentMainLineCn ? (
+                <p className="text-sm text-jai-text leading-relaxed whitespace-pre-wrap">{preset.plotData.currentMainLineCn}</p>
+              ) : preset.plotData?.currentMainLine ? (
+                <p className="text-sm text-jai-text leading-relaxed whitespace-pre-wrap">{preset.plotData.currentMainLine}</p>
               ) : (
-                <div className="space-y-3">
-                  <FlipCard
-                    content={preset.plotDirection}
-                    title="剧情走向"
-                    emptyText="暂无剧情走向，点击编辑添加"
-                    cachedTranslation={preset.translations?.plotDirection}
-                    onTranslationReady={(t) => updateTranslation('plotDirection', t)}
-                    onContentChanged={() => clearTranslation('plotDirection')}
-                  />
-                  {preset.plotData && (
-                    <div className="space-y-2 text-xs text-jai-text-secondary">
-                      {preset.plotData.plotStage && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-jai-text-secondary/70">阶段:</span>
-                          <span>{preset.plotData.plotStage}</span>
-                          {preset.plotData.plotStageCn && <span className="text-jai-text-secondary/70">({preset.plotData.plotStageCn})</span>}
-                        </div>
-                      )}
-                      {preset.plotData.progressDesc && (
-                        <div>
-                          <span className="text-jai-text-secondary/70">进展:</span>
-                          <span className="ml-1">{preset.plotData.progressDesc}</span>
-                          {preset.plotData.progressDescCn && <span className="text-jai-text-secondary/70 ml-1">({preset.plotData.progressDescCn})</span>}
-                        </div>
-                      )}
-                      {preset.plotData.savedPlotDirections && preset.plotData.savedPlotDirections.length > 1 && (
-                        <div>
-                          <span className="text-jai-text-secondary/70">已保存走向:</span>
-                          <div className="flex flex-wrap gap-1.5 mt-1.5">
-                            {preset.plotData.savedPlotDirections.map((d, i) => (
-                              <span key={i} className={`inline-block px-2 py-1 rounded-lg text-[11px] leading-tight border ${d.en === preset.plotDirection ? 'bg-jai-secondary/20 border-jai-secondary text-jai-accent' : 'bg-jai-card border-jai-card-border text-jai-text-secondary'}`}>
-                                {d.en} {d.cn && <span className="text-jai-text-secondary/60">({d.cn})</span>}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <p className="text-sm text-jai-text-secondary">开始会话后，AI 将自动概括剧情</p>
               )}
             </CardContent>
           </Card>

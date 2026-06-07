@@ -200,15 +200,7 @@
   animation: slideUp 200ms ease-out;
 }
 
-/* Chat page: counteract layout padding for fullscreen experience */
-.chat-fullscreen {
-  margin: -1rem -0.75rem -5rem -0.75rem;
-}
-@media (min-width: 768px) {
-  .chat-fullscreen {
-    margin: -1.5rem -1rem -1.5rem -1rem;
-  }
-}
+/* Chat page uses fixed inset-0 for fullscreen, no margin hack needed */
 
 /* Hide scrollbar but keep scroll functionality */
 .no-scrollbar {

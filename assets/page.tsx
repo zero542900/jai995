@@ -996,7 +996,7 @@ function ChatPageInner() {
   }
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 left-0 md:left-16 lg:left-52 flex flex-col bg-jai-bg/50 z-30">
+    <div className="flex flex-col h-[100dvh] bg-jai-bg/50 chat-fullscreen">
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 bg-jai-card/80 backdrop-blur-sm border-b border-jai-card-border">
         <button onClick={handleBackToPresets} className="p-1.5 md:p-1 text-jai-secondary hover:text-jai-accent transition-colors">

@@ -162,6 +162,8 @@ function ChatPageInner() {
   // Main storyline summary (shown in plot panel, from AI analysis)
   const [currentMainLine, setCurrentMainLine] = useState('');
   const [currentMainLineCn, setCurrentMainLineCn] = useState('');
+  const [progressDesc, setProgressDesc] = useState('');
+  const [progressDescCn, setProgressDescCn] = useState('');
 
   // AI analysis state
   const [plotAnalyzeLoading, setPlotAnalyzeLoading] = useState(false);
@@ -254,6 +256,8 @@ function ChatPageInner() {
         const pd = preset.plotData;
         if (pd.currentMainLine) setCurrentMainLine(pd.currentMainLine);
         if (pd.currentMainLineCn) setCurrentMainLineCn(pd.currentMainLineCn);
+        if (pd.progressDesc) setProgressDesc(pd.progressDesc);
+        if (pd.progressDescCn) setProgressDescCn(pd.progressDescCn);
         if (pd.lastMemoryCount !== undefined) setLastMemoryCount(pd.lastMemoryCount);
 
       }
@@ -319,13 +323,9 @@ function ChatPageInner() {
     return history;
   }, [messages, currentPreset?.longTermMemory]);
 
-  const buildStylePrompt = useCallback(() => {
-    return '';
-  }, []);
-
   const buildMainLinePrompt = useCallback(() => {
     if (!currentMainLine.trim()) return '';
-    return `\n\n[主线指令 - 灵感和扩写必须向此方向靠拢]\n[主线概括: ${currentMainLine}]\n所有后续生成的灵感、扩写内容都应推动剧情向主线方向发展。`;
+    return `\n\n[主线指令 - 扩写必须向此方向靠拢]\n[主线概括: ${currentMainLine}]\n所有后续生成的扩写内容都应推动剧情向主线方向发展。`;
   }, [currentMainLine]);
 
   // ========== Message Actions ==========
@@ -447,7 +447,6 @@ function ChatPageInner() {
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
           personMode,
-          stylePrompt: buildStylePrompt(),
           mainLinePrompt: buildMainLinePrompt()
         })
       });
@@ -568,7 +567,6 @@ function ChatPageInner() {
           chatHistory: buildChatHistoryForMemory(),
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
-          stylePrompt: buildStylePrompt(),
           mainLinePrompt: buildMainLinePrompt()
         })
       });
@@ -580,6 +578,10 @@ function ChatPageInner() {
       if (data.mainLineName) {
         setCurrentMainLine(data.mainLineName);
         setCurrentMainLineCn(data.mainLineNameCn || '');
+      }
+      if (data.progressDesc) {
+        setProgressDesc(data.progressDesc);
+        setProgressDescCn(data.progressDescCn || '');
       }
 
       showNotification('AI 已概括主线剧情');
@@ -598,6 +600,8 @@ function ChatPageInner() {
     const plotData: PlotData = {
       currentMainLine,
       currentMainLineCn,
+      progressDesc,
+      progressDescCn,
       lastMemoryCount,
     };
     const updated = { ...preset, plotData };
@@ -613,7 +617,7 @@ function ChatPageInner() {
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMainLine, currentMainLineCn, lastMemoryCount]);
+  }, [currentMainLine, currentMainLineCn, progressDesc, progressDescCn, lastMemoryCount]);
 
   const handleBackToPresets = () => {
     if (currentPresetId) {
@@ -725,6 +729,12 @@ function ChatPageInner() {
                   </div>
                   {currentMainLineCn && (
                     <p className="text-[11px] text-jai-text-secondary mt-1">{currentMainLineCn}</p>
+                  )}
+                  {(progressDesc || progressDescCn) && (
+                    <div className="mt-2 pt-2 border-t border-jai-card-border">
+                      {progressDesc && <p className="text-[11px] text-jai-text-secondary">{progressDesc}</p>}
+                      {progressDescCn && <p className="text-[11px] text-jai-text-secondary mt-1">{progressDescCn}</p>}
+                    </div>
                   )}
                 </div>
               ) : (

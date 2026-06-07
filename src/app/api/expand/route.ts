@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { brief, charInfo, userCard, userPersonality, plotDirection, chatHistory, longTermMemory, personMode, apiKey, stylePrompt, mainLinePrompt } = body;
+    const { brief, charInfo, userCard, userPersonality, chatHistory, longTermMemory, personMode, apiKey, mainLinePrompt } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -27,12 +27,11 @@ CORE PRINCIPLE: The expanded content must be from the User's perspective — wha
 ${personInstruction}
 - 禁止 OOC（Out of Character）。扩写内容必须严格保持在角色设定内，不得跳出角色、打破第四面墙或以作者身份发言。
 - 如果原文是第三人称，保持第三人称；如果原文是第一人称，保持第一人称。始终以 {{user}} 的视角叙述，使内容更符合其口吻。
-${stylePrompt ? `\nSTYLE INSTRUCTION:\n${stylePrompt}` : ''}${mainLinePrompt ? `\nMAIN STORYLINE:\n${mainLinePrompt}` : ''}
+${mainLinePrompt ? `\nMAIN STORYLINE:\n${mainLinePrompt}` : ''}
 
 CONTEXT:
 - Character (Char): ${charInfo || '(not provided)'}
 - User Persona: ${userCard || userPersonality || '(not provided)'}
-${plotDirection ? `- Current Plot Direction: ${plotDirection}` : ''}
 ${longTermMemory ? `- Long-term Memory: ${longTermMemory}` : ''}
 
 CURRENT SCENE:

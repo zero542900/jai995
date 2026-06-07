@@ -12,6 +12,8 @@ export interface StyleSettings {
 export interface PlotData {
   currentMainLine: string;
   currentMainLineCn: string;
+  progressDesc?: string;
+  progressDescCn?: string;
   lastMemoryCount?: number;
 }
 

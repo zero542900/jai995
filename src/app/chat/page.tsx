@@ -145,6 +145,7 @@ function ChatPageInner() {
   const [expandBrief, setExpandBrief] = useState('');
   const [expandResult, setExpandResult] = useState<{ en: string; cn: string } | null>(null);
   const [expandFlipped, setExpandFlipped] = useState(false);
+  const [expandTranslating, setExpandTranslating] = useState(false);
 
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
@@ -487,6 +488,31 @@ function ChatPageInner() {
     } finally {
       setExpandLoading(false);
     }
+  };
+
+  const handleExpandFlip = async () => {
+    if (expandTranslating || expandLoading) return;
+    if (!expandFlipped && expandResult && !expandResult.cn && expandResult.en) {
+      // Need to translate before flipping to Chinese
+      setExpandTranslating(true);
+      try {
+        const apiKey = localStorage.getItem('jai_api_key');
+        if (!apiKey) return;
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: expandResult.en, apiKey, thinkingEnabled }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.translation) {
+            setExpandResult(prev => prev ? { ...prev, cn: data.translation } : prev);
+          }
+        }
+      } catch { /* ignore */ }
+      setExpandTranslating(false);
+    }
+    setExpandFlipped(prev => !prev);
   };
 
   const handleMemory = async () => {
@@ -845,8 +871,8 @@ function ChatPageInner() {
                     <button onClick={() => copyContent(expandResult.en)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
                       <IconCopy className="w-3 h-3" /> 复制英文
                     </button>
-                    <button onClick={() => setExpandFlipped(!expandFlipped)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
-                      <IconFlip className="w-3 h-3" /> {expandFlipped ? '英文' : '中文'}
+                    <button onClick={handleExpandFlip} disabled={expandTranslating} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50">
+                      <IconFlip className="w-3 h-3" /> {expandTranslating ? '翻译中...' : expandFlipped ? '英文' : '中文'}
                     </button>
                     <button onClick={handleExpand} disabled={expandLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50">
                       <IconRefresh className="w-3 h-3" /> 重新生成
@@ -1329,8 +1355,8 @@ function MessageBubble({ message, onFlip, onEdit, onSaveEdit, onCancelEdit, onDe
         {/* Action Buttons - always visible */}
         {!message.editing && (
           <div className={`flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 pb-1.5 md:pb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <button onClick={onFlip} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
-              <IconFlip className="w-3 h-3" />
+            <button onClick={onFlip} disabled={message.translating} title="翻转" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors disabled:opacity-50 ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
+              <IconFlip className="w-3 h-3" /> {message.translating ? '...' : ''}
             </button>
             <button onClick={onCopy} title="复制" className={`p-1.5 md:p-1 rounded hover:bg-black/10 transition-colors ${isUser ? 'text-jai-bubble-user-text/70 hover:text-jai-bubble-user-text' : 'text-jai-text-secondary hover:text-jai-text'}`}>
               <IconCopy className="w-3 h-3" />

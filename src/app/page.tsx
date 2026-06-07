@@ -58,6 +58,7 @@ export default function GeneratePage() {
   const [englishCard, setEnglishCard] = useState('');
   const [chineseCard, setChineseCard] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [showFront, setShowFront] = useState(true);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [presetName, setPresetName] = useState('');
@@ -181,6 +182,29 @@ export default function GeneratePage() {
   const handleCopy = useCallback(() => {
     copyToClipboard(englishCard);
   }, [englishCard]);
+
+  const handleFlip = useCallback(async () => {
+    if (isGenerating || isTranslating) return;
+    // If flipping to Chinese side and no translation yet, translate first
+    if (showFront && !chineseCard && englishCard) {
+      setIsTranslating(true);
+      try {
+        const apiKey = localStorage.getItem('jai_api_key');
+        if (!apiKey) return;
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: englishCard, apiKey, thinkingEnabled }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.translation) setChineseCard(data.translation);
+        }
+      } catch { /* ignore */ }
+      setIsTranslating(false);
+    }
+    setShowFront(prev => !prev);
+  }, [showFront, chineseCard, englishCard, isGenerating, isTranslating, thinkingEnabled]);
 
   const handleSavePreset = useCallback(() => {
     if (!presetName.trim()) {
@@ -312,8 +336,8 @@ export default function GeneratePage() {
                 <Button onClick={handleCopy} variant="outline" size="sm" title="复制英文全文" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconCopy className="w-4 h-4" /> 复制
                 </Button>
-                <Button onClick={() => setShowFront(prev => !prev)} variant="outline" size="sm" title="翻转卡片" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
-                  <IconFlip className="w-4 h-4" /> {showFront ? '中文' : 'EN'}
+                <Button onClick={handleFlip} disabled={isTranslating} variant="outline" size="sm" title="翻转卡片" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
+                  <IconFlip className="w-4 h-4" /> {isTranslating ? '翻译中...' : showFront ? '中文' : 'EN'}
                 </Button>
                 <Button onClick={handleRefresh} variant="outline" size="sm" title="重新生成整卡" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconRefresh className="w-4 h-4" /> 刷新

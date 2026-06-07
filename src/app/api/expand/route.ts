@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       ? 'Write from the THIRD PERSON perspective (he / she / they / User\'s name).'
       : 'Write from the FIRST PERSON perspective (I / me / my).';
 
-    const systemPrompt = `You are a creative roleplay writing assistant for JanitorAI. Expand a brief outline into a vivid, complete passage from the USER's perspective.
+    const systemPrompt = `You are a creative roleplay writing assistant for JanitorAI. Polish and moderately expand a brief outline into a vivid, complete passage from the USER's perspective.
 
 CORE PRINCIPLE: The expanded content must be from the User's perspective — what the User says or does.
 
@@ -42,13 +42,9 @@ BRIEF OUTLINE TO EXPAND:
 ${brief}
 
 INSTRUCTIONS:
-Expand this brief outline into a complete, vivid passage (2-5 paragraphs) from the User's perspective. Include:
-- Dialogue (what the User says)
-- Actions and body language
-- Internal thoughts or feelings
-- Environmental details
+Expand this brief outline into a polished, complete passage from the User's perspective. Only develop action details, environmental atmosphere, subtle emotional reactions, and plausible sensory information. Do NOT invent major events or new dialogue.
 
-Write naturally and cinematically, like a Western RP novel. No anime/manga style.
+Write directly, realistically, with visual clarity. Avoid adjective stacking and hollow metaphors.
 
 ${WRITING_STYLE_INSTRUCTION}
 

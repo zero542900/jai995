@@ -138,9 +138,6 @@ function ChatPageInner() {
 
 
 
-  // Mobile toolbar state
-  const [showMobileToolbar, setShowMobileToolbar] = useState(false);
-
   // Feature states
 
 
@@ -1403,119 +1400,27 @@ function ChatPageInner() {
           </div>
         )}
 
-        {/* Controls Row - Desktop: always visible; Mobile: in expandable toolbar */}
-        <div className="hidden md:flex items-center gap-2 flex-wrap">
+        {/* Controls Row - unified for mobile & desktop */}
+        <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
           <select
             value={personMode}
             onChange={e => setPersonMode(e.target.value as 'first' | 'third')}
-            className="text-xs px-2 py-1 rounded-lg border border-jai-card-border bg-jai-bg/50 text-jai-accent focus:outline-none focus:border-jai-accent"
+            className="text-xs px-2 py-1.5 rounded-lg border border-jai-card-border bg-jai-bg/50 text-jai-accent focus:outline-none focus:border-jai-accent"
           >
-            <option value="first">第一人称 (I/Me)</option>
-            <option value="third">第三人称 (He/She)</option>
+            <option value="first">第一人称</option>
+            <option value="third">第三人称</option>
           </select>
-
-          <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer ml-auto">
-            <span>思考</span>
-            <button
-              onClick={() => setThinkingEnabled(!thinkingEnabled)}
-              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
-            >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
-            </button>
-          </label>
-        </div>
-
-        {/* Mobile: Expandable Toolbar */}
-        {showMobileToolbar && (
-          <div className="md:hidden space-y-2 pb-1">
-            {/* Row 1: Person mode + Style buttons */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <select
-                value={personMode}
-                onChange={e => setPersonMode(e.target.value as 'first' | 'third')}
-                className="text-xs px-2 py-1.5 rounded-lg border border-jai-card-border bg-jai-bg/50 text-jai-accent focus:outline-none focus:border-jai-accent"
-              >
-                <option value="first">第一人称</option>
-                <option value="third">第三人称</option>
-              </select>
-
-              <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer ml-auto">
-                <span>思考</span>
-                <button
-                  onClick={() => setThinkingEnabled(!thinkingEnabled)}
-                  className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
-                >
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
-                </button>
-              </label>
-            </div>
-
-            {/* Feature buttons - mobile */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button onClick={() => setShowExpandModal(true)} disabled={expandLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
-                <IconPen className="w-3 h-3" /> 扩写
-              </button>
-              <button onClick={handleMemory} disabled={memoryLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
-                <IconBrain className="w-3 h-3" /> 记忆
-              </button>
-              <button
-                onClick={() => setShowPlotPanel(!showPlotPanel)}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-muted transition-colors"
-              >
-                <IconPlot className="w-3 h-3" /> 剧情
-              </button>
-              <div className="relative" ref={instructionPickerRef}>
-                <button
-                  onClick={() => {
-                    setInstructionList(getInstructionList());
-                    setShowInstructionPicker(!showInstructionPicker);
-                  }}
-                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border transition-colors"
-                >
-                  <IconBook className="w-3 h-3" /> 指令
-                </button>
-                {showInstructionPicker && instructionList.length > 0 && (
-                  <div className="absolute bottom-full right-0 mb-1 w-56 max-h-48 overflow-y-auto bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
-                    {instructionList.map(inst => (
-                      <button
-                        key={inst.id}
-                        onClick={() => {
-                          setUserInput(prev => (prev ? prev + '\n' : '') + `【${inst.content}】`);
-                          setShowInstructionPicker(false);
-                          showNotification(`已插入「${inst.name}」`);
-                        }}
-                        className="w-full text-left px-3 py-2 hover:bg-jai-muted transition-colors"
-                      >
-                        <p className="text-xs font-medium text-jai-text truncate">{inst.name}</p>
-                        <p className="text-[10px] text-jai-text-secondary truncate">{inst.summary}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {showInstructionPicker && instructionList.length === 0 && (
-                  <div className="absolute bottom-full right-0 mb-1 w-44 bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
-                    <p className="text-xs text-jai-text-secondary">暂无指令</p>
-                    <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Desktop Feature Buttons */}
-        <div className="hidden md:flex items-center gap-2 relative">
-          <button onClick={() => setShowExpandModal(true)} disabled={expandLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
-            <IconPen className="w-3.5 h-3.5" /> 扩写
+          <button onClick={() => setShowExpandModal(true)} disabled={expandLoading} className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
+            <IconPen className="w-3 h-3" /> 扩写
           </button>
-          <button onClick={handleMemory} disabled={memoryLoading} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
-            <IconBrain className="w-3.5 h-3.5" /> 记忆
+          <button onClick={handleMemory} disabled={memoryLoading} className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border disabled:opacity-50 transition-colors">
+            <IconBrain className="w-3 h-3" /> 记忆
           </button>
           <button
             onClick={() => setShowPlotPanel(!showPlotPanel)}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-muted transition-colors"
+            className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border transition-colors"
           >
-            <IconPlot className="w-3.5 h-3.5" /> 剧情
+            <IconPlot className="w-3 h-3" /> 剧情
           </button>
           <div className="relative" ref={instructionPickerRef}>
             <button
@@ -1523,12 +1428,12 @@ function ChatPageInner() {
                 setInstructionList(getInstructionList());
                 setShowInstructionPicker(!showInstructionPicker);
               }}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border transition-colors"
             >
-              <IconBook className="w-3.5 h-3.5" /> 指令
+              <IconBook className="w-3 h-3" /> 指令
             </button>
             {showInstructionPicker && instructionList.length > 0 && (
-              <div className="absolute bottom-full left-0 mb-1 w-56 max-h-60 overflow-y-auto bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
+              <div className="absolute bottom-full right-0 mb-1 w-56 max-h-48 overflow-y-auto bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-1">
                 {instructionList.map(inst => (
                   <button
                     key={inst.id}
@@ -1546,23 +1451,25 @@ function ChatPageInner() {
               </div>
             )}
             {showInstructionPicker && instructionList.length === 0 && (
-              <div className="absolute bottom-full left-0 mb-1 w-56 bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
+              <div className="absolute bottom-full right-0 mb-1 w-44 bg-jai-card rounded-xl border border-jai-card-border shadow-lg z-50 py-3 px-3">
                 <p className="text-xs text-jai-text-secondary">暂无指令</p>
                 <p className="text-[10px] text-jai-text-secondary mt-0.5">前往指令库添加</p>
               </div>
             )}
           </div>
+          <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer ml-auto">
+            <span>思考</span>
+            <button
+              onClick={() => setThinkingEnabled(!thinkingEnabled)}
+              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
+            >
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+            </button>
+          </label>
         </div>
 
         {/* Input Row */}
         <div className="flex items-center gap-1.5">
-          {/* Mobile toolbar toggle */}
-          <button
-            onClick={() => setShowMobileToolbar(!showMobileToolbar)}
-            className={`md:hidden shrink-0 p-2 rounded-lg border transition-colors ${showMobileToolbar ? 'bg-jai-card-border border-jai-secondary text-jai-accent' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-          </button>
           <input
             type="text"
             value={jaiInput}

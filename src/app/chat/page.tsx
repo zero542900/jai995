@@ -815,6 +815,9 @@ function ChatPageInner() {
                     <button onClick={() => setExpandFlipped(!expandFlipped)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
                       <IconFlip className="w-3 h-3" /> {expandFlipped ? '英文' : '中文'}
                     </button>
+                    <button onClick={() => { setExpandResult(null); setThinkingContent(''); }} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
+                      <IconEdit className="w-3 h-3" /> 重新编辑
+                    </button>
                   </div>
                 </div>
               )}

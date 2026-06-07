@@ -47,6 +47,9 @@ Format:
 
 Keep it concise but comprehensive — this will be used as context for the Bot in future conversations.
 
+FORMAT INTEGRITY CHECK (STRICT):
+Before outputting, verify that ALL instances of {{char}} and {{user}} are complete and intact. If you find any broken placeholder like {{}} or {{char} or {user}}, you MUST fix it to the correct full form. Never output a broken placeholder.
+
 ${mainLinePrompt || ''}
 
 ${WRITING_STYLE_INSTRUCTION}

@@ -1503,6 +1503,11 @@ function ChatPageInner() {
           </div>
         )}
 
+        {/* DEBUG */}
+        <div className="text-[10px] text-red-500 bg-yellow-100 p-1 rounded font-mono break-all">
+          DEBUG: tone=[{styleTone}] emotion=[{styleEmotion}] pace=[{stylePace}] optional=[{styleOptional.join(',')}] expanded=[{expandedStyleCategory}]
+        </div>
+
         {/* Mobile: Always-visible style summary tags */}
         <div className="md:hidden flex items-center gap-1 flex-wrap">
           <span className="text-[10px] text-jai-text-secondary">{personMode === 'first' ? '一' : '三'}</span>

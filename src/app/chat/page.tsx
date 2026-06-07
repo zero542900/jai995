@@ -1503,6 +1503,15 @@ function ChatPageInner() {
           </div>
         )}
 
+        {/* Mobile: Always-visible style summary tags */}
+        <div className="md:hidden flex items-center gap-1 flex-wrap">
+          <span className="text-[10px] text-jai-text-secondary">{personMode === 'first' ? '一' : '三'}</span>
+          {styleTone && <span className="text-[10px] px-1.5 py-0.5 rounded bg-jai-accent/15 text-jai-accent font-medium">{shortenLabel(styleTone)}</span>}
+          {styleEmotion && <span className="text-[10px] px-1.5 py-0.5 rounded bg-jai-accent/15 text-jai-accent font-medium">{shortenLabel(styleEmotion)}</span>}
+          {stylePace && <span className="text-[10px] px-1.5 py-0.5 rounded bg-jai-accent/15 text-jai-accent font-medium">{shortenLabel(stylePace)}</span>}
+          {styleOptional.length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-jai-accent/15 text-jai-accent font-medium">+{styleOptional.length}</span>}
+        </div>
+
         {/* Controls Row - Desktop: always visible; Mobile: in expandable toolbar */}
         <div className="hidden md:flex items-center gap-2 flex-wrap">
           <select

@@ -1,46 +1,32 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, WRITING_STYLE_INSTRUCTION } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt } = body;
+    const { chatHistory, apiKey } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
 
     const systemPrompt = `You are a plot analysis assistant for JanitorAI roleplay. Analyze the current story state and return a concise summary.
 
-CONTEXT:
-- Character (Char): ${charInfo || '(not provided)'}
-- User Persona: ${userCard || '(not provided)'}
-${longTermMemory ? `- Long-term Memory: ${longTermMemory}` : ''}
-
 CURRENT SCENE:
 ${chatHistory || '(This is the beginning of the story)'}
 
-${mainLinePrompt ? `\nMAIN LINE INSTRUCTION:\n${mainLinePrompt}\n` : ''}
-
 INSTRUCTIONS:
-Analyze the current story and return a JSON object with the following fields:
+Analyze the current scene and return a JSON object with the following fields:
 
 1. "mainLineName" (string): A concise name for the current main storyline, 2-6 words. Like a TV episode title. Examples: "Power Reversal", "Silent Confession", "The Unraveling", "Crossfire Trust"
 
-2. "mainLineNameCn" (string): Chinese translation of the mainLineName. Natural, evocative, not literal. Examples: "权力逆转", "沉默的告白", "瓦解", "交叉火力下的信任"
+2."mainLineNameCn" (string): Chinese title that captures the essence of the English mainLineName. Prioritize conciseness and narrative tone over word-for-word accuracy.
 
-3. "progressDesc" (string): 1-2 sentences describing where the story currently stands. English. Cinematic, concise.
+3. "progressDesc" (string): 1-2 sentences describing where the story currently stands. English. Cinematic, concise. No embellishment, no emotional manipulation.
 
-4. "progressDescCn" (string): Chinese translation of progressDesc.
+4. "progressDescCn" (string): Chinese translation of progressDesc. Follow global writing style constraints if applicable.
 
-${WRITING_STYLE_INSTRUCTION}
-
-OUTPUT FORMAT: Return ONLY a JSON object, no markdown, no code blocks, no extra text:
-{
-  "mainLineName": "...",
-  "mainLineNameCn": "...",
-  "progressDesc": "...",
-  "progressDescCn": "..."
-}`;
+OUTPUT:
+Return ONLY the JSON object. No markdown code blocks, no explanations.`;
 
     const response = await callDeepSeek({
       apiKey,

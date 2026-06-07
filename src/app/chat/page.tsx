@@ -562,12 +562,8 @@ function ChatPageInner() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          charInfo: currentPreset.charInfo,
-          userCard: currentPreset.userCard,
           chatHistory: buildChatHistoryForMemory(),
-          longTermMemory: currentPreset.longTermMemory,
           apiKey,
-          mainLinePrompt: buildMainLinePrompt()
         })
       });
 

@@ -150,6 +150,7 @@ function ChatPageInner() {
   const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [memoryResult, setMemoryResult] = useState<{ en: string; cn: string } | null>(null);
   const [memoryFlipped, setMemoryFlipped] = useState(false);
+  const [thinkingContent, setThinkingContent] = useState('');
 
   // Plot Assistant states
   const [showPlotPanel, setShowPlotPanel] = useState(false);
@@ -401,11 +402,12 @@ function ChatPageInner() {
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: msg.content, apiKey })
+          body: JSON.stringify({ text: msg.content, apiKey, thinkingEnabled })
         });
         if (!res.ok) throw new Error('Translation failed');
         const data = await res.json();
         const translation = data.translation || '';
+        if (data.reasoning) setThinkingContent(data.reasoning);
 
         setMessages(prev => prev.map(m =>
           m.id === id ? { ...m, chineseTranslation: translation, translated: true, translating: false, flipped: !m.flipped } : m
@@ -434,6 +436,7 @@ function ChatPageInner() {
     setExpandLoading(true);
     setExpandResult(null);
     setExpandFlipped(false);
+    setThinkingContent('');
 
     try {
       const res = await fetch('/api/expand', {
@@ -447,7 +450,8 @@ function ChatPageInner() {
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
           personMode,
-          mainLinePrompt: buildMainLinePrompt()
+          mainLinePrompt: buildMainLinePrompt(),
+          thinkingEnabled
         })
       });
 
@@ -456,6 +460,7 @@ function ChatPageInner() {
       if (!reader) throw new Error('No reader');
 
       let fullText = '';
+      let reasoning = '';
       const decoder = new TextDecoder();
       while (true) {
         const { done, value } = await reader.read();
@@ -468,11 +473,13 @@ function ChatPageInner() {
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) fullText += parsed.content;
+              if (parsed.reasoning) reasoning += parsed.reasoning;
             } catch { /* skip */ }
           }
         }
       }
 
+      if (reasoning) setThinkingContent(reasoning);
       const parts = fullText.split('===CHINESE===');
       setExpandResult({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim() });
     } catch {
@@ -490,6 +497,7 @@ function ChatPageInner() {
     setMemoryLoading(true);
     setMemoryResult(null);
     setMemoryFlipped(false);
+    setThinkingContent('');
     setShowMemoryModal(true);
 
     try {
@@ -503,6 +511,7 @@ function ChatPageInner() {
           longTermMemory: currentPreset.longTermMemory,
           apiKey,
           mainLinePrompt: buildMainLinePrompt(),
+          thinkingEnabled
         })
       });
 
@@ -511,6 +520,7 @@ function ChatPageInner() {
       if (!reader) throw new Error('No reader');
 
       let fullText = '';
+      let reasoning = '';
       const decoder = new TextDecoder();
       while (true) {
         const { done, value } = await reader.read();
@@ -523,11 +533,13 @@ function ChatPageInner() {
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) fullText += parsed.content;
+              if (parsed.reasoning) reasoning += parsed.reasoning;
             } catch { /* skip */ }
           }
         }
       }
 
+      if (reasoning) setThinkingContent(reasoning);
       const parts = fullText.split('===CHINESE===');
       const enText = (parts[0] || '').trim();
       const cnText = (parts[1] || '').trim();
@@ -556,6 +568,7 @@ function ChatPageInner() {
     if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
     setPlotAnalyzeLoading(true);
+    setThinkingContent('');
 
     try {
       const res = await fetch('/api/plot-analyze', {
@@ -564,11 +577,14 @@ function ChatPageInner() {
         body: JSON.stringify({
           chatHistory: buildChatHistoryForMemory(),
           apiKey,
+          thinkingEnabled
         })
       });
 
       if (!res.ok) throw new Error('分析失败');
       const data = await res.json();
+
+      if (data.reasoning) setThinkingContent(data.reasoning);
 
       // Fill in AI-generated main line info
       if (data.mainLineName) {
@@ -736,6 +752,14 @@ function ChatPageInner() {
               ) : (
                 <p className="text-[11px] text-jai-text-secondary">点击"重新概括"按钮，AI 将自动分析当前剧情主线</p>
               )}
+              {thinkingContent && (
+                <div className="mt-2 border border-jai-thinking/50 bg-jai-thinking/10 rounded-lg p-2">
+                  <div className="text-[11px] font-medium text-jai-thinking mb-1 flex items-center gap-1">
+                    <IconBrain className="w-3 h-3" /> 思考过程
+                  </div>
+                  <div className="text-[10px] text-jai-thinking/80 leading-relaxed whitespace-pre-wrap max-h-[120px] overflow-y-auto">{thinkingContent}</div>
+                </div>
+              )}
             </div>
           </div>
           </div>
@@ -773,6 +797,14 @@ function ChatPageInner() {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {thinkingContent && (
+                    <div className="border border-jai-thinking/50 bg-jai-thinking/10 rounded-lg p-2.5">
+                      <div className="text-xs font-medium text-jai-thinking mb-1.5 flex items-center gap-1">
+                        <IconBrain className="w-3 h-3" /> 思考过程
+                      </div>
+                      <div className="text-xs text-jai-thinking/80 leading-relaxed whitespace-pre-wrap max-h-[150px] overflow-y-auto">{thinkingContent}</div>
+                    </div>
+                  )}
                   <div className="p-3 rounded-xl bg-jai-bg/50 border border-jai-card-border">
                     <p className="text-sm whitespace-pre-wrap">{expandFlipped ? expandResult.cn : expandResult.en}</p>
                   </div>
@@ -807,6 +839,14 @@ function ChatPageInner() {
                 <p className="text-sm text-jai-text-secondary animate-pulse">生成中...</p>
               ) : memoryResult ? (
                 <div className="space-y-3">
+                  {thinkingContent && (
+                    <div className="border border-jai-thinking/50 bg-jai-thinking/10 rounded-lg p-2.5">
+                      <div className="text-xs font-medium text-jai-thinking mb-1.5 flex items-center gap-1">
+                        <IconBrain className="w-3 h-3" /> 思考过程
+                      </div>
+                      <div className="text-xs text-jai-thinking/80 leading-relaxed whitespace-pre-wrap max-h-[150px] overflow-y-auto">{thinkingContent}</div>
+                    </div>
+                  )}
                   <div className="p-3 rounded-xl bg-jai-thinking/10 border border-jai-thinking/30">
                     <p className="text-sm whitespace-pre-wrap">{memoryFlipped ? memoryResult.cn : memoryResult.en}</p>
                   </div>

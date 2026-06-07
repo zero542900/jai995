@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt } = body;
+    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt, thinkingEnabled } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -56,13 +56,16 @@ ${WRITING_STYLE_INSTRUCTION}
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
+    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const temperature = thinkingEnabled ? undefined : 0.5;
+
     const response = await callDeepSeek({
       apiKey,
-      model: 'deepseek-chat',
+      model,
       messages: [{ role: 'user', content: 'Generate a long-term memory summary from {{char}}\'s perspective about {{user}} based on the current conversation context.' }],
       systemPrompt,
       stream: true,
-      temperature: 0.5,
+      temperature,
       maxTokens: 1500,
     });
 
@@ -86,8 +89,9 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
               try {
                 const json = JSON.parse(trimmed.slice(6));
                 const content = json.choices?.[0]?.delta?.content;
-                if (content) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                const reasoning = json.choices?.[0]?.delta?.reasoning_content;
+                if (content || reasoning) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: content || '', reasoning: reasoning || '' })}\n\n`));
                 }
               } catch { /* skip */ }
             }

@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey } from '@/lib/deepseek';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { chatHistory, apiKey } = body;
+    const { chatHistory, apiKey, thinkingEnabled } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -28,18 +28,22 @@ Analyze the current scene and return a JSON object with the following fields:
 OUTPUT:
 Return ONLY the JSON object. No markdown code blocks, no explanations.`;
 
+    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const temperature = thinkingEnabled ? undefined : 0.6;
+
     const response = await callDeepSeek({
       apiKey,
-      model: 'deepseek-chat',
+      model,
       messages: [{ role: 'user', content: 'Analyze the current story and return the structured data.' }],
       systemPrompt,
       stream: false,
-      temperature: 0.6,
+      temperature,
       maxTokens: 500,
     });
 
     const apiResponse = await response.json();
     const aiContent = apiResponse?.choices?.[0]?.message?.content || '';
+    const reasoning = apiResponse?.choices?.[0]?.message?.reasoning_content || '';
 
     if (!aiContent) {
       return new Response(JSON.stringify({ error: 'AI output empty, please retry' }), {
@@ -71,7 +75,7 @@ Return ONLY the JSON object. No markdown code blocks, no explanations.`;
           headers: { 'Content-Type': 'application/json' },
         });
       }
-      return new Response(JSON.stringify(parsed), {
+      return new Response(JSON.stringify({ ...parsed, reasoning }), {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch {

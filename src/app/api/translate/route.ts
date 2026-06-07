@@ -15,7 +15,7 @@ ${WRITING_STYLE_INSTRUCTION}
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { text, apiKey } = body;
+    const { text, apiKey, thinkingEnabled } = body;
 
     if (!apiKey) {
       return Response.json({ error: '请先在设置页面配置 DeepSeek API Key' }, { status: 400 });
@@ -31,18 +31,24 @@ export async function POST(request: NextRequest) {
     ];
 
     // Non-streaming request for translation (short content, simpler and more reliable)
+    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const temperature = thinkingEnabled ? undefined : 0.5;
+    const requestBody: Record<string, unknown> = {
+      model,
+      messages,
+      stream: false,
+    };
+    if (temperature !== undefined) {
+      requestBody.temperature = temperature;
+    }
+
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages,
-        temperature: 0.5,
-        stream: false,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -57,8 +63,9 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     const translation = data.choices?.[0]?.message?.content || '';
+    const reasoning = data.choices?.[0]?.message?.reasoning_content || '';
 
-    return Response.json({ translation });
+    return Response.json({ translation, reasoning });
   } catch (error) {
     const message = error instanceof Error ? error.message : '翻译失败';
     return Response.json({ error: message }, { status: 500 });

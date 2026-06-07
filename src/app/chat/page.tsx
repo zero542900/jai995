@@ -436,6 +436,13 @@ function ChatPageInner() {
     },
   } as const;
 
+  // Shorten label for style buttons (e.g. "欧美剧集" → "欧美", "强强对抗" → "强强", "加一点浪漫" → "浪漫")
+  const shortenLabel = (label: string) => {
+    if (label.startsWith('加一点')) return label.slice(3);
+    if (label.length <= 4) return label;
+    return label.slice(0, 2);
+  };
+
   const buildStylePrompt = useCallback(() => {
     const parts: string[] = [];
     if (styleTone === '混合模式') {
@@ -1520,7 +1527,7 @@ function ChatPageInner() {
                   onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
                   className={`text-xs px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
                 >
-                  <span>{currentVal || labels[cat]}</span>
+                  <span>{currentVal ? shortenLabel(currentVal) : labels[cat]}</span>
                   <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 {isExpanded && (
@@ -1537,10 +1544,13 @@ function ChatPageInner() {
                           }
                           setExpandedStyleCategory(null);
                         }}
-                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${currentVal === key ? 'bg-jai-accent/15 text-jai-accent font-medium' : 'text-jai-text hover:bg-jai-muted'}`}
+                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-start gap-1.5 ${currentVal === key ? 'bg-jai-accent/15 text-jai-accent font-medium' : 'text-jai-text hover:bg-jai-muted'}`}
                       >
-                        <span className="font-medium">{key}</span>
-                        <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
+                        <span className="shrink-0 mt-0.5">{currentVal === key ? '✓ ' : '  '}</span>
+                        <div>
+                          <span className="font-medium">{key}</span>
+                          <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
+                        </div>
                       </button>
                     ))}
                     {currentVal && (
@@ -1622,7 +1632,7 @@ function ChatPageInner() {
                     onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
                     className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all flex items-center gap-0.5 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
                   >
-                    <span>{currentVal || labels[cat]}</span>
+                    <span>{currentVal ? shortenLabel(currentVal) : labels[cat]}</span>
                     <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                   </button>
                 );
@@ -1725,7 +1735,7 @@ function ChatPageInner() {
                       }}
                       className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-jai-accent/15 border border-jai-accent' : 'hover:bg-jai-bg/50 border border-transparent'}`}
                     >
-                      <span className={`text-sm ${currentVal === key ? 'text-jai-accent font-medium' : 'text-jai-text'}`}>{key}</span>
+                      <span className={`text-sm ${currentVal === key ? 'text-jai-accent font-medium' : 'text-jai-text'}`}>{currentVal === key ? '✓ ' : ''}{key}</span>
                       <span className="block text-xs text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
                     </button>
                   );

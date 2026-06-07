@@ -1503,10 +1503,6 @@ function ChatPageInner() {
           </div>
         )}
 
-        {/* DEBUG */}
-        <div className="text-[10px] text-red-500 bg-yellow-100 p-1 rounded font-mono break-all">
-          DEBUG: tone=[{styleTone}] emotion=[{styleEmotion}] pace=[{stylePace}] optional=[{styleOptional.join(',')}] expanded=[{expandedStyleCategory}]
-        </div>
 
         {/* Mobile: Always-visible style summary tags */}
         <div className="md:hidden flex items-center gap-1 flex-wrap">
@@ -1534,47 +1530,26 @@ function ChatPageInner() {
             const currentVal = cat === 'tone' ? styleTone : cat === 'emotion' ? styleEmotion : stylePace;
             const setter = cat === 'tone' ? setStyleTone : cat === 'emotion' ? setStyleEmotion : setStylePace;
             const options = STYLE_OPTIONS[cat];
-            const isExpanded = expandedStyleCategory === cat;
             return (
-              <div key={cat} className="relative">
-                <button
-                  onClick={() => { alert('btn: cat=' + cat + ' expanded=' + expandedStyleCategory); setExpandedStyleCategory(isExpanded ? null : cat); }}
-                  className={`text-xs px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent hover:border-jai-accent'}`}
+              <div key={cat} className="flex items-center gap-1">
+                <select
+                  value={currentVal}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (cat === 'tone' && val === '混合模式') {
+                      setter(val);
+                      setShowMixModal(true);
+                    } else {
+                      setter(val);
+                    }
+                  }}
+                  className="text-xs px-2 py-1 rounded-lg border border-jai-card-border bg-jai-bg/50 text-jai-text focus:outline-none focus:border-jai-accent appearance-none cursor-pointer"
                 >
-                  <span>{currentVal ? shortenLabel(currentVal) : labels[cat]}</span>
-                  <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                </button>
-                {isExpanded && (
-                  <div className="absolute bottom-full left-0 mb-1 bg-jai-card border border-jai-card-border rounded-lg shadow-lg py-1 min-w-[220px] z-50 max-h-60 overflow-y-auto">
-                    {Object.entries(options).map(([key, desc]) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          alert('opt: cat=' + cat + ' key=' + key + ' setter=' + typeof setter); if (cat === 'tone' if (cat === 'tone' && key === '混合模式') {if (cat === 'tone' && key === '混合模式') { key === '混合模式') {
-                            setter(key);
-                            setShowMixModal(true);
-                          } else {
-                            setter(key);
-                          }
-                          setExpandedStyleCategory(null);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-start gap-1.5 ${currentVal === key ? 'bg-jai-accent/15 text-jai-accent font-medium' : 'text-jai-text hover:bg-jai-muted'}`}
-                      >
-                        <span className="shrink-0 mt-0.5">{currentVal === key ? '✓ ' : '  '}</span>
-                        <div>
-                          <span className="font-medium">{key}</span>
-                          <span className="block text-[10px] text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
-                        </div>
-                      </button>
-                    ))}
-                    {currentVal && (
-                      <button
-                        onClick={() => { setter(''); setExpandedStyleCategory(null); }}
-                        className="w-full text-left px-3 py-1 text-xs text-red-400 hover:bg-red-50 border-t border-jai-muted"
-                      >清除选择</button>
-                    )}
-                  </div>
-                )}
+                  <option value="">{labels[cat]}</option>
+                  {Object.entries(options).map(([key, desc]) => (
+                    <option key={key} value={key}>{key} · {desc}</option>
+                  ))}
+                </select>
               </div>
             );
           })}
@@ -1639,21 +1614,30 @@ function ChatPageInner() {
               {(['tone', 'emotion', 'pace'] as const).map(cat => {
                 const labels: Record<string, string> = { tone: '调性', emotion: '情感', pace: '节奏' };
                 const currentVal = cat === 'tone' ? styleTone : cat === 'emotion' ? styleEmotion : stylePace;
-                const isExpanded = expandedStyleCategory === cat;
+                const setter = cat === 'tone' ? setStyleTone : cat === 'emotion' ? setStyleEmotion : setStylePace;
+                const options = STYLE_OPTIONS[cat];
                 return (
-                  <button
+                  <select
                     key={cat}
-                    onClick={() => setExpandedStyleCategory(isExpanded ? null : cat)}
-                    className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all flex items-center gap-0.5 font-medium ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
+                    value={currentVal}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (cat === 'tone' && val === '混合模式') {
+                        setter(val);
+                        setShowMixModal(true);
+                      } else {
+                        setter(val);
+                      }
+                    }}
+                    className={`text-xs px-2 py-1.5 rounded-lg border transition-all font-medium appearance-none cursor-pointer ${currentVal ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
                   >
-                    <span>{currentVal ? shortenLabel(currentVal) : labels[cat]}</span>
-                    <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </button>
+                    <option value="">{labels[cat]}</option>
+                    {Object.entries(options).map(([key, desc]) => (
+                      <option key={key} value={key}>{key}</option>
+                    ))}
+                  </select>
                 );
               })}
-              <button
-                onClick={() => setShowOptionalMenu(!showOptionalMenu)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all font-medium ${styleOptional.length > 0 ? 'bg-jai-accent text-white border-jai-accent shadow-sm' : 'border-jai-card-border bg-jai-bg/50 text-jai-accent'}`}
               >
                 {styleOptional.length > 0 ? `风格×${styleOptional.length}` : '可选'}
               </button>
@@ -1722,50 +1706,6 @@ function ChatPageInner() {
         )}
 
         {/* Mobile: Style bottom sheet */}
-        {expandedStyleCategory && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end bg-black/30" onClick={() => setExpandedStyleCategory(null)}>
-            <div className="bg-jai-card rounded-t-2xl w-full max-h-[60vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 bg-jai-card px-4 py-3 border-b border-jai-card-border flex items-center justify-between">
-                <span className="text-sm font-medium text-jai-text">
-                  {expandedStyleCategory === 'tone' ? '剧集调性' : expandedStyleCategory === 'emotion' ? '情感浓度' : '叙事节奏'}
-                </span>
-                <button onClick={() => setExpandedStyleCategory(null)} className="p-1 text-jai-text-secondary hover:text-jai-text">✕</button>
-              </div>
-              <div className="p-3 space-y-1">
-                {Object.entries(STYLE_OPTIONS[expandedStyleCategory as 'tone' | 'emotion' | 'pace']).map(([key, desc]) => {
-                  const currentVal = expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace;
-                  const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        if (expandedStyleCategory === 'tone' && key === '混合模式') {
-                          setter(key);
-                          setShowMixModal(true);
-                        } else {
-                          setter(key);
-                        }
-                        setExpandedStyleCategory(null);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${currentVal === key ? 'bg-jai-accent/15 border border-jai-accent' : 'hover:bg-jai-bg/50 border border-transparent'}`}
-                    >
-                      <span className={`text-sm ${currentVal === key ? 'text-jai-accent font-medium' : 'text-jai-text'}`}>{currentVal === key ? '✓ ' : ''}{key}</span>
-                      <span className="block text-xs text-jai-text-secondary mt-0.5 line-clamp-2">{desc}</span>
-                    </button>
-                  );
-                })}
-                {(expandedStyleCategory === 'tone' ? styleTone : expandedStyleCategory === 'emotion' ? styleEmotion : stylePace) && (
-                  <button
-                    onClick={() => {
-                      const setter = expandedStyleCategory === 'tone' ? setStyleTone : expandedStyleCategory === 'emotion' ? setStyleEmotion : setStylePace;
-                      setter('');
-                      setExpandedStyleCategory(null);
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-50 rounded-xl"
-                  >清除选择</button>
-                )}
-              </div>
-            </div>
           </div>
         )}
 

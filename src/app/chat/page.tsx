@@ -480,7 +480,7 @@ function ChatPageInner() {
       }
 
       if (reasoning) setThinkingContent(reasoning);
-      const parts = fullText.split('===CHINESE===');
+      const parts = fullText.split(/===\s*CHINESE\s*===/);
       setExpandResult({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim() });
     } catch {
       showNotification('扩写失败');
@@ -540,7 +540,7 @@ function ChatPageInner() {
       }
 
       if (reasoning) setThinkingContent(reasoning);
-      const parts = fullText.split('===CHINESE===');
+      const parts = fullText.split(/===\s*CHINESE\s*===/);
       const enText = (parts[0] || '').trim();
       const cnText = (parts[1] || '').trim();
       setMemoryResult({ en: enText, cn: cnText });
@@ -806,7 +806,36 @@ function ChatPageInner() {
                     </div>
                   )}
                   <div className="p-3 rounded-xl bg-jai-bg/50 border border-jai-card-border">
-                    <p className="text-sm whitespace-pre-wrap">{expandFlipped ? expandResult.cn : expandResult.en}</p>
+                    <p className="text-sm whitespace-pre-wrap">{expandFlipped && !expandResult.cn ? (
+                      <div className="text-center py-4 space-y-2">
+                        <p className="text-sm text-jai-text-secondary">中文翻译未生成</p>
+                        <button
+                          onClick={async () => {
+                            const apiKey = localStorage.getItem('jai_api_key');
+                            if (!apiKey) { showNotification('请先配置 API Key'); return; }
+                            try {
+                              const res = await fetch('/api/translate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: expandResult.en, apiKey, thinkingEnabled })
+                              });
+                              if (!res.ok) throw new Error();
+                              const data = await res.json();
+                              if (data.translation) {
+                                setExpandResult(prev => prev ? { ...prev, cn: data.translation } : null);
+                              }
+                            } catch {
+                              showNotification('翻译失败');
+                            }
+                          }}
+                          className="px-3 py-1.5 text-xs rounded-lg bg-jai-secondary/60 text-jai-btn-text hover:bg-jai-secondary/80 transition-colors"
+                        >
+                          重新翻译
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{expandFlipped ? expandResult.cn : expandResult.en}</p>
+                    )}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => copyContent(expandResult.en)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
@@ -851,7 +880,36 @@ function ChatPageInner() {
                     </div>
                   )}
                   <div className="p-3 rounded-xl bg-jai-thinking/10 border border-jai-thinking/30">
-                    <p className="text-sm whitespace-pre-wrap">{memoryFlipped ? memoryResult.cn : memoryResult.en}</p>
+                    <p className="text-sm whitespace-pre-wrap">{memoryFlipped && !memoryResult.cn ? (
+                      <div className="text-center py-4 space-y-2">
+                        <p className="text-sm text-jai-text-secondary">中文翻译未生成</p>
+                        <button
+                          onClick={async () => {
+                            const apiKey = localStorage.getItem('jai_api_key');
+                            if (!apiKey) { showNotification('请先配置 API Key'); return; }
+                            try {
+                              const res = await fetch('/api/translate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: memoryResult.en, apiKey, thinkingEnabled })
+                              });
+                              if (!res.ok) throw new Error();
+                              const data = await res.json();
+                              if (data.translation) {
+                                setMemoryResult(prev => prev ? { ...prev, cn: data.translation } : null);
+                              }
+                            } catch {
+                              showNotification('翻译失败');
+                            }
+                          }}
+                          className="px-3 py-1.5 text-xs rounded-lg bg-jai-thinking/10 text-jai-thinking hover:bg-jai-thinking/20 transition-colors"
+                        >
+                          重新翻译
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{memoryFlipped ? memoryResult.cn : memoryResult.en}</p>
+                    )}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <button onClick={() => copyContent(memoryResult.en)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-thinking/10 text-jai-thinking hover:bg-jai-thinking/20">

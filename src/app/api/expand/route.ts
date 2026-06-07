@@ -59,7 +59,7 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
       systemPrompt,
       stream: true,
       temperature,
-      maxTokens: 2000,
+      maxTokens: 3000,
     });
 
     const stream = response.body!;

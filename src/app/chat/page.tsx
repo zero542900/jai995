@@ -481,8 +481,7 @@ function ChatPageInner() {
       }
 
       if (reasoning) setThinkingContent(reasoning);
-      const parts = fullText.split(/===\s*CHINESE\s*===/);
-      setExpandResult({ en: (parts[0] || '').trim(), cn: (parts[1] || '').trim() });
+      setExpandResult({ en: fullText.trim(), cn: '' });
     } catch {
       showNotification('扩写失败');
     } finally {

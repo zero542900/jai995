@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,7 +49,7 @@ ${WRITING_STYLE_INSTRUCTION}
 
 ${MARKDOWN_FORMAT_INSTRUCTION}
 
-${CHINESE_OUTPUT_INSTRUCTION}`;
+Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
     const temperature = thinkingEnabled ? undefined : 0.7;

@@ -28,12 +28,12 @@ export async function POST(request: NextRequest) {
     }
 
     const contextPrompt = context
-      ? `\n\n以下是对话上下文，仅供理解语境使用，不要翻译上下文本身：\n${context}\n`
+      ? `\n\n【对话上下文】（仅供理解语境，绝对不要翻译以下上下文内容）\n${context}\n`
       : '';
 
     const messages = [
       { role: 'system', content: TRANSLATION_SYSTEM_PROMPT },
-      { role: 'user', content: `请将以下英文翻译为中文：${contextPrompt}\n${text}` },
+      { role: 'user', content: `请将下方【待翻译文本】翻译为中文。${contextPrompt}\n【待翻译文本】\n${text}` },
     ];
 
     // Non-streaming request for translation (short content, simpler and more reliable)

@@ -58,6 +58,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   thinking?: string;
+  chineseTranslation?: string;
   timestamp: number;
 }
 

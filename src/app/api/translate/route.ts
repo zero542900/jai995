@@ -17,7 +17,7 @@ ${MARKDOWN_FORMAT_INSTRUCTION}`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { text, apiKey, thinkingEnabled } = body;
+    const { text, apiKey, thinkingEnabled, context } = body;
 
     if (!apiKey) {
       return Response.json({ error: '请先在设置页面配置 DeepSeek API Key' }, { status: 400 });
@@ -27,9 +27,13 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '请提供需要翻译的英文文本' }, { status: 400 });
     }
 
+    const contextPrompt = context
+      ? `\n\n以下是对话上下文，仅供理解语境使用，不要翻译上下文本身：\n${context}\n`
+      : '';
+
     const messages = [
       { role: 'system', content: TRANSLATION_SYSTEM_PROMPT },
-      { role: 'user', content: `请将以下英文翻译为中文：\n\n${text}` },
+      { role: 'user', content: `请将以下英文翻译为中文：${contextPrompt}\n${text}` },
     ];
 
     // Non-streaming request for translation (short content, simpler and more reliable)

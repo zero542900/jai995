@@ -233,11 +233,23 @@ function ChatPageInner() {
     
     if (sessions[currentPresetId] && sessions[currentPresetId].messages.length > 0) {
       const saved = sessions[currentPresetId].messages;
+      // Restore messages with runtime defaults, preserve chineseTranslation from storage
+      const restored = saved.map((m: { id?: string; role?: string; content?: string; chineseTranslation?: string; timestamp?: number }) => ({
+        id: m.id || '',
+        role: (m.role === 'bot' ? 'bot' : m.role) as 'user' | 'bot',
+        content: m.content || '',
+        chineseTranslation: m.chineseTranslation,
+        translated: !!m.chineseTranslation,
+        translating: false,
+        flipped: false,
+        editing: false,
+        timestamp: m.timestamp || 0,
+      }));
       // Always ensure greeting is the first message
-      if (greetingMsg && saved[0]?.id !== greetingMsg.id) {
-        setMessages([greetingMsg, ...saved]);
+      if (greetingMsg && restored[0]?.id !== greetingMsg.id) {
+        setMessages([greetingMsg, ...restored]);
       } else {
-        setMessages(saved);
+        setMessages(restored);
       }
     } else if (greetingMsg) {
       setMessages([greetingMsg]);
@@ -400,10 +412,18 @@ function ChatPageInner() {
         const apiKey = localStorage.getItem('jai_api_key');
         if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
+        // Build context: surrounding messages for better translation accuracy
+        const msgIndex = messages.findIndex(m => m.id === id);
+        const contextStart = Math.max(0, msgIndex - 2);
+        const contextEnd = Math.min(messages.length, msgIndex + 3); // +3 to include the message itself and 2 after
+        const contextMessages = messages.slice(contextStart, contextEnd)
+          .map(m => `${m.role === 'user' ? '{{user}}' : '{{char}}'}: ${m.content}`)
+          .join('\n');
+
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: msg.content, apiKey, thinkingEnabled })
+          body: JSON.stringify({ text: msg.content, apiKey, thinkingEnabled, context: contextMessages })
         });
         if (!res.ok) throw new Error('Translation failed');
         const data = await res.json();

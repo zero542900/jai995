@@ -41,7 +41,7 @@ BRIEF OUTLINE TO EXPAND:
 ${brief}
 
 INSTRUCTIONS:
-Expand this brief outline into a polished, complete passage from the User's perspective. Only develop action details, environmental atmosphere, subtle emotional reactions, and plausible sensory information. Do NOT invent major events or new dialogue.
+Expand this brief outline into a polished, complete passage from the User's perspective. Only develop action details, environmental atmosphere, subtle emotional reactions, and plausible sensory information. Do NOT invent major events or new dialogue. 扩写时需严格遵循用户提供的梗概方向，不得随意发展与梗概无关的剧情。
 
 Write directly, realistically, with visual clarity. Avoid adjective stacking and hollow metaphors.
 
@@ -52,7 +52,7 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.85;
+    const temperature = thinkingEnabled ? undefined : 0.7;
 
     const response = await callDeepSeek({
       apiKey,

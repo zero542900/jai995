@@ -59,7 +59,7 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.5;
+    const temperature = thinkingEnabled ? undefined : 0.15;
 
     const response = await callDeepSeek({
       apiKey,

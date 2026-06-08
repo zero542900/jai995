@@ -29,7 +29,7 @@ OUTPUT:
 Return ONLY the JSON object. No markdown code blocks, no explanations.`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.6;
+    const temperature = thinkingEnabled ? undefined : 0.3;
 
     const response = await callDeepSeek({
       apiKey,

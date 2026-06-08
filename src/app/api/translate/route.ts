@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Non-streaming request for translation (short content, simpler and more reliable)
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.5;
+    const temperature = thinkingEnabled ? undefined : 0.15;
     const requestBody: Record<string, unknown> = {
       model,
       messages,

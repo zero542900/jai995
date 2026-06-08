@@ -76,7 +76,7 @@ ${WRITING_STYLE_INSTRUCTION}
     ];
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.9;
+    const temperature = thinkingEnabled ? 0.5 : 0.3;
 
     const response = await callDeepSeek({ apiKey, messages, model, temperature });
     return streamResponse(createSSEStream(response));

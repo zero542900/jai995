@@ -49,8 +49,7 @@ ${WRITING_STYLE_INSTRUCTION}
 **Face**: 
 **Hair**: 
 **Body**: 
-**Clothing Style**: 
-**Distinctive Features**: 
+**Body**: 
 
 # Personality & Psychological Profile
 **Core Traits**: 
@@ -62,10 +61,6 @@ ${WRITING_STYLE_INSTRUCTION}
 # Background & History (Short Bio)
 **Brief Bio**: 
 **Key Past Event**: 
-
-# Interaction & Dialogue Rules
-**Speech Pattern**: 
-**Dialogue Style**:
 
 [额外指令]
 - 你只需要输出模板的填充结果，不要输出任何额外的解释或说明文字。

@@ -59,7 +59,6 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.15;
 
     const response = await callDeepSeek({
       apiKey,
@@ -67,7 +66,6 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
       messages: [{ role: 'user', content: 'Generate a long-term memory summary from {{char}}\'s perspective about {{user}} based on the current conversation context.' }],
       systemPrompt,
       stream: true,
-      temperature,
       maxTokens: 1500,
     });
 

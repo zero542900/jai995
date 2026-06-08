@@ -29,7 +29,6 @@ OUTPUT:
 Return ONLY the JSON object. No markdown code blocks, no explanations.`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.3;
 
     const response = await callDeepSeek({
       apiKey,
@@ -37,7 +36,6 @@ Return ONLY the JSON object. No markdown code blocks, no explanations.`;
       messages: [{ role: 'user', content: 'Analyze the current story and return the structured data.' }],
       systemPrompt,
       stream: false,
-      temperature,
       maxTokens: 500,
     });
 

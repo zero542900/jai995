@@ -52,7 +52,6 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
 
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.7;
 
     const response = await callDeepSeek({
       apiKey,
@@ -60,7 +59,6 @@ Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
       messages: [{ role: 'user', content: `Expand this brief outline into a complete passage from the User's perspective:\n\n${brief}` }],
       systemPrompt,
       stream: true,
-      temperature,
       maxTokens: 3000,
     });
 

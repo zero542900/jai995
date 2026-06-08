@@ -34,15 +34,6 @@ export async function POST(request: NextRequest) {
 
     // Non-streaming request for translation (short content, simpler and more reliable)
     const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
-    const temperature = thinkingEnabled ? undefined : 0.15;
-    const requestBody: Record<string, unknown> = {
-      model,
-      messages,
-      stream: false,
-    };
-    if (temperature !== undefined) {
-      requestBody.temperature = temperature;
-    }
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
@@ -50,7 +41,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ model, messages, stream: false }),
     });
 
     if (!response.ok) {

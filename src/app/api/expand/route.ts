@@ -44,6 +44,7 @@ INSTRUCTIONS:
 Expand this brief outline into a polished, complete passage from the User's perspective.
 Do NOT invent major events or new dialogue.
 Follow the user's outline strictly.
+Keep the output within 1000 tokens.
 
 ${WRITING_STYLE_INSTRUCTION}
 
@@ -59,7 +60,7 @@ Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
       messages: [{ role: 'user', content: `Expand this brief outline into a complete passage from the User's perspective:\n\n${brief}` }],
       systemPrompt,
       stream: true,
-      maxTokens: 3000,
+      maxTokens: 1000,
     });
 
     const stream = response.body!;

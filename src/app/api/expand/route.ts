@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +46,8 @@ Expand this brief outline into a polished, complete passage from the User's pers
 Write directly, realistically, with visual clarity. Avoid adjective stacking and hollow metaphors.
 
 ${WRITING_STYLE_INSTRUCTION}
+
+${MARKDOWN_FORMAT_INSTRUCTION}
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 

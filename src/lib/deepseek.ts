@@ -179,8 +179,10 @@ export const WRITING_STYLE_INSTRUCTION = `
 - 禁止使用"不x，不y，不z，就"格式。
 - 禁止使用"这就够了"、"很…，但很…"等总结性短判断。
 - 禁止使用任何以"不是"开头的否定句式。
-- 如果你发现某段输出中出现了上述禁用句式，不得以删除内容作为处理方式。你必须用一段新的、符合以上约束的完整描写来替换它。
+- 如果你发现某段输出中出现了上述禁用句式，不得以删除内容作为处理方式。你必须用一段新的、符合以上约束的完整描写来替换它。`;
 
+// Markdown format rules - for narrative outputs only (expand/memory/translate/chat), NOT for structured templates (generate)
+export const MARKDOWN_FORMAT_INSTRUCTION = `
 [Markdown 格式规则]
 - 加粗（**text**）：仅用于角色台词的语气强调，或叙事段落中需要突出的关键动作、物件。不得用于普通叙述句的整句加粗。
 - 斜体（*text*）：仅用于角色内心独白、未说出口的心理活动，或旁白中的气氛渲染。不得用于台词本身。
@@ -194,7 +196,9 @@ export const WRITING_STYLE_INSTRUCTION = `
 export const CHINESE_OUTPUT_INSTRUCTION = `
 Output format: First output the English content, then on a new line write exactly "===CHINESE===" (this exact marker), then output the Chinese translation below.
 
-${WRITING_STYLE_INSTRUCTION}`;
+${WRITING_STYLE_INSTRUCTION}
+
+${MARKDOWN_FORMAT_INSTRUCTION}`;
 
 export function validateApiKey(apiKey: string | undefined): Response | null {
   if (!apiKey) {

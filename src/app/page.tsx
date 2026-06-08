@@ -134,15 +134,7 @@ export default function GeneratePage() {
             if (json.error) throw new Error(json.error);
             if (json.content) {
               fullText += json.content;
-              // Split on separator
-              const sepIdx = fullText.indexOf('===CHINESE===');
-              if (sepIdx !== -1) {
-                setEnglishCard(fullText.slice(0, sepIdx).trim());
-                setChineseCard(fullText.slice(sepIdx + '===CHINESE==='.length).trim());
-              } else {
-                setEnglishCard(fullText);
-                setChineseCard('');
-              }
+              setEnglishCard(fullText);
             }
             if (json.reasoning) {
               setThinkingContent(prev => prev + json.reasoning);
@@ -151,13 +143,6 @@ export default function GeneratePage() {
             if (e instanceof Error && !e.message.includes('JSON')) throw e;
           }
         }
-      }
-
-      // Final split
-      const sepIdx = fullText.indexOf('===CHINESE===');
-      if (sepIdx !== -1) {
-        setEnglishCard(fullText.slice(0, sepIdx).trim());
-        setChineseCard(fullText.slice(sepIdx + '===CHINESE==='.length).trim());
       }
 
       setShowSaveDialog(true);

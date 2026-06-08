@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { WRITING_STYLE_INSTRUCTION } from '@/lib/deepseek';
+import { WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
 
 const TRANSLATION_SYSTEM_PROMPT = `你是一位精通中英双语、深谙同人圈文化的资深译者，尤其擅长 AO3 网站上的同人文。你的翻译不仅是语言转换，更是文化与情感的传递。
 
@@ -10,7 +10,9 @@ const TRANSLATION_SYSTEM_PROMPT = `你是一位精通中英双语、深谙同人
 
 ${WRITING_STYLE_INSTRUCTION}
 
-仅输出翻译结果，不要添加任何解释或注释。`;
+仅输出翻译结果，不要添加任何解释或注释。
+
+${MARKDOWN_FORMAT_INSTRUCTION}`;
 
 export async function POST(request: NextRequest) {
   try {

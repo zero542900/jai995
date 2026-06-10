@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { WRITING_STYLE_INSTRUCTION, callDeepSeek, createSSEStream, handleAPIError, validateApiKey, streamResponse } from '@/lib/deepseek';
+import { WRITING_STYLE_INSTRUCTION, callDeepSeek, createSSEStream, handleAPIError, validateApiKey, streamResponse, resolveModelParams } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userPersonality, greeting, apiKey, thinkingEnabled } = body;
+    const { charInfo, userPersonality, greeting, apiKey, thinkingEnabled, modelChoice } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -75,9 +75,9 @@ ${WRITING_STYLE_INSTRUCTION}
       { role: 'user', content: userMessage },
     ];
 
-    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const { model, thinking } = resolveModelParams(modelChoice, thinkingEnabled);
 
-    const response = await callDeepSeek({ apiKey, messages, model });
+    const response = await callDeepSeek({ apiKey, messages, model, thinking });
     return streamResponse(createSSEStream(response));
   } catch (error) {
     return handleAPIError(error);

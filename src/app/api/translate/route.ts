@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
+import { WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, resolveModelParams } from '@/lib/deepseek';
 
 const TRANSLATION_SYSTEM_PROMPT = `你是一位精通中英双语、深谙同人圈文化的资深译者，尤其擅长 AO3 网站上的同人文。你的翻译不仅是语言转换，更是文化与情感的传递。
 
@@ -17,7 +17,7 @@ ${MARKDOWN_FORMAT_INSTRUCTION}`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { text, apiKey, thinkingEnabled, context } = body;
+    const { text, apiKey, thinkingEnabled, modelChoice, context } = body;
 
     if (!apiKey) {
       return Response.json({ error: '请先在设置页面配置 DeepSeek API Key' }, { status: 400 });
@@ -36,8 +36,10 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: `请将下方【待翻译文本】翻译为中文。${contextPrompt}\n【待翻译文本】\n${text}` },
     ];
 
-    // Non-streaming request for translation (short content, simpler and more reliable)
-    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    // Use resolveModelParams for model selection
+    const { model, thinking: thinkingParam } = resolveModelParams(thinkingEnabled, modelChoice);
+    const requestBody: Record<string, unknown> = { model, messages, stream: false };
+    if (thinkingParam) requestBody.thinking = thinkingParam;
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, stream: false }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

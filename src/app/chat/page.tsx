@@ -134,7 +134,7 @@ function ChatPageInner() {
   const [jaiInput, setJaiInput] = useState('');
   const [personMode, setPersonMode] = useState<'first' | 'third'>('third');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
-
+  const [modelChoice, setModelChoice] = useState<'flash' | 'pro'>('flash');
 
 
   // Feature states
@@ -265,6 +265,7 @@ function ChatPageInner() {
     if (preset) {
       setPersonMode(preset.personMode || 'third');
       setThinkingEnabled(preset.thinkingEnabled || false);
+      setModelChoice((localStorage.getItem('jai_model_choice') as 'flash' | 'pro') || 'flash');
       // Restore plotData from preset
       if (preset.plotData) {
         const pd = preset.plotData;
@@ -423,7 +424,7 @@ function ChatPageInner() {
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: msg.content, apiKey, thinkingEnabled, context: contextMessages })
+          body: JSON.stringify({ text: msg.content, apiKey, thinkingEnabled, modelChoice, context: contextMessages })
         });
         if (!res.ok) throw new Error('Translation failed');
         const data = await res.json();
@@ -472,7 +473,8 @@ function ChatPageInner() {
           apiKey,
           personMode,
           mainLinePrompt: buildMainLinePrompt(),
-          thinkingEnabled
+          thinkingEnabled,
+          modelChoice
         })
       });
 
@@ -520,7 +522,7 @@ function ChatPageInner() {
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: expandResult.en, apiKey, thinkingEnabled }),
+          body: JSON.stringify({ text: expandResult.en, apiKey, thinkingEnabled, modelChoice }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -866,7 +868,7 @@ function ChatPageInner() {
                               const res = await fetch('/api/translate', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ text: expandResult.en, apiKey, thinkingEnabled })
+                                body: JSON.stringify({ text: expandResult.en, apiKey, thinkingEnabled, modelChoice })
                               });
                               if (!res.ok) throw new Error();
                               const data = await res.json();
@@ -943,7 +945,7 @@ function ChatPageInner() {
                               const res = await fetch('/api/translate', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ text: memoryResult.en, apiKey, thinkingEnabled })
+                                body: JSON.stringify({ text: memoryResult.en, apiKey, thinkingEnabled, modelChoice })
                               });
                               if (!res.ok) throw new Error();
                               const data = await res.json();
@@ -1068,15 +1070,25 @@ function ChatPageInner() {
               </div>
             )}
           </div>
-          <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer ml-auto">
-            <span>思考</span>
-            <button
-              onClick={() => setThinkingEnabled(!thinkingEnabled)}
-              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
+          <div className="flex items-center gap-2 ml-auto">
+            <select
+              value={modelChoice}
+              onChange={(e) => { setModelChoice(e.target.value as 'flash' | 'pro'); localStorage.setItem('jai_model_choice', e.target.value); }}
+              className="text-[10px] bg-jai-muted border border-jai-card-border rounded-md px-1.5 py-0.5 text-jai-text-secondary focus:outline-none"
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
-            </button>
-          </label>
+              <option value="flash">Flash</option>
+              <option value="pro">Pro</option>
+            </select>
+            <label className="flex items-center gap-1.5 text-xs text-jai-text-secondary cursor-pointer">
+              <span>思考</span>
+              <button
+                onClick={() => setThinkingEnabled(!thinkingEnabled)}
+                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${thinkingEnabled ? 'bg-jai-thinking' : 'bg-jai-muted'}`}
+              >
+                <span className={`inline-block h-3 w-3 transform rounded-full bg-jai-card transition-transform ${thinkingEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+              </button>
+            </label>
+          </div>
         </div>
 
         {/* Input Row */}

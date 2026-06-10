@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { IconCheck, IconKey } from '@/components/icons';
-import { getApiKey, setApiKey } from '@/lib/storage';
+import { IconCheck, IconKey, IconCpu } from '@/components/icons';
+import { getApiKey, setApiKey, getModelPreference, setModelPreference } from '@/lib/storage';
 import { THEMES, getCurrentThemeId, applyTheme } from '@/lib/themes';
 
 export default function SettingsPage() {
@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [maskedKey, setMaskedKey] = useState('');
   const [currentThemeId, setCurrentThemeId] = useState('rose');
+  const [model, setModelState] = useState<'flash' | 'pro'>('flash');
 
   useEffect(() => {
     const stored = getApiKey();
@@ -21,6 +22,7 @@ export default function SettingsPage() {
       setSaved(true);
     }
     setCurrentThemeId(getCurrentThemeId());
+    setModelState(getModelPreference());
   }, []);
 
   const handleSave = () => {
@@ -149,6 +151,44 @@ export default function SettingsPage() {
                 清除
               </Button>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 模型选择 */}
+      <Card className="border-jai-card-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-1.5">
+            <IconCpu className="w-4 h-4 text-jai-secondary" /> 模型选择
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-jai-secondary">
+            选择 AI 模型。Pro 模型质量更高但消耗更多额度，Flash 模型速度更快。
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => { setModelState('flash'); setModelPreference('flash'); }}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                model === 'flash'
+                  ? 'border-jai-accent bg-jai-accent/10'
+                  : 'border-jai-card-border hover:border-jai-accent/50'
+              }`}
+            >
+              <div className="text-sm font-semibold text-center">Flash</div>
+              <div className="text-xs text-jai-secondary text-center mt-1">快速高效</div>
+            </button>
+            <button
+              onClick={() => { setModelState('pro'); setModelPreference('pro'); }}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                model === 'pro'
+                  ? 'border-jai-accent bg-jai-accent/10'
+                  : 'border-jai-card-border hover:border-jai-accent/50'
+              }`}
+            >
+              <div className="text-sm font-semibold text-center">Pro</div>
+              <div className="text-xs text-jai-secondary text-center mt-1">高质量推理</div>
+            </button>
           </div>
         </CardContent>
       </Card>

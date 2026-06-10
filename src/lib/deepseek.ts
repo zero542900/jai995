@@ -10,6 +10,7 @@ interface DeepSeekCallOptions {
   temperature?: number;
   maxTokens?: number;
   stream?: boolean;
+  thinking?: 'enabled' | 'disabled';
 }
 
 export class DeepSeekAPIError extends Error {
@@ -22,7 +23,7 @@ export class DeepSeekAPIError extends Error {
 }
 
 export async function callDeepSeek(options: DeepSeekCallOptions) {
-  const { apiKey, messages, systemPrompt, model = 'deepseek-chat', temperature, maxTokens = 4096, stream = true } = options;
+  const { apiKey, messages, systemPrompt, model = 'deepseek-chat', temperature, maxTokens = 4096, stream = true, thinking } = options;
 
   const allMessages: { role: string; content: string }[] = [];
   if (systemPrompt) {
@@ -38,6 +39,9 @@ export async function callDeepSeek(options: DeepSeekCallOptions) {
   };
   if (temperature !== undefined) {
     body.temperature = temperature;
+  }
+  if (thinking !== undefined) {
+    body.thinking = { type: thinking };
   }
 
   const response = await fetch(DEEPSEEK_API_URL, {
@@ -58,6 +62,34 @@ export async function callDeepSeek(options: DeepSeekCallOptions) {
   }
 
   return response;
+}
+
+/**
+ * Resolve model name and thinking param based on user's model preference and thinking toggle.
+ * Flash: deepseek-chat / deepseek-reasoner
+ * Pro:   deepseek-v4-pro + thinking param
+ */
+export function resolveModelParams(modelTier: 'flash' | 'pro', thinkingEnabled: boolean) {
+  if (modelTier === 'pro') {
+    return {
+      model: 'deepseek-v4-pro',
+      thinking: thinkingEnabled ? 'enabled' as const : 'disabled' as const,
+      temperature: undefined as number | undefined,
+    };
+  }
+  // Flash (default)
+  if (thinkingEnabled) {
+    return {
+      model: 'deepseek-reasoner',
+      thinking: undefined as 'enabled' | 'disabled' | undefined,
+      temperature: undefined as number | undefined,
+    };
+  }
+  return {
+    model: 'deepseek-chat',
+    thinking: undefined as 'enabled' | 'disabled' | undefined,
+    temperature: undefined as number | undefined,
+  };
 }
 
 export function createSSEStream(response: Response) {

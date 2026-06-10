@@ -64,6 +64,7 @@ export default function GeneratePage() {
   const [presetName, setPresetName] = useState('');
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const [thinkingContent, setThinkingContent] = useState('');
+  const [modelChoice, setModelChoice] = useState<'flash' | 'pro'>(typeof window !== 'undefined' ? (localStorage.getItem('jai_model_choice') as 'flash' | 'pro' || 'flash') : 'flash');
   const abortRef = useRef<AbortController | null>(null);
 
   const parsedFields = useMemo(() => parseFields(englishCard), [englishCard]);
@@ -97,6 +98,7 @@ export default function GeneratePage() {
         greeting: greeting.trim(),
         apiKey,
         thinkingEnabled,
+        modelChoice,
       };
 
       const response = await fetch('/api/generate', {
@@ -261,9 +263,25 @@ export default function GeneratePage() {
             停止生成
           </Button>
         )}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">思考模式</span>
-          <button
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">模型</span>
+            <select
+              value={modelChoice}
+              onChange={e => {
+                const v = e.target.value as 'flash' | 'pro';
+                setModelChoice(v);
+                localStorage.setItem('jai_model_choice', v);
+              }}
+              className="h-7 px-2 text-xs rounded-full border border-jai-border bg-jai-card text-jai-primary focus:outline-none focus:ring-1 focus:ring-jai-thinking/50"
+            >
+              <option value="flash">Flash</option>
+              <option value="pro">Pro</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">思考</span>
+            <button
             type="button"
             role="switch"
             aria-checked={thinkingEnabled}
@@ -275,6 +293,7 @@ export default function GeneratePage() {
             />
           </button>
         </div>
+      </div>
       </div>
 
       {englishCard && (

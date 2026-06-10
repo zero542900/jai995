@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey } from '@/lib/deepseek';
+import { callDeepSeek, resolveModelParams, validateApiKey } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { chatHistory, apiKey, thinkingEnabled } = body;
+    const { chatHistory, apiKey, thinkingEnabled, modelChoice } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -28,11 +28,12 @@ Analyze the current scene and return a JSON object with the following fields:
 OUTPUT:
 Return ONLY the JSON object. No markdown code blocks, no explanations.`;
 
-    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const { model, thinking } = resolveModelParams(thinkingEnabled, modelChoice);
 
     const response = await callDeepSeek({
       apiKey,
       model,
+      thinking,
       messages: [{ role: 'user', content: 'Analyze the current story and return the structured data.' }],
       systemPrompt,
       stream: false,

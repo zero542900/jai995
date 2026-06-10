@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, resolveModelParams } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt, thinkingEnabled } = body;
+    const { charInfo, userCard, chatHistory, longTermMemory, apiKey, mainLinePrompt, thinkingEnabled, modelChoice } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -58,11 +58,12 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
-    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const { model, thinking } = resolveModelParams(thinkingEnabled, modelChoice);
 
     const response = await callDeepSeek({
       apiKey,
       model,
+      thinking,
       messages: [{ role: 'user', content: 'Generate a long-term memory summary from {{char}}\'s perspective about {{user}} based on the current conversation context.' }],
       systemPrompt,
       stream: true,

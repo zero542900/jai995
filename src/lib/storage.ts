@@ -6,6 +6,7 @@ const KEYS = {
   PRESETS: 'jai_presets',
   SESSIONS: 'jai_sessions',
   API_KEY: 'jai_api_key',
+  MODEL_PREFERENCE: 'jai_model_choice',
   USER_TEMPLATE: 'jai_user_template',
   INSTRUCTIONS: 'jai_instructions',
 } as const;
@@ -24,6 +25,20 @@ export function setApiKey(key: string): void {
 
 export function hasApiKey(): boolean {
   return getApiKey().length > 0;
+}
+
+// ========== Model Preference ==========
+
+export type ModelPreference = 'flash' | 'pro';
+
+export function getModelPreference(): ModelPreference {
+  if (typeof window === 'undefined') return 'flash';
+  return (localStorage.getItem(KEYS.MODEL_PREFERENCE) as ModelPreference) || 'flash';
+}
+
+export function setModelPreference(pref: ModelPreference): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEYS.MODEL_PREFERENCE, pref);
 }
 
 // ========== User Template ==========

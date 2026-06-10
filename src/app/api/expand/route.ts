@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, resolveModelParams } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { brief, charInfo, userCard, userPersonality, chatHistory, longTermMemory, personMode, apiKey, mainLinePrompt, thinkingEnabled } = body;
+    const { brief, charInfo, userCard, userPersonality, chatHistory, longTermMemory, personMode, apiKey, mainLinePrompt, thinkingEnabled, modelChoice } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -52,11 +52,12 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 
 Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
 
-    const model = thinkingEnabled ? 'deepseek-reasoner' : 'deepseek-chat';
+    const { model, thinking } = resolveModelParams(modelChoice, thinkingEnabled);
 
     const response = await callDeepSeek({
       apiKey,
       model,
+      thinking,
       messages: [{ role: 'user', content: `Expand this brief outline into a complete passage from the User's perspective:\n\n${brief}` }],
       systemPrompt,
       stream: true,

@@ -456,7 +456,7 @@ function ChatPageInner() {
     if (!apiKey) { showNotification('请先配置 API Key'); return; }
 
     setExpandLoading(true);
-    setExpandResult(null);
+    setExpandResult({ en: '', cn: '' });
     setExpandFlipped(false);
     setThinkingContent('');
 
@@ -495,14 +495,19 @@ function ChatPageInner() {
             if (data === '[DONE]') continue;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.content) fullText += parsed.content;
-              if (parsed.reasoning) reasoning += parsed.reasoning;
+              if (parsed.content) {
+                fullText += parsed.content;
+                setExpandResult({ en: fullText, cn: '' });
+              }
+              if (parsed.reasoning) {
+                reasoning += parsed.reasoning;
+                setThinkingContent(reasoning);
+              }
             } catch { /* skip */ }
           }
         }
       }
 
-      if (reasoning) setThinkingContent(reasoning);
       setExpandResult({ en: fullText.trim(), cn: '' });
     } catch {
       showNotification('扩写失败');
@@ -842,7 +847,7 @@ function ChatPageInner() {
                     扩写
                   </button>
                 </div>
-              ) : expandLoading && !expandResult ? (
+              ) : expandLoading && !expandResult?.en ? (
                 <div className="flex items-center justify-center py-8 text-sm text-jai-secondary">
                   <IconRefresh className="w-4 h-4 animate-spin mr-2" /> 生成中...
                 </div>
@@ -885,7 +890,7 @@ function ChatPageInner() {
                         </button>
                       </div>
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap">{expandFlipped ? expandResult.cn : expandResult.en}</p>
+                      <p className="text-sm whitespace-pre-wrap">{expandFlipped ? expandResult.cn : expandResult.en}{expandLoading && !expandFlipped && <span className="inline-block w-0.5 h-4 bg-jai-accent animate-pulse ml-0.5 align-text-bottom" />}</p>
                     )}</p>
                   </div>
                   <div className="flex items-center gap-2">

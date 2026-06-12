@@ -28,7 +28,7 @@ Analyze the current scene and return a JSON object with the following fields:
 OUTPUT:
 Return ONLY the JSON object. No markdown code blocks, no explanations.`;
 
-    const { model, thinking } = resolveModelParams(thinkingEnabled, modelChoice);
+    const { model, thinking } = resolveModelParams(modelChoice, thinkingEnabled);
 
     const response = await callDeepSeek({
       apiKey,

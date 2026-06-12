@@ -58,7 +58,7 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
-    const { model, thinking } = resolveModelParams(thinkingEnabled, modelChoice);
+    const { model, thinking } = resolveModelParams(modelChoice, thinkingEnabled);
 
     const response = await callDeepSeek({
       apiKey,

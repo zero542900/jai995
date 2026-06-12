@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     ];
 
     // Use resolveModelParams for model selection
-    const { model, thinking: thinkingParam } = resolveModelParams(thinkingEnabled, modelChoice);
+    const { model, thinking: thinkingParam } = resolveModelParams(modelChoice, thinkingEnabled);
     const requestBody: Record<string, unknown> = { model, messages, stream: false };
     if (thinkingParam) requestBody.thinking = thinkingParam;
 

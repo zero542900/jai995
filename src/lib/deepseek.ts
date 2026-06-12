@@ -204,28 +204,44 @@ export function handleAPIError(error: unknown): Response {
 // Shared writing style instructions - applies to ALL API routes globally
 export const WRITING_STYLE_INSTRUCTION = `
 [文风约束 - 全局通用]
-以下约束同时适用于英文和中文输出中的叙述性段落。在需要将原文展开为完整句子时必须遵守。简短的要害式短语（如单个形容词列举）不需要套用这些规则。
-- 禁用词汇：你不得在任何上下文中使用以下词语——"兜住"、"接住"、"稳"、"守"、"极其"。
-- 禁止使用以下句式："不是……而是……"、"在……的过程中"、"总而言之"、"综上所述"、"不仅……更……"、"不是……是……是……"、"不是……不是……是……"、"是……的基石/关键/必修课"。
-- 禁止使用排比句、对偶句、反复等修辞性排叠结构。
-- 禁止使用"不x，不y，不z，就"格式。
-- 禁止使用"这就够了"、"很…，但很…"等总结性短判断。
-- 禁止使用任何以"不是"开头的否定句式。
-- 如果你发现某段输出中出现了上述禁用句式，不得以删除内容作为处理方式。你必须用一段新的、符合以上约束的完整描写来替换它。
-- Simile & Metaphor Restriction: Do NOT use poetic or abstract similes/metaphors. If a comparison is essential, it must be concrete and drawn from the immediate physical setting or the character's direct experience. When in doubt, state the fact plainly instead of using figurative language.
-- Ending & Termination Rule: All generated text MUST end on a concrete action, sensory detail, or a short line of dialogue. Strictly forbidden to conclude with any form of summary, moralizing, foreshadowing, or editorial judgment (e.g., "Things were about to change irreversibly," "A new chapter was beginning," "This foreshadowed..."). The output must cut off sharply at a factual or sensory beat. 严禁在结尾使用"事情正在起变化"、"新的篇章即将开启"、"这预示着"等评判性语句。`;
+
+禁用词汇：你不得在任何上下文中使用以下词语——"兜住"、"接住"、"稳"、"守"、"极其"。
+
+禁止使用以下句式："不是……而是……"、"在……的过程中"、"总而言之"、"综上所述"、"不仅……更……"、"不是……是……是……"、"不是……不是……是……"、"是……的基石/关键/必修课"。
+
+禁止使用排比句、对偶句、反复等修辞性排叠结构。
+
+禁止使用"不x，不y，不z，就"格式。
+
+禁止使用"这就够了"、"很…，但很…"等总结性短判断。
+
+禁止使用任何以"不是"开头的否定句式。
+
+Simile & Metaphor Restriction: Do NOT use poetic or abstract similes/metaphors. If a comparison is essential, it must be concrete and drawn from the immediate physical setting or the character's direct experience. When in doubt, state the fact plainly instead of using figurative language.
+
+Ending & Termination Rule: All generated text MUST end on a concrete action, sensory detail, or a short line of dialogue. Strictly forbidden to conclude with any form of summary, moralizing, foreshadowing, or editorial judgment (e.g., "Things were about to change irreversibly," "A new chapter was beginning," "This foreshadowed..."). The output must cut off sharply at a factual or sensory beat. 严禁在结尾使用"事情正在起变化"、"新的篇章即将开启"、"这预示着"等评判性语句。
+
+如果你发现某段输出中出现了上述任意一条禁用规则，不得以删除内容作为处理方式。你必须用一段新的、符合以上全部约束的完整描写来替换它。`;
 
 // Markdown format rules - for narrative outputs only (expand/memory/translate/chat), NOT for structured templates (generate)
 export const MARKDOWN_FORMAT_INSTRUCTION = `
-[Markdown 格式规则]
-- 加粗（**text**）：仅用于角色台词的语气强调，或叙事段落中需要突出的关键动作、物件。不得用于普通叙述句的整句加粗。
-- 斜体（*text*）：仅用于角色内心独白、未说出口的心理活动，或旁白中的气氛渲染。不得用于台词本身。
-- 行内代码/短信（\`text\`）：仅用于短信内容、纸条文字、电子屏幕显示、系统提示等非口头对话的文本。使用时光杆一对反引号包裹，不得用于角色说出的台词。
-- 分隔线（*** 或 ---）：仅用于场景转换或时间跳跃。光杆输入三个星号或连字符，前后各空一行，不得添加额外文字。
-- 引用块（>）：仅用于呈现长篇引用内容（如信件全文、报告摘录）。短信等短文本优先使用 \`text\` 格式。
-- 禁止使用标题（#）、代码块（\`\`\`）、有序/无序列表等破坏沉浸感的结构化格式。
-- 禁止整段加粗或整段斜体。
-- 禁止在单一短语上混用加粗与斜体进行多重强调。`;
+[Markdown 格式规则]（仅叙事类输出）
+
+加粗（**text**）：仅用于角色台词的语气强调，或叙事段落中需要突出的关键动作、物件。
+
+斜体（*text*）：仅用于角色内心独白、未说出口的心理活动，或旁白中的气氛渲染。
+
+行内代码（\`text\`）：仅用于短信内容、纸条文字、电子屏幕显示。
+
+分隔线（*** 或 ---）：仅用于场景转换或时间跳跃。
+
+引用块（>）：仅用于长篇引用内容。
+
+禁止使用标题（#）、代码块（\`\`\`）、有序/无序列表。
+
+禁止整段加粗或整段斜体。
+
+禁止在单一短语上混用加粗与斜体进行多重强调。`;
 
 export const CHINESE_OUTPUT_INSTRUCTION = `
 Output format: First output the English content, then on a new line write exactly "===CHINESE===" (this exact marker), then output the Chinese translation below.

@@ -212,6 +212,7 @@ export const WRITING_STYLE_INSTRUCTION = `
 - 禁止使用"这就够了"、"很…，但很…"等总结性短判断。
 - 禁止使用任何以"不是"开头的否定句式。
 - 如果你发现某段输出中出现了上述禁用句式，不得以删除内容作为处理方式。你必须用一段新的、符合以上约束的完整描写来替换它。
+- Simile & Metaphor Restriction: Do NOT use poetic or abstract similes/metaphors. If a comparison is essential, it must be concrete and drawn from the immediate physical setting or the character's direct experience. When in doubt, state the fact plainly instead of using figurative language.
 - Ending & Termination Rule: All generated text MUST end on a concrete action, sensory detail, or a short line of dialogue. Strictly forbidden to conclude with any form of summary, moralizing, foreshadowing, or editorial judgment (e.g., "Things were about to change irreversibly," "A new chapter was beginning," "This foreshadowed..."). The output must cut off sharply at a factual or sensory beat. 严禁在结尾使用"事情正在起变化"、"新的篇章即将开启"、"这预示着"等评判性语句。`;
 
 // Markdown format rules - for narrative outputs only (expand/memory/translate/chat), NOT for structured templates (generate)

@@ -225,7 +225,7 @@ Ending & Termination Rule: All generated text MUST end on a concrete action, sen
 
 // Markdown format rules - for narrative outputs only (expand/memory/translate/chat), NOT for structured templates (generate)
 export const MARKDOWN_FORMAT_INSTRUCTION = `
-[Markdown 格式规则]（仅叙事类输出）
+[Markdown 格式规则]（仅叙事类输出。结构化模板如 User 卡不受此限制。）
 
 加粗（**text**）：仅用于角色台词的语气强调，或叙事段落中需要突出的关键动作、物件。
 

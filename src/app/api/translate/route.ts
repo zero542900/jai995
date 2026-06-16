@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, resolveModelParams } from '@/lib/deepseek';
+import { WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, callDeepSeek, validateApiKey, handleAPIError } from '@/lib/deepseek';
 
 const TRANSLATION_SYSTEM_PROMPT = `你是一位精通中英双语、深谙同人圈文化的资深译者，尤其擅长 AO3 网站上的同人文。你的翻译不仅是语言转换，更是文化与情感的传递。
 
@@ -17,14 +17,16 @@ ${MARKDOWN_FORMAT_INSTRUCTION}`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { text, apiKey, thinkingEnabled, modelChoice, context } = body;
+    const { text, apiKey, context } = body;
 
-    if (!apiKey) {
-      return Response.json({ error: '请先在设置页面配置 DeepSeek API Key' }, { status: 400 });
-    }
+    const keyError = validateApiKey(apiKey);
+    if (keyError) return keyError;
 
     if (!text?.trim()) {
-      return Response.json({ error: '请提供需要翻译的英文文本' }, { status: 400 });
+      return new Response(JSON.stringify({ error: '请提供需要翻译的英文文本' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const contextPrompt = context
@@ -36,42 +38,28 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: `请将下方【待翻译文本】翻译为中文。${contextPrompt}\n【待翻译文本】\n${text}` },
     ];
 
-    // Use resolveModelParams for model selection
-    const { model, thinking: thinkingParam } = resolveModelParams(modelChoice, thinkingEnabled);
-    const requestBody: Record<string, unknown> = { model, messages, stream: false };
-    if (thinkingParam) requestBody.thinking = { type: thinkingParam };
-
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(requestBody),
+    // 翻译不需要思考模式，强制使用 deepseek-chat + 不开启 thinking
+    const response = await callDeepSeek({
+      apiKey,
+      model: 'deepseek-chat',
+      messages,
+      stream: false,
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      let errMsg = `DeepSeek API error: ${response.status}`;
-      try {
-        const errJson = JSON.parse(errText);
-        if (errJson?.error?.message) errMsg = errJson.error.message;
-      } catch { /* use default */ }
-      return Response.json({ error: errMsg }, { status: response.status >= 400 && response.status < 500 ? response.status : 500 });
-    }
-
     const data = await response.json();
-    const msg = data.choices?.[0]?.message;
-    // Pro model with thinking may put actual content in reasoning_content
-    let translation = msg?.content || '';
-    const reasoning = msg?.reasoning_content || '';
-    if (!translation && reasoning) {
-      translation = reasoning;
+    const translation = data?.choices?.[0]?.message?.content || '';
+
+    if (!translation) {
+      return new Response(JSON.stringify({ error: '翻译结果为空，请重试' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return Response.json({ translation, reasoning: translation === reasoning ? '' : reasoning });
+    return new Response(JSON.stringify({ translation }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : '翻译失败';
-    return Response.json({ error: message }, { status: 500 });
+    return handleAPIError(error);
   }
 }

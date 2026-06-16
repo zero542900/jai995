@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, resolveModelParams } from '@/lib/deepseek';
+import { callDeepSeek, validateApiKey, CHINESE_OUTPUT_INSTRUCTION, resolveModelParams, streamResponse, createSSEStream } from '@/lib/deepseek';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,10 +52,6 @@ Before outputting, verify that ALL instances of {{char}} and {{user}} are comple
 
 ${mainLinePrompt || ''}
 
-${WRITING_STYLE_INSTRUCTION}
-
-${MARKDOWN_FORMAT_INSTRUCTION}
-
 ${CHINESE_OUTPUT_INSTRUCTION}`;
 
     const { model, thinking } = resolveModelParams(modelChoice, thinkingEnabled);
@@ -70,50 +66,7 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
       maxTokens: 1500,
     });
 
-    const stream = response.body!;
-    const reader = stream.getReader();
-    const decoder = new TextDecoder();
-    const encoder = new TextEncoder();
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || trimmed === 'data: [DONE]') continue;
-              if (!trimmed.startsWith('data: ')) continue;
-              try {
-                const json = JSON.parse(trimmed.slice(6));
-                const content = json.choices?.[0]?.delta?.content;
-                const reasoning = json.choices?.[0]?.delta?.reasoning_content;
-                if (content || reasoning) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: content || '', reasoning: reasoning || '' })}\n\n`));
-                }
-              } catch { /* skip */ }
-            }
-          }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : 'Stream error';
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`));
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    return streamResponse(createSSEStream(response));
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Internal error';
     return new Response(JSON.stringify({ error: msg }), {

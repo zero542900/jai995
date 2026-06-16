@@ -456,7 +456,7 @@ export default function GeneratePage() {
 
             {/* History panel inside result card */}
             {showHistory && (
-              <div className="mt-3 border border-jai-thinking/30 bg-jai-thinking/5 rounded-lg p-3 space-y-2">
+              <div className="mt-3 border border-jai-thinking/30 bg-jai-thinking/5 rounded-lg p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-jai-thinking">生成历史</span>
                   <span className="text-[11px] text-muted-foreground">最多保留最近 5 条</span>
@@ -464,33 +464,58 @@ export default function GeneratePage() {
                 {history.length === 0 ? (
                   <p className="text-xs text-muted-foreground py-3 text-center">暂无历史记录，生成后自动保存</p>
                 ) : (
-                  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0.5 px-0.5 snap-x">
-                    {history.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="shrink-0 w-[220px] md:w-[250px] snap-start rounded-lg border border-jai-card-border bg-white/80 p-2.5 space-y-1.5 hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => handleLoadHistory(entry)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-muted-foreground">
-                            {new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteHistory(entry.id); }}
-                            className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors p-0.5"
-                          >
-                            删除
-                          </button>
-                        </div>
-                        <div className="text-[11px] text-jai-text line-clamp-2">
-                          {entry.userPersonality}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground line-clamp-3 leading-relaxed">
-                          {entry.englishCard.slice(0, 120)}...
-                        </div>
+                  (() => {
+                    const groupMap = new Map<string, { label: string; entries: GenerateHistory[] }>();
+                    for (const entry of history) {
+                      const key = `${entry.charInfo || ''}|||${entry.greeting || ''}`;
+                      const charLabel = entry.charInfo ? entry.charInfo.slice(0, 30) + (entry.charInfo.length > 30 ? '...' : '') : '无 Char';
+                      const greetLabel = entry.greeting ? entry.greeting.slice(0, 20) + (entry.greeting.length > 20 ? '...' : '') : '';
+                      const label = greetLabel ? `${charLabel} / ${greetLabel}` : charLabel;
+                      if (!groupMap.has(key)) {
+                        groupMap.set(key, { label, entries: [] });
+                      }
+                      groupMap.get(key)!.entries.push(entry);
+                    }
+                    const groups = Array.from(groupMap.values());
+                    return (
+                      <div className="space-y-2.5">
+                        {groups.map((group, gi) => (
+                          <div key={gi} className="space-y-1.5">
+                            <div className="text-[10px] font-medium text-jai-secondary px-0.5 truncate" title={group.label}>
+                              {group.label}
+                            </div>
+                            <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0.5 px-0.5 snap-x">
+                              {group.entries.map((entry) => (
+                                <div
+                                  key={entry.id}
+                                  className="shrink-0 w-[220px] md:w-[250px] snap-start rounded-lg border border-jai-card-border bg-white/80 p-2.5 space-y-1.5 hover:shadow-md transition-shadow cursor-pointer"
+                                  onClick={() => handleLoadHistory(entry)}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteHistory(entry.id); }}
+                                      className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors p-0.5"
+                                    >
+                                      删除
+                                    </button>
+                                  </div>
+                                  <div className="text-[11px] text-jai-text line-clamp-2">
+                                    {entry.userPersonality}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground line-clamp-3 leading-relaxed">
+                                    {entry.englishCard.slice(0, 120)}...
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()
                 )}
               </div>
             )}

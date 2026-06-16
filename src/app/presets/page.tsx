@@ -45,9 +45,9 @@ function SortablePresetCard({
     isDragging,
   } = useSortable({ id: preset.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? undefined : transition,
   };
 
   const status = getSessionStatus(preset.id);
@@ -56,7 +56,7 @@ function SortablePresetCard({
     <Card
       ref={setNodeRef}
       style={style}
-      className={`border-jai-card-border hover:border-primary/40 hover:shadow-sm transition-shadow cursor-pointer group ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
+      className={`border-jai-card-border hover:border-primary/40 hover:shadow-sm cursor-pointer group ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
     >
       <CardContent className="p-4 space-y-2">
         <div className="flex items-start justify-between">

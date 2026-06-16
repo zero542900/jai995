@@ -45,16 +45,16 @@ function SortableInstructionCard({
     isDragging,
   } = useSortable({ id: instruction.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? undefined : transition,
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative bg-card border border-jai-card-border rounded-lg p-3 hover:shadow-[0_2px_8px_var(--color-jai-shadow)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
+      className={`group relative bg-card border border-jai-card-border rounded-lg p-3 hover:shadow-[0_2px_8px_var(--color-jai-shadow)] cursor-pointer ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
     >
       {/* 拖拽手柄 */}
       <div

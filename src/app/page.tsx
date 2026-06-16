@@ -293,61 +293,7 @@ export default function GeneratePage() {
 
   return (
     <div className="page-enter space-y-4 md:space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg md:text-xl font-semibold text-foreground">生成 User 面具</h1>
-        {history.length > 0 && (
-          <Button
-            onClick={() => setShowHistory(!showHistory)}
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-          >
-            <IconHistory className="w-4 h-4" />
-            历史 ({history.length})
-          </Button>
-        )}
-      </div>
-
-      {/* History panel */}
-      {showHistory && history.length > 0 && (
-        <Card className="border-jai-thinking/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              生成历史
-              <span className="text-xs text-muted-foreground font-normal">最多保留最近 5 条</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
-              {history.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="shrink-0 w-[280px] md:w-[300px] snap-start rounded-lg border border-jai-card-border bg-white/70 p-3 space-y-2 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => handleLoadHistory(entry)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">
-                      {new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteHistory(entry.id); }}
-                      className="text-xs text-muted-foreground hover:text-red-400 transition-colors p-0.5"
-                    >
-                      删除
-                    </button>
-                  </div>
-                  <div className="text-xs text-jai-text line-clamp-2">
-                    {entry.userPersonality}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground line-clamp-4 leading-relaxed">
-                    {entry.englishCard.slice(0, 150)}...
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <h1 className="text-lg md:text-xl font-semibold text-foreground">生成 User 面具</h1>
 
       <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
@@ -492,9 +438,59 @@ export default function GeneratePage() {
                 <Button onClick={handleRefresh} variant="outline" size="sm" title="重新生成整卡" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconRefresh className="w-4 h-4" /> 刷新
                 </Button>
+                <Button
+                  onClick={() => setShowHistory(!showHistory)}
+                  variant="outline"
+                  size="sm"
+                  title="查看生成历史"
+                  className="gap-1.5 h-9 md:h-8 text-xs md:text-sm"
+                >
+                  <IconHistory className="w-4 h-4" /> 历史{history.length > 0 ? ` (${history.length})` : ''}
+                </Button>
                 <Button onClick={() => setShowSaveDialog(true)} size="sm" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconSave className="w-4 h-4" /> 保存预设
                 </Button>
+              </div>
+            )}
+
+            {/* History panel inside result card */}
+            {showHistory && (
+              <div className="mt-3 border border-jai-thinking/30 bg-jai-thinking/5 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-jai-thinking">生成历史</span>
+                  <span className="text-[11px] text-muted-foreground">最多保留最近 5 条</span>
+                </div>
+                {history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-3 text-center">暂无历史记录，生成后自动保存</p>
+                ) : (
+                  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0.5 px-0.5 snap-x">
+                    {history.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="shrink-0 w-[220px] md:w-[250px] snap-start rounded-lg border border-jai-card-border bg-white/80 p-2.5 space-y-1.5 hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleLoadHistory(entry)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteHistory(entry.id); }}
+                            className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors p-0.5"
+                          >
+                            删除
+                          </button>
+                        </div>
+                        <div className="text-[11px] text-jai-text line-clamp-2">
+                          {entry.userPersonality}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground line-clamp-3 leading-relaxed">
+                          {entry.englishCard.slice(0, 120)}...
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

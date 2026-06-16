@@ -61,10 +61,15 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const translation = data.choices?.[0]?.message?.content || '';
-    const reasoning = data.choices?.[0]?.message?.reasoning_content || '';
+    const msg = data.choices?.[0]?.message;
+    // Pro model with thinking may put actual content in reasoning_content
+    let translation = msg?.content || '';
+    const reasoning = msg?.reasoning_content || '';
+    if (!translation && reasoning) {
+      translation = reasoning;
+    }
 
-    return Response.json({ translation, reasoning });
+    return Response.json({ translation, reasoning: translation === reasoning ? '' : reasoning });
   } catch (error) {
     const message = error instanceof Error ? error.message : '翻译失败';
     return Response.json({ error: message }, { status: 500 });

@@ -239,9 +239,27 @@ export default function GeneratePage() {
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.translation) setChineseCard(data.translation);
+          if (data.translation) {
+            setChineseCard(data.translation);
+          } else if (data.error) {
+            alert(`翻译失败：${data.error}`);
+            setIsTranslating(false);
+            return;
+          } else {
+            alert('翻译返回为空，请检查模型设置');
+            setIsTranslating(false);
+            return;
+          }
+        } else {
+          alert('翻译请求失败，请检查 API Key');
+          setIsTranslating(false);
+          return;
         }
-      } catch { /* ignore */ }
+      } catch {
+        alert('翻译网络错误');
+        setIsTranslating(false);
+        return;
+      }
       setIsTranslating(false);
     }
     setShowFront(prev => !prev);

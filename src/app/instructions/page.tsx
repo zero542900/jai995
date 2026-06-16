@@ -59,7 +59,7 @@ function SortableInstructionCard({
     >
       {/* 拖拽手柄 */}
       <div
-        className="absolute top-1 left-1 cursor-grab active:cursor-grabbing text-jai-text-secondary/30 hover:text-jai-text-secondary transition-colors flex items-center justify-center w-7 h-7 rounded hover:bg-jai-muted"
+        className="absolute top-1 left-1 cursor-grab active:cursor-grabbing text-jai-text-secondary/30 hover:text-jai-text-secondary transition-colors flex items-center justify-center w-7 h-7 rounded hover:bg-jai-muted touch-none"
         {...attributes}
         {...listeners}
       >

@@ -63,7 +63,7 @@ function SortablePresetCard({
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-1.5 flex-1 min-w-0">
             <div
-              className="cursor-grab active:cursor-grabbing text-jai-text-secondary/40 hover:text-jai-text-secondary transition-colors shrink-0 flex items-center justify-center w-7 h-7 -ml-1 -mt-0.5 rounded hover:bg-jai-muted"
+              className="cursor-grab active:cursor-grabbing text-jai-text-secondary/40 hover:text-jai-text-secondary transition-colors shrink-0 flex items-center justify-center w-7 h-7 -ml-1 -mt-0.5 rounded hover:bg-jai-muted touch-none"
               {...attributes}
               {...listeners}
             >

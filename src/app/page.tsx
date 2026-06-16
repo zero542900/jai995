@@ -280,6 +280,7 @@ export default function GeneratePage() {
   const handleLoadHistory = useCallback((entry: GenerateHistory) => {
     setEnglishCard(entry.englishCard);
     setChineseCard(entry.chineseCard);
+    setUserPersonality(entry.userPersonality);
     setShowFront(true);
     setThinkingContent('');
     setShowHistory(false);

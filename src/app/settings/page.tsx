@@ -47,6 +47,54 @@ export default function SettingsPage() {
     setCurrentThemeId(themeId);
   };
 
+  // 分类主题
+  const lightThemes = THEMES.filter(t => !t.isDark);
+  const darkThemes = THEMES.filter(t => t.isDark);
+
+  const renderThemeGrid = (themes: typeof THEMES) => (
+    <div className="grid grid-cols-3 gap-2">
+      {themes.map((theme) => {
+        const isActive = currentThemeId === theme.id;
+        return (
+          <button
+            key={theme.id}
+            onClick={() => handleThemeChange(theme.id)}
+            className={`
+              relative p-2 rounded-xl border-2 transition-all duration-300 text-left
+              ${isActive
+                ? 'border-jai-accent shadow-[0_2px_8px_var(--color-jai-shadow)]'
+                : 'border-jai-card-border hover:border-jai-secondary hover:shadow-[0_2px_8px_var(--color-jai-shadow)]'
+              }
+            `}
+          >
+            {/* 横向色条预览 */}
+            <div
+              className="w-full h-6 rounded-md flex items-center gap-0.5 px-1.5"
+              style={{ backgroundColor: theme.colors['jai-bg'] }}
+            >
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: theme.colors['jai-secondary'] }} />
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: theme.colors['jai-accent'] }} />
+              <div className="h-3 w-3 rounded-sm border" style={{ backgroundColor: theme.colors['jai-card'], borderColor: theme.colors['jai-card-border'] }} />
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: theme.colors['jai-input-bg'] }} />
+              <div className="flex-1" />
+              {isActive && (
+                <div className="h-3 w-3 rounded-full bg-jai-success flex items-center justify-center">
+                  <svg className="w-2 h-2 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            {/* 主题名称 */}
+            <div className="mt-1.5 text-[11px] font-medium text-jai-text leading-tight truncate">
+              {theme.name}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="page-enter space-y-6">
       <h1 className="text-xl font-semibold text-foreground">设置</h1>
@@ -67,52 +115,16 @@ export default function SettingsPage() {
             选择你喜欢的配色方案，切换后立即生效。
           </p>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {THEMES.map((theme) => {
-              const isActive = currentThemeId === theme.id;
-              return (
-                <button
-                  key={theme.id}
-                  onClick={() => handleThemeChange(theme.id)}
-                  className={`
-                    relative p-2.5 rounded-xl border-2 transition-all duration-300 text-left
-                    ${isActive
-                      ? 'border-jai-accent shadow-[0_2px_8px_var(--color-jai-shadow)]'
-                      : 'border-jai-card-border hover:border-jai-secondary hover:shadow-[0_2px_8px_var(--color-jai-shadow)]'
-                    }
-                  `}
-                >
-                  {/* 横向色条预览 */}
-                  <div
-                    className="w-full h-8 rounded-lg flex items-center gap-1 px-2"
-                    style={{ backgroundColor: theme.colors['jai-bg'] }}
-                  >
-                    {/* 色块序列 */}
-                    <div className="h-4 w-4 rounded" style={{ backgroundColor: theme.colors['jai-secondary'] }} />
-                    <div className="h-4 w-4 rounded" style={{ backgroundColor: theme.colors['jai-accent'] }} />
-                    <div className="h-4 w-4 rounded border" style={{ backgroundColor: theme.colors['jai-card'], borderColor: theme.colors['jai-card-border'] }} />
-                    <div className="h-4 w-4 rounded" style={{ backgroundColor: theme.colors['jai-input-bg'] }} />
-                    <div className="flex-1" />
-                    {isActive && (
-                      <div className="h-4 w-4 rounded-full bg-jai-success flex items-center justify-center">
-                        <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
+          {/* 浅色主题 */}
+          <div>
+            <div className="text-xs font-medium text-jai-text-secondary mb-2">浅色</div>
+            {renderThemeGrid(lightThemes)}
+          </div>
 
-                  {/* 主题描述 */}
-                  <div className="mt-1.5 text-[11px] text-jai-text-secondary leading-tight line-clamp-2">
-                    {theme.description}
-                  </div>
-                  {/* 主题名称 */}
-                  <div className="mt-0.5 text-xs font-medium text-jai-text leading-tight">
-                    {theme.name}
-                  </div>
-                </button>
-              );
-            })}
+          {/* 深色主题 */}
+          <div>
+            <div className="text-xs font-medium text-jai-text-secondary mb-2">深色</div>
+            {renderThemeGrid(darkThemes)}
           </div>
         </CardContent>
       </Card>

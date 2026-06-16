@@ -1,6 +1,6 @@
 /**
  * 主题配色系统
- * 每个主题包含 14 个颜色变量，切换时一次性替换所有变量
+ * 每个主题包含颜色变量，切换时一次性替换所有变量
  */
 
 export interface ThemeColors {
@@ -28,12 +28,16 @@ export interface ThemeColors {
   'jai-thinking': string;
   /** 卡片阴影色 (rgba) */
   'jai-shadow': string;
+  /** 卡片阴影hover色 (rgba) */
+  'jai-shadow-hover': string;
   /** 角色聊天气泡背景 */
   'jai-bubble': string;
   /** 用户聊天气泡背景 */
   'jai-bubble-user': string;
   /** 用户聊天气泡上的文字/按钮颜色 */
   'jai-bubble-user-text': string;
+  /** 按钮文字颜色 */
+  'jai-btn-text': string;
 }
 
 export interface Theme {
@@ -46,6 +50,7 @@ export interface Theme {
 }
 
 export const THEMES: Theme[] = [
+  // ===== 现有主题（色差修复） =====
   {
     id: 'rose',
     name: '玫瑰粉',
@@ -64,9 +69,11 @@ export const THEMES: Theme[] = [
       'jai-success': '#5DA07E',
       'jai-thinking': '#a78bfa',
       'jai-shadow': 'rgba(180, 100, 120, 0.20)',
+      'jai-shadow-hover': 'rgba(180, 100, 120, 0.30)',
       'jai-bubble': '#F5D5DA',
       'jai-bubble-user': '#D08898',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
   {
@@ -87,9 +94,11 @@ export const THEMES: Theme[] = [
       'jai-success': '#5A92AA',
       'jai-thinking': '#8b9ff6',
       'jai-shadow': 'rgba(140, 170, 200, 0.20)',
+      'jai-shadow-hover': 'rgba(140, 170, 200, 0.30)',
       'jai-bubble': '#D8E5F0',
       'jai-bubble-user': '#98B4D0',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
   {
@@ -110,9 +119,11 @@ export const THEMES: Theme[] = [
       'jai-success': '#4AA075',
       'jai-thinking': '#8bb8f6',
       'jai-shadow': 'rgba(140, 195, 160, 0.20)',
+      'jai-shadow-hover': 'rgba(140, 195, 160, 0.30)',
       'jai-bubble': '#D5EBDD',
       'jai-bubble-user': '#98C8A5',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
   {
@@ -133,101 +144,115 @@ export const THEMES: Theme[] = [
       'jai-success': '#6A88AA',
       'jai-thinking': '#8060e8',
       'jai-shadow': 'rgba(170, 140, 200, 0.20)',
+      'jai-shadow-hover': 'rgba(170, 140, 200, 0.30)',
       'jai-bubble': '#E2D5EE',
       'jai-bubble-user': '#B898D0',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
+  // 沙棕：加深accent和secondary，增强层次
   {
     id: 'sand',
     name: '沙棕',
     nameEn: 'Sand Beige',
     description: '柔棕调，沙漠的温暖',
     colors: {
-      'jai-bg': '#DAC5B0',
-      'jai-secondary': '#C8A888',
-      'jai-accent': '#B88E70',
+      'jai-bg': '#D8C4A8',
+      'jai-secondary': '#C09868',
+      'jai-accent': '#9A7040',
       'jai-card': '#F2EAE0',
-      'jai-card-border': '#D4BEA8',
-      'jai-input-bg': '#EEDCC8',
-      'jai-text': '#4A3628',
-      'jai-text-secondary': '#8A7058',
-      'jai-muted': '#EEDCC8',
-      'jai-success': '#5AA07A',
+      'jai-card-border': '#D4BEA0',
+      'jai-input-bg': '#E8D8C0',
+      'jai-text': '#3A2818',
+      'jai-text-secondary': '#7A6048',
+      'jai-muted': '#E8D8C0',
+      'jai-success': '#5A9870',
       'jai-thinking': '#a78bfa',
-      'jai-shadow': 'rgba(195, 160, 130, 0.20)',
-      'jai-bubble': '#EAD8C2',
-      'jai-bubble-user': '#C8A888',
+      'jai-shadow': 'rgba(180, 140, 100, 0.22)',
+      'jai-shadow-hover': 'rgba(180, 140, 100, 0.32)',
+      'jai-bubble': '#E5D5C0',
+      'jai-bubble-user': '#C09868',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
+  // 枫叶：加深橙调，和夕阳拉开差距
   {
     id: 'midnight',
     name: '枫叶',
     nameEn: 'Maple Leaf',
     description: '枫叶色调，秋日层林的暖意',
     colors: {
-      'jai-bg': '#E0B898',
-      'jai-secondary': '#D08858',
-      'jai-accent': '#C45A30',
-      'jai-card': '#F8EDE0',
-      'jai-card-border': '#D8A880',
-      'jai-input-bg': '#F0D0B8',
-      'jai-text': '#4A2010',
-      'jai-text-secondary': '#8A5838',
-      'jai-muted': '#F0D0B8',
-      'jai-success': '#5AA078',
+      'jai-bg': '#D8A880',
+      'jai-secondary': '#C07838',
+      'jai-accent': '#A05820',
+      'jai-card': '#F5E5D5',
+      'jai-card-border': '#D0A070',
+      'jai-input-bg': '#E8C8A8',
+      'jai-text': '#3A1808',
+      'jai-text-secondary': '#7A4820',
+      'jai-muted': '#E8C8A8',
+      'jai-success': '#5A9878',
       'jai-thinking': '#8b9ff6',
-      'jai-shadow': 'rgba(190, 100, 50, 0.22)',
-      'jai-bubble': '#F0D0B8',
-      'jai-bubble-user': '#D08858',
+      'jai-shadow': 'rgba(180, 100, 50, 0.22)',
+      'jai-shadow-hover': 'rgba(180, 100, 50, 0.32)',
+      'jai-bubble': '#E8C8A0',
+      'jai-bubble-user': '#C07838',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
+  // 夕阳：偏黄金调，和枫叶(偏红橙)拉开差距
   {
     id: 'warmnight',
     name: '夕阳',
     nameEn: 'Sunset',
     description: '夕阳色调，天边最后一抹暖光',
     colors: {
-      'jai-bg': '#F0C898',
-      'jai-secondary': '#E89838',
-      'jai-accent': '#FE8005',
-      'jai-card': '#FAF0E0',
-      'jai-card-border': '#E8B878',
-      'jai-input-bg': '#F8DCB0',
+      'jai-bg': '#E8C070',
+      'jai-secondary': '#D09020',
+      'jai-accent': '#B87010',
+      'jai-card': '#FAF0D8',
+      'jai-card-border': '#D8B060',
+      'jai-input-bg': '#F0D898',
       'jai-text': '#3A2008',
-      'jai-text-secondary': '#7A5828',
-      'jai-muted': '#F8DCB0',
-      'jai-success': '#5AA078',
+      'jai-text-secondary': '#8A5820',
+      'jai-muted': '#F0D898',
+      'jai-success': '#5A9878',
       'jai-thinking': '#c898f0',
-      'jai-shadow': 'rgba(210, 145, 40, 0.22)',
-      'jai-bubble': '#F8DCB0',
-      'jai-bubble-user': '#E89838',
+      'jai-shadow': 'rgba(200, 150, 40, 0.22)',
+      'jai-shadow-hover': 'rgba(200, 150, 40, 0.32)',
+      'jai-bubble': '#F0D898',
+      'jai-bubble-user': '#D09020',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
+  // 日光：加重灰度层次，不再一片白
   {
     id: 'daylight',
     name: '日光',
     nameEn: 'Daylight',
     description: '明亮清爽，晨光白净空间',
     colors: {
-      'jai-bg': '#F5F0EC',
-      'jai-secondary': '#E0D8D0',
-      'jai-accent': '#B0A090',
-      'jai-card': '#FAFAF8',
-      'jai-card-border': '#E0D8D0',
-      'jai-input-bg': '#EDE6E0',
-      'jai-text': '#3A3230',
-      'jai-text-secondary': '#8A8078',
-      'jai-muted': '#EDE6E0',
-      'jai-success': '#5AAA78',
+      'jai-bg': '#EDE5DC',
+      'jai-secondary': '#C8B8A8',
+      'jai-accent': '#8A7868',
+      'jai-card': '#FAF8F5',
+      'jai-card-border': '#D0C4B8',
+      'jai-input-bg': '#E0D5CA',
+      'jai-text': '#2E2520',
+      'jai-text-secondary': '#7A6E62',
+      'jai-muted': '#E0D5CA',
+      'jai-success': '#5A9A68',
       'jai-thinking': '#9080e0',
-      'jai-shadow': 'rgba(160, 140, 120, 0.12)',
-      'jai-bubble': '#EDE8E3',
-      'jai-bubble-user': '#E0D8D0',
-      'jai-bubble-user-text': '#3A3230',
+      'jai-shadow': 'rgba(130, 110, 90, 0.15)',
+      'jai-shadow-hover': 'rgba(130, 110, 90, 0.25)',
+      'jai-bubble': '#E5DCD2',
+      'jai-bubble-user': '#C8B8A8',
+      'jai-bubble-user-text': '#2E2520',
+      'jai-btn-text': '#2E2520',
     },
   },
   {
@@ -248,9 +273,11 @@ export const THEMES: Theme[] = [
       'jai-success': '#5AAA80',
       'jai-thinking': '#B060F0',
       'jai-shadow': 'rgba(200, 90, 135, 0.22)',
+      'jai-shadow-hover': 'rgba(200, 90, 135, 0.32)',
       'jai-bubble': '#F5C0D5',
       'jai-bubble-user': '#D878A0',
       'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
   {
@@ -271,9 +298,121 @@ export const THEMES: Theme[] = [
       'jai-success': '#40A888',
       'jai-thinking': '#7080F0',
       'jai-shadow': 'rgba(100, 175, 155, 0.20)',
+      'jai-shadow-hover': 'rgba(100, 175, 155, 0.30)',
       'jai-bubble': '#C8E5DD',
       'jai-bubble-user': '#80BCB0',
       'jai-bubble-user-text': '#1E3A34',
+      'jai-btn-text': '#1E3A34',
+    },
+  },
+
+  // ===== 新增主题 =====
+  // 护眼-暖沙：旧纸张米黄，最有阅读舒适感
+  {
+    id: 'eyecare-warm',
+    name: '护眼暖沙',
+    nameEn: 'Warm Sand Eye-Care',
+    description: '旧纸张米黄，长时间阅读最舒适',
+    isDark: false,
+    colors: {
+      'jai-bg': '#F0E6D0',
+      'jai-secondary': '#C8B090',
+      'jai-accent': '#8A7050',
+      'jai-card': '#FAF5EC',
+      'jai-card-border': '#D8C8A8',
+      'jai-input-bg': '#E8DCC8',
+      'jai-text': '#3A2E20',
+      'jai-text-secondary': '#7A6850',
+      'jai-muted': '#E8DCC8',
+      'jai-success': '#6A9858',
+      'jai-thinking': '#9070D0',
+      'jai-shadow': 'rgba(160, 130, 90, 0.15)',
+      'jai-shadow-hover': 'rgba(160, 130, 90, 0.25)',
+      'jai-bubble': '#E8DCC0',
+      'jai-bubble-user': '#C8B090',
+      'jai-bubble-user-text': '#3A2E20',
+      'jai-btn-text': '#3A2E20',
+    },
+  },
+  // 护眼-薄荷：灰绿底，冷调护眼
+  {
+    id: 'eyecare-mint',
+    name: '护眼薄荷',
+    nameEn: 'Mint Eye-Care',
+    description: '灰绿底色，清冷护眼不刺激',
+    isDark: false,
+    colors: {
+      'jai-bg': '#C8D8C8',
+      'jai-secondary': '#98B898',
+      'jai-accent': '#5A8858',
+      'jai-card': '#E8F0E8',
+      'jai-card-border': '#A8C0A8',
+      'jai-input-bg': '#D5E2D5',
+      'jai-text': '#1E3020',
+      'jai-text-secondary': '#4A6A48',
+      'jai-muted': '#D5E2D5',
+      'jai-success': '#408848',
+      'jai-thinking': '#7080D0',
+      'jai-shadow': 'rgba(100, 150, 100, 0.18)',
+      'jai-shadow-hover': 'rgba(100, 150, 100, 0.28)',
+      'jai-bubble': '#D0E0D0',
+      'jai-bubble-user': '#98B898',
+      'jai-bubble-user-text': '#1E3020',
+      'jai-btn-text': '#1E3020',
+    },
+  },
+  // 深色：深灰底 + 暖灰字，标准暗色
+  {
+    id: 'dark',
+    name: '深色',
+    nameEn: 'Dark Mode',
+    description: '深灰底色，夜间使用不刺眼',
+    isDark: true,
+    colors: {
+      'jai-bg': '#1A1A1E',
+      'jai-secondary': '#3A3A42',
+      'jai-accent': '#6A6A78',
+      'jai-card': '#252528',
+      'jai-card-border': '#3A3A42',
+      'jai-input-bg': '#2A2A30',
+      'jai-text': '#D0CCC8',
+      'jai-text-secondary': '#8A8680',
+      'jai-muted': '#2A2A30',
+      'jai-success': '#5AAA6A',
+      'jai-thinking': '#a78bfa',
+      'jai-shadow': 'rgba(0, 0, 0, 0.30)',
+      'jai-shadow-hover': 'rgba(0, 0, 0, 0.45)',
+      'jai-bubble': '#2E2E35',
+      'jai-bubble-user': '#3A3A42',
+      'jai-bubble-user-text': '#D0CCC8',
+      'jai-btn-text': '#D0CCC8',
+    },
+  },
+  // 粉黑：纯黑底 + 高饱和玫红，赛博朋克风
+  {
+    id: 'pink-black',
+    name: '粉黑',
+    nameEn: 'Pink Noir',
+    description: '黑底玫红，赛博朋克的冷艳',
+    isDark: true,
+    colors: {
+      'jai-bg': '#0E0E10',
+      'jai-secondary': '#C41858',
+      'jai-accent': '#E91E63',
+      'jai-card': '#1A1A20',
+      'jai-card-border': '#C41858',
+      'jai-input-bg': '#18181E',
+      'jai-text': '#F0E0E8',
+      'jai-text-secondary': '#B08898',
+      'jai-muted': '#1E1E28',
+      'jai-success': '#00D68F',
+      'jai-thinking': '#BB86FC',
+      'jai-shadow': 'rgba(233, 30, 99, 0.18)',
+      'jai-shadow-hover': 'rgba(233, 30, 99, 0.30)',
+      'jai-bubble': '#1C1C24',
+      'jai-bubble-user': '#C41858',
+      'jai-bubble-user-text': '#FFFFFF',
+      'jai-btn-text': '#FFFFFF',
     },
   },
 ];
@@ -312,22 +451,22 @@ export function applyTheme(themeId: string): void {
   root.style.setProperty('--popover', c['jai-card']);
   root.style.setProperty('--popover-foreground', c['jai-text']);
   root.style.setProperty('--primary', c['jai-secondary']);
-  root.style.setProperty('--primary-foreground', c['jai-text']);
+  root.style.setProperty('--primary-foreground', c['jai-btn-text']);
   root.style.setProperty('--secondary', c['jai-accent']);
-  root.style.setProperty('--secondary-foreground', c['jai-text']);
+  root.style.setProperty('--secondary-foreground', c['jai-btn-text']);
   root.style.setProperty('--muted', c['jai-muted']);
   root.style.setProperty('--muted-foreground', c['jai-text-secondary']);
   root.style.setProperty('--accent', c['jai-accent']);
-  root.style.setProperty('--accent-foreground', c['jai-text']);
+  root.style.setProperty('--accent-foreground', c['jai-btn-text']);
   root.style.setProperty('--border', c['jai-card-border']);
   root.style.setProperty('--input', c['jai-secondary']);
   root.style.setProperty('--ring', c['jai-accent']);
   root.style.setProperty('--sidebar', c['jai-muted']);
   root.style.setProperty('--sidebar-foreground', c['jai-text']);
   root.style.setProperty('--sidebar-primary', c['jai-accent']);
-  root.style.setProperty('--sidebar-primary-foreground', c['jai-text']);
+  root.style.setProperty('--sidebar-primary-foreground', c['jai-btn-text']);
   root.style.setProperty('--sidebar-accent', c['jai-secondary']);
-  root.style.setProperty('--sidebar-accent-foreground', c['jai-text']);
+  root.style.setProperty('--sidebar-accent-foreground', c['jai-btn-text']);
   root.style.setProperty('--sidebar-border', c['jai-card-border']);
   root.style.setProperty('--sidebar-ring', c['jai-accent']);
   root.style.setProperty('--chart-1', c['jai-accent']);

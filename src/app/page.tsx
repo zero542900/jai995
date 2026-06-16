@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { copyToClipboard } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { IconCopy, IconFlip, IconRefresh, IconSave, IconHistory } from '@/components/icons';
+import { IconCopy, IconFlip, IconRefresh, IconSave, IconHistory, IconShield } from '@/components/icons';
 import { getApiKey, createPreset, savePreset, addGenerateHistory, getGenerateHistory, deleteGenerateHistoryEntry } from '@/lib/storage';
 import type { GenerateHistory } from '@/lib/types';
 
@@ -103,6 +103,12 @@ export default function GeneratePage() {
   const [modelChoice, setModelChoice] = useState<'flash' | 'pro'>(typeof window !== 'undefined' ? (localStorage.getItem('jai_model_choice') as 'flash' | 'pro' || 'flash') : 'flash');
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<GenerateHistory[]>([]);
+  const [checkIssues, setCheckIssues] = useState<Array<{ type: string; severity: string; fields: string[]; description: string; suggestion: string }>>([]);
+  const [isChecking, setIsChecking] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
+  const [selectedIssues, setSelectedIssues] = useState<Set<number>>(new Set());
+  const [fixedCard, setFixedCard] = useState<string | null>(null);
+  const [showCheckPanel, setShowCheckPanel] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load history on mount
@@ -292,6 +298,77 @@ export default function GeneratePage() {
     setHistory(getGenerateHistory());
   }, []);
 
+  // Card conflict check
+  const handleCardCheck = useCallback(async () => {
+    const ak = getApiKey();
+    if (!englishCard.trim() || !ak) return;
+    setIsChecking(true);
+    setCheckIssues([]);
+    setSelectedIssues(new Set());
+    setFixedCard(null);
+    setShowCheckPanel(true);
+    try {
+      const res = await fetch('/api/card-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userCard: englishCard, charInfo: charInfo || undefined, greeting: greeting || undefined, apiKey: ak }),
+      });
+      const data = await res.json();
+      if (data.issues && data.issues.length > 0) {
+        setCheckIssues(data.issues);
+        // Auto-select high severity
+        const highIdx = data.issues
+          .map((iss: { severity: string }, i: number) => iss.severity === 'high' ? i : -1)
+          .filter((i: number) => i >= 0);
+        setSelectedIssues(new Set(highIdx));
+      } else if (data.issues) {
+        setCheckIssues([]);
+      } else {
+        setCheckIssues([]);
+      }
+    } catch {
+      setCheckIssues([]);
+    } finally {
+      setIsChecking(false);
+    }
+  }, [englishCard, charInfo, greeting]);
+
+  // Auto-fix selected issues
+  const handleCardFix = useCallback(async () => {
+    const key = getApiKey();
+    if (selectedIssues.size === 0 || !key) return;
+    setIsFixing(true);
+    setFixedCard(null);
+    const issuesToFix = checkIssues.filter((_, i) => selectedIssues.has(i));
+    try {
+      const res = await fetch('/api/card-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userCard: englishCard, charInfo: charInfo || undefined, greeting: greeting || undefined, issues: issuesToFix, apiKey: key }),
+      });
+      const data = await res.json();
+      if (data.fixedCard) {
+        setFixedCard(data.fixedCard);
+      }
+    } catch {
+      // silent
+    } finally {
+      setIsFixing(false);
+    }
+  }, [englishCard, charInfo, greeting, checkIssues, selectedIssues]);
+
+  // Accept fixed card
+  const handleAcceptFix = useCallback(() => {
+    if (fixedCard) {
+      setEnglishCard(fixedCard);
+      setChineseCard('');
+      setThinkingContent('');
+      setFixedCard(null);
+      setCheckIssues([]);
+      setShowCheckPanel(false);
+    }
+  }, [fixedCard]);
+
   return (
     <div className="page-enter space-y-4 md:space-y-6">
       <h1 className="text-lg md:text-xl font-semibold text-foreground">生成 User 面具</h1>
@@ -439,6 +516,9 @@ export default function GeneratePage() {
                 <Button onClick={handleRefresh} variant="outline" size="sm" title="重新生成整卡" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
                   <IconRefresh className="w-4 h-4" /> 刷新
                 </Button>
+                <Button onClick={handleCardCheck} disabled={isChecking} variant="outline" size="sm" title="冲突检测" className="gap-1.5 h-9 md:h-8 text-xs md:text-sm">
+                  <IconShield className="w-4 h-4" /> {isChecking ? '检测中...' : '检测'}
+                </Button>
                 <Button
                   onClick={() => setShowHistory(!showHistory)}
                   variant="outline"
@@ -516,6 +596,103 @@ export default function GeneratePage() {
                       </div>
                     );
                   })()
+                )}
+              </div>
+            )}
+
+            {/* Check panel inside result card */}
+            {showCheckPanel && (
+              <div className="mt-3 border border-amber-300/30 bg-amber-50/50 rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-amber-700">冲突检测</span>
+                  <button
+                    onClick={() => { setShowCheckPanel(false); setCheckIssues([]); setSelectedIssues(new Set()); }}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    关闭
+                  </button>
+                </div>
+                {isChecking ? (
+                  <div className="flex items-center justify-center py-6 gap-2">
+                    <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-muted-foreground">检测中...</span>
+                  </div>
+                ) : isFixing ? (
+                  <div className="flex items-center justify-center py-6 gap-2">
+                    <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-muted-foreground">修正中...</span>
+                  </div>
+                ) : checkIssues.length === 0 ? (
+                  <div className="text-center py-4">
+                    <span className="text-sm text-green-600 font-medium">未发现冲突，角色卡设定一致</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {checkIssues.map((issue, i) => (
+                      <div
+                        key={i}
+                        className={`rounded-lg border p-2.5 space-y-1.5 cursor-pointer transition-colors ${
+                          selectedIssues.has(i) ? 'border-amber-300 bg-amber-50' : 'border-jai-card-border bg-white/50'
+                        }`}
+                        onClick={() => {
+                          const next = new Set(selectedIssues);
+                          if (next.has(i)) next.delete(i); else next.add(i);
+                          setSelectedIssues(next);
+                        }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedIssues.has(i)}
+                            onChange={() => {
+                              const next = new Set(selectedIssues);
+                              if (next.has(i)) next.delete(i); else next.add(i);
+                              setSelectedIssues(next);
+                            }}
+                            className="mt-0.5 accent-amber-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                issue.severity === 'high' ? 'bg-red-100 text-red-700' :
+                                issue.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                'bg-blue-100 text-blue-700'
+                              }`}>
+                                {issue.severity === 'high' ? '高' : issue.severity === 'medium' ? '中' : '低'}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                {issue.type === 'contradiction' ? '矛盾' : issue.type === 'inconsistency' ? '不一致' : '遗漏'}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">{issue.fields.join(', ')}</span>
+                            </div>
+                            <p className="text-[11px] text-jai-text leading-relaxed">{issue.description}</p>
+                            {issue.suggestion && (
+                              <p className="text-[10px] text-green-600 leading-relaxed">建议: {issue.suggestion}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        onClick={() => {
+                          if (selectedIssues.size === checkIssues.length) setSelectedIssues(new Set());
+                          else setSelectedIssues(new Set(checkIssues.map((_, i) => i)));
+                        }}
+                        className="text-[11px] text-amber-600 hover:text-amber-700 transition-colors"
+                      >
+                        {selectedIssues.size === checkIssues.length ? '取消全选' : '全选'}
+                      </button>
+                      <button
+                        onClick={handleCardFix}
+                        disabled={selectedIssues.size === 0}
+                        className="text-xs px-3 py-1.5 rounded-full bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        修正选中 ({selectedIssues.size})
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

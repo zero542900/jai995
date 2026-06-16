@@ -1,53 +1,71 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { copyToClipboard } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { IconCopy, IconFlip, IconRefresh, IconSave } from '@/components/icons';
-import { getApiKey, createPreset, savePreset } from '@/lib/storage';
+import { IconCopy, IconFlip, IconRefresh, IconSave, IconHistory } from '@/components/icons';
+import { getApiKey, createPreset, savePreset, addGenerateHistory, getGenerateHistory, deleteGenerateHistoryEntry } from '@/lib/storage';
+import type { GenerateHistory } from '@/lib/types';
 
-/** 解析 User 卡文本为字段列表 */
-function parseFields(text: string): { key: string; value: string }[] {
-  const fields: { key: string; value: string }[] = [];
-  const regex = /\*\*([^*]+)\*\*:\s*([\s\S]*?)(?=\n\*\*|$)/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    fields.push({ key: match[1].trim(), value: match[2].trim() });
-  }
-  return fields;
+/** 解析 User 卡文本为分区结构 */
+interface CardSection {
+  title: string;
+  fields: { key: string; value: string }[];
 }
 
-/** 从字段列表还原完整文本 */
-function buildCardText(fields: { key: string; value: string }[], sectionHeaders: string[]): string {
-  let result = '[System Note: This card defines the user\'s persona. Do not break character. Keep responses grounded in the events and details below.]\n\n';
-  let fieldIdx = 0;
-  for (const header of sectionHeaders) {
-    result += header + '\n';
-    // count fields under this header - approximate by known template
-    const fieldsPerSection: Record<string, number> = {
-      '# Basic Information': 6,
-      '# Appearance & Physical Traits': 5,
-      '# Personality & Psychological Profile': 5,
-      '# Background & History (Short Bio)': 2,
-      '# Interaction & Dialogue Rules': 3,
-    };
-    const count = fieldsPerSection[header] || 0;
-    for (let i = 0; i < count && fieldIdx < fields.length; i++) {
-      const f = fields[fieldIdx];
-      if (header === '# Interaction & Dialogue Rules' && f.key === 'Style guideline') {
-        result += `*[Style guideline: Keep it realistic, no godmodding]*\n`;
-        fieldIdx++;
-        continue;
-      }
-      result += `**${f.key}**: ${f.value}\n`;
-      fieldIdx++;
-    }
-    result += '\n';
+function parseCardSections(text: string): CardSection[] {
+  const sections: CardSection[] = [];
+  const sectionRegex = /^# (.+)$/gm;
+  const matches: { title: string; startIndex: number }[] = [];
+  let match;
+  while ((match = sectionRegex.exec(text)) !== null) {
+    matches.push({ title: match[1], startIndex: match.index + match[0].length });
   }
-  return result.trim();
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i].startIndex;
+    const end = i + 1 < matches.length ? matches[i + 1].startIndex - matches[i + 1].title.length - 2 : text.length;
+    const sectionText = text.slice(start, end).trim();
+    const fields: { key: string; value: string }[] = [];
+    const fieldRegex = /\*\*([^*]+)\*\*:\s*([\s\S]*?)(?=\n\*\*|$)/g;
+    let fMatch;
+    while ((fMatch = fieldRegex.exec(sectionText)) !== null) {
+      fields.push({ key: fMatch[1].trim(), value: fMatch[2].trim() });
+    }
+    if (fields.length > 0 || sectionText.length > 0) {
+      sections.push({ title: matches[i].title, fields });
+    }
+  }
+  return sections;
+}
+
+/** 卡片视图组件 */
+function UserCardView({ text, label }: { text: string; label?: string }) {
+  const sections = useMemo(() => parseCardSections(text), [text]);
+  if (!text) return null;
+  return (
+    <div className="space-y-3">
+      {label && <div className="text-xs text-muted-foreground mb-1">{label}</div>}
+      {sections.map((section, idx) => (
+        <div key={idx} className="rounded-lg border border-jai-card-border/60 bg-white/50 overflow-hidden">
+          <div className="px-3 py-1.5 bg-jai-secondary/20 border-b border-jai-card-border/40">
+            <span className="text-xs font-medium text-jai-accent">{section.title}</span>
+          </div>
+          <div className="px-3 py-2 space-y-1.5">
+            {section.fields.map((field, fIdx) => (
+              <div key={fIdx} className="text-xs md:text-sm leading-relaxed">
+                <span className="font-medium text-jai-primary">{field.key}</span>
+                <span className="text-muted-foreground mx-1">:</span>
+                <span className="text-jai-text">{field.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function GeneratePage() {
@@ -65,10 +83,14 @@ export default function GeneratePage() {
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const [thinkingContent, setThinkingContent] = useState('');
   const [modelChoice, setModelChoice] = useState<'flash' | 'pro'>(typeof window !== 'undefined' ? (localStorage.getItem('jai_model_choice') as 'flash' | 'pro' || 'flash') : 'flash');
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<GenerateHistory[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
-  const parsedFields = useMemo(() => parseFields(englishCard), [englishCard]);
-  const parsedChineseFields = useMemo(() => parseFields(chineseCard), [chineseCard]);
+  // Load history on mount
+  useEffect(() => {
+    setHistory(getGenerateHistory());
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     const apiKey = getApiKey();
@@ -147,6 +169,21 @@ export default function GeneratePage() {
         }
       }
 
+      // Save to history
+      if (fullText) {
+        const entry: GenerateHistory = {
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+          englishCard: fullText,
+          chineseCard: '',
+          charInfo: charInfo.trim(),
+          userPersonality: userPersonality.trim(),
+          greeting: greeting.trim(),
+          createdAt: Date.now(),
+        };
+        addGenerateHistory(entry);
+        setHistory(getGenerateHistory());
+      }
+
       setShowSaveDialog(true);
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
@@ -155,7 +192,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [charInfo, userPersonality, greeting, router]);
+  }, [charInfo, userPersonality, greeting, thinkingEnabled, modelChoice, router]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -172,7 +209,6 @@ export default function GeneratePage() {
 
   const handleFlip = useCallback(async () => {
     if (isGenerating || isTranslating) return;
-    // If flipping to Chinese side and no translation yet, translate first
     if (showFront && !chineseCard && englishCard) {
       setIsTranslating(true);
       try {
@@ -181,7 +217,7 @@ export default function GeneratePage() {
         const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: englishCard, apiKey, thinkingEnabled }),
+          body: JSON.stringify({ text: englishCard, apiKey, thinkingEnabled, modelChoice }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -191,7 +227,7 @@ export default function GeneratePage() {
       setIsTranslating(false);
     }
     setShowFront(prev => !prev);
-  }, [showFront, chineseCard, englishCard, isGenerating, isTranslating, thinkingEnabled]);
+  }, [showFront, chineseCard, englishCard, isGenerating, isTranslating, thinkingEnabled, modelChoice]);
 
   const handleSavePreset = useCallback(() => {
     if (!presetName.trim()) {
@@ -205,11 +241,77 @@ export default function GeneratePage() {
     router.push('/presets');
   }, [presetName, charInfo, englishCard, chineseCard, userPersonality, greeting, router]);
 
+  const handleLoadHistory = useCallback((entry: GenerateHistory) => {
+    setEnglishCard(entry.englishCard);
+    setChineseCard(entry.chineseCard);
+    setShowFront(true);
+    setThinkingContent('');
+    setShowHistory(false);
+    setShowSaveDialog(true);
+  }, []);
+
+  const handleDeleteHistory = useCallback((id: string) => {
+    deleteGenerateHistoryEntry(id);
+    setHistory(getGenerateHistory());
+  }, []);
+
   return (
     <div className="page-enter space-y-4 md:space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between">
         <h1 className="text-lg md:text-xl font-semibold text-foreground">生成 User 面具</h1>
+        {history.length > 0 && (
+          <Button
+            onClick={() => setShowHistory(!showHistory)}
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+          >
+            <IconHistory className="w-4 h-4" />
+            历史 ({history.length})
+          </Button>
+        )}
       </div>
+
+      {/* History panel */}
+      {showHistory && history.length > 0 && (
+        <Card className="border-jai-thinking/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              生成历史
+              <span className="text-xs text-muted-foreground font-normal">最多保留最近 5 条</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+              {history.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="shrink-0 w-[280px] md:w-[300px] snap-start rounded-lg border border-jai-card-border bg-white/70 p-3 space-y-2 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleLoadHistory(entry)}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">
+                      {new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteHistory(entry.id); }}
+                      className="text-xs text-muted-foreground hover:text-red-400 transition-colors p-0.5"
+                    >
+                      删除
+                    </button>
+                  </div>
+                  <div className="text-xs text-jai-text line-clamp-2">
+                    {entry.userPersonality}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground line-clamp-4 leading-relaxed">
+                    {entry.englishCard.slice(0, 150)}...
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
@@ -325,12 +427,20 @@ export default function GeneratePage() {
                 <div className="text-xs text-jai-thinking/80 leading-relaxed whitespace-pre-wrap max-h-[150px] md:max-h-[200px] overflow-y-auto">{thinkingContent}</div>
               </div>
             )}
-            {/* Card content area */}
-            <div className="bg-muted/50 p-2.5 md:p-4 rounded-lg max-h-[50vh] md:max-h-[500px] overflow-y-auto">
+            {/* Card content - visual card view */}
+            <div className="max-h-[60vh] md:max-h-[600px] overflow-y-auto space-y-2">
               {showFront ? (
-                <div className="text-xs md:text-sm font-mono leading-relaxed whitespace-pre-wrap break-words">{englishCard}</div>
+                isGenerating && !englishCard.trim() ? (
+                  <div className="text-sm text-muted-foreground text-center py-8">生成中...</div>
+                ) : (
+                  <UserCardView text={englishCard} />
+                )
               ) : (
-                <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap break-words">{chineseCard || '翻译生成中...'}</div>
+                chineseCard ? (
+                  <UserCardView text={chineseCard} label="中文翻译" />
+                ) : (
+                  <div className="text-sm text-muted-foreground text-center py-8">翻译生成中...</div>
+                )
               )}
             </div>
 

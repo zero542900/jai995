@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -9,6 +9,7 @@ const KEYS = {
   MODEL_PREFERENCE: 'jai_model_choice',
   USER_TEMPLATE: 'jai_user_template',
   INSTRUCTIONS: 'jai_instructions',
+  GENERATE_HISTORY: 'jai_generate_history',
 } as const;
 
 // ========== API Key ==========
@@ -205,6 +206,39 @@ export function reorderInstructions(instructionIds: string[]): void {
     if (!instructionIds.includes(instruction.id)) ordered.push(instruction);
   }
   localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(ordered));
+}
+
+// ========== Generate History ==========
+
+const MAX_GENERATE_HISTORY = 5;
+
+export function getGenerateHistory(): GenerateHistory[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(KEYS.GENERATE_HISTORY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addGenerateHistory(entry: GenerateHistory): void {
+  if (typeof window === 'undefined') return;
+  const history = getGenerateHistory();
+  history.unshift(entry); // newest first
+  if (history.length > MAX_GENERATE_HISTORY) history.length = MAX_GENERATE_HISTORY;
+  localStorage.setItem(KEYS.GENERATE_HISTORY, JSON.stringify(history));
+}
+
+export function clearGenerateHistory(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(KEYS.GENERATE_HISTORY);
+}
+
+export function deleteGenerateHistoryEntry(id: string): void {
+  if (typeof window === 'undefined') return;
+  const history = getGenerateHistory().filter(h => h.id !== id);
+  localStorage.setItem(KEYS.GENERATE_HISTORY, JSON.stringify(history));
 }
 
 // ========== Seed Default Instructions ==========

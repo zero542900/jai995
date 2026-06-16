@@ -71,6 +71,16 @@ export interface Instruction {
   updatedAt: number;
 }
 
+export interface GenerateHistory {
+  id: string;
+  englishCard: string;
+  chineseCard: string;
+  charInfo: string;
+  userPersonality: string;
+  greeting: string;
+  createdAt: number;
+}
+
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;

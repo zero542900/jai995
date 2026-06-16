@@ -99,6 +99,21 @@ export function deletePreset(id: string): void {
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
 }
 
+export function reorderPresets(presetIds: string[]): void {
+  if (typeof window === 'undefined') return;
+  const presets = getPresets();
+  const ordered: Preset[] = [];
+  for (const id of presetIds) {
+    const preset = presets.find((p) => p.id === id);
+    if (preset) ordered.push(preset);
+  }
+  // Append any presets not in the reorder list (safety)
+  for (const preset of presets) {
+    if (!presetIds.includes(preset.id)) ordered.push(preset);
+  }
+  localStorage.setItem(KEYS.PRESETS, JSON.stringify(ordered));
+}
+
 // ========== Sessions ==========
 
 export function getSessions(): Session[] {
@@ -175,6 +190,21 @@ export function deleteInstruction(id: string): void {
   if (typeof window === 'undefined') return;
   const instructions = getInstructions().filter((i) => i.id !== id);
   localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(instructions));
+}
+
+export function reorderInstructions(instructionIds: string[]): void {
+  if (typeof window === 'undefined') return;
+  const instructions = getInstructions();
+  const ordered: Instruction[] = [];
+  for (const id of instructionIds) {
+    const instruction = instructions.find((i) => i.id === id);
+    if (instruction) ordered.push(instruction);
+  }
+  // Append any instructions not in the reorder list (safety)
+  for (const instruction of instructions) {
+    if (!instructionIds.includes(instruction.id)) ordered.push(instruction);
+  }
+  localStorage.setItem(KEYS.INSTRUCTIONS, JSON.stringify(ordered));
 }
 
 // ========== Seed Default Instructions ==========

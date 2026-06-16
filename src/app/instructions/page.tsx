@@ -1,12 +1,124 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconCopy, IconTrash, IconCheck, IconBook, IconGrip } from '@/components/icons';
 import { getInstructions, deleteInstruction, createInstruction, seedInstructions, reorderInstructions } from '@/lib/storage';
 import type { Instruction } from '@/lib/types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortableInstructionCard({
+  instruction,
+  onDelete,
+  copiedId,
+  onCopy,
+}: {
+  instruction: Instruction;
+  onDelete: (id: string, name: string) => void;
+  copiedId: string | null;
+  onCopy: (instruction: Instruction) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: instruction.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative bg-card border border-jai-card-border rounded-lg p-3 hover:shadow-[0_2px_8px_var(--color-jai-shadow)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
+    >
+      {/* 拖拽手柄 */}
+      <div
+        className="absolute top-2 left-2 cursor-grab active:cursor-grabbing text-jai-text-secondary/30 hover:text-jai-text-secondary transition-colors"
+        {...attributes}
+        {...listeners}
+      >
+        <IconGrip className="w-3 h-3" />
+      </div>
+
+      {/* 标题 */}
+      <Link href={`/instructions/${instruction.id}`}>
+        <h3 className="font-semibold text-xs text-jai-accent leading-tight mb-1.5 line-clamp-1 pl-4">
+          {instruction.name}
+        </h3>
+        <p
+          className="text-[11px] text-jai-text-secondary leading-relaxed mb-3"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {instruction.summary || instruction.name}
+        </p>
+      </Link>
+
+      {/* 操作按钮 */}
+      <div className="flex items-center gap-0.5">
+        <button
+          onClick={() => onCopy(instruction)}
+          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-jai-accent hover:bg-jai-muted transition-colors"
+          title="复制指令内容"
+        >
+          {copiedId === instruction.id ? (
+            <>
+              <IconCheck className="w-3 h-3 text-jai-success" />
+              <span className="text-jai-success">已复制</span>
+            </>
+          ) : (
+            <>
+              <IconCopy className="w-3 h-3" />
+              <span>复制</span>
+            </>
+          )}
+        </button>
+        <Link
+          href={`/instructions/${instruction.id}`}
+          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-jai-accent hover:bg-jai-muted transition-colors"
+        >
+          编辑
+        </Link>
+        <button
+          onClick={() => onDelete(instruction.id, instruction.name)}
+          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors ml-auto"
+          title="删除"
+        >
+          <IconTrash className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function InstructionsPage() {
   const [instructions, setInstructions] = useState<Instruction[]>([]);
@@ -15,9 +127,6 @@ export default function InstructionsPage() {
   const [newSummary, setNewSummary] = useState('');
   const [newContent, setNewContent] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [overIdx, setOverIdx] = useState<number | null>(null);
-  const dragCounterRef = useRef(0);
 
   const loadInstructions = useCallback(() => {
     setInstructions(getInstructions());
@@ -34,7 +143,6 @@ export default function InstructionsPage() {
       setCopiedId(instruction.id);
       setTimeout(() => setCopiedId(null), 1500);
     } catch {
-      // fallback
       const textarea = document.createElement('textarea');
       textarea.value = instruction.content;
       document.body.appendChild(textarea);
@@ -66,47 +174,28 @@ export default function InstructionsPage() {
     loadInstructions();
   }, [newName, newSummary, newContent, loadInstructions]);
 
-  const handleDragStart = (idx: number) => {
-    setDragIdx(idx);
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
-  const handleDragEnter = (idx: number) => {
-    dragCounterRef.current++;
-    setOverIdx(idx);
-  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-  const handleDragLeave = () => {
-    dragCounterRef.current--;
-    if (dragCounterRef.current === 0) {
-      setOverIdx(null);
-    }
-  };
+    const oldIndex = instructions.findIndex((i) => i.id === active.id);
+    const newIndex = instructions.findIndex((i) => i.id === over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (idx: number) => {
-    if (dragIdx === null || dragIdx === idx) {
-      setDragIdx(null);
-      setOverIdx(null);
-      dragCounterRef.current = 0;
-      return;
-    }
-    const newInstructions = [...instructions];
-    const [moved] = newInstructions.splice(dragIdx, 1);
-    newInstructions.splice(idx, 0, moved);
+    const newInstructions = arrayMove(instructions, oldIndex, newIndex);
     setInstructions(newInstructions);
     reorderInstructions(newInstructions.map((i) => i.id));
-    setDragIdx(null);
-    setOverIdx(null);
-    dragCounterRef.current = 0;
-  };
-
-  const handleDragEnd = () => {
-    setDragIdx(null);
-    setOverIdx(null);
-    dragCounterRef.current = 0;
   };
 
   return (
@@ -156,7 +245,7 @@ export default function InstructionsPage() {
         </Card>
       )}
 
-      {/* 指令卡片列表 - 紧凑小卡片 */}
+      {/* 指令卡片列表 */}
       {instructions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <IconBook className="w-12 h-12 mb-3 opacity-30" />
@@ -164,74 +253,25 @@ export default function InstructionsPage() {
           <p className="text-xs mt-1">点击右上角「新增指令」添加</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-          {instructions.map((instruction, idx) => {
-            const isDragging = dragIdx === idx;
-            const isDragOver = overIdx === idx && dragIdx !== idx;
-            return (
-              <div
-                key={instruction.id}
-                draggable
-                onDragStart={() => handleDragStart(idx)}
-                onDragEnter={() => handleDragEnter(idx)}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(idx)}
-                onDragEnd={handleDragEnd}
-                className={`group relative bg-card border border-jai-card-border rounded-lg p-3 hover:shadow-[0_2px_8px_var(--color-jai-shadow)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${isDragging ? 'opacity-40 scale-[0.97]' : ''} ${isDragOver ? 'border-primary/60 shadow-md ring-1 ring-primary/20' : ''}`}
-              >
-                {/* 拖拽手柄 */}
-                <div className="absolute top-2 left-2 cursor-grab active:cursor-grabbing text-jai-text-secondary/30 hover:text-jai-text-secondary transition-colors">
-                  <IconGrip className="w-3 h-3" />
-                </div>
-
-                {/* 标题 */}
-                <Link href={`/instructions/${instruction.id}`}>
-                  <h3 className="font-semibold text-xs text-jai-accent leading-tight mb-1.5 line-clamp-1 pl-4">
-                    {instruction.name}
-                  </h3>
-                  <p className="text-[11px] text-jai-text-secondary leading-relaxed mb-3" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {instruction.summary || instruction.name}
-                  </p>
-                </Link>
-
-                {/* 操作按钮 - 底部紧凑排列 */}
-                <div className="flex items-center gap-0.5">
-                  <button
-                    onClick={() => handleCopy(instruction)}
-                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-jai-accent hover:bg-jai-muted transition-colors"
-                    title="复制指令内容"
-                  >
-                    {copiedId === instruction.id ? (
-                      <>
-                        <IconCheck className="w-3 h-3 text-jai-success" />
-                        <span className="text-jai-success">已复制</span>
-                      </>
-                    ) : (
-                      <>
-                        <IconCopy className="w-3 h-3" />
-                        <span>复制</span>
-                      </>
-                    )}
-                  </button>
-                  <Link
-                    href={`/instructions/${instruction.id}`}
-                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-jai-accent hover:bg-jai-muted transition-colors"
-                  >
-                    编辑
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(instruction.id, instruction.name)}
-                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] text-jai-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors ml-auto"
-                    title="删除"
-                  >
-                    <IconTrash className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={instructions.map((i) => i.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {instructions.map((instruction) => (
+                <SortableInstructionCard
+                  key={instruction.id}
+                  instruction={instruction}
+                  onDelete={handleDelete}
+                  copiedId={copiedId}
+                  onCopy={handleCopy}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );

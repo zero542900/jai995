@@ -1,18 +1,118 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconTrash, IconGrip } from '@/components/icons';
 import { getPresets, deletePreset, getSessionsByPreset, reorderPresets } from '@/lib/storage';
 import type { Preset } from '@/lib/types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortablePresetCard({
+  preset,
+  onDelete,
+  truncate,
+  getSessionStatus,
+}: {
+  preset: Preset;
+  onDelete: (id: string, name: string) => void;
+  truncate: (text: string, max: number) => string;
+  getSessionStatus: (presetId: string) => { label: string; color: string };
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: preset.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const status = getSessionStatus(preset.id);
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`border-jai-card-border hover:border-primary/40 hover:shadow-sm transition-shadow cursor-pointer group ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
+    >
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-1.5 flex-1 min-w-0">
+            <div
+              className="mt-0.5 cursor-grab active:cursor-grabbing text-jai-text-secondary/40 hover:text-jai-text-secondary transition-colors shrink-0"
+              {...attributes}
+              {...listeners}
+            >
+              <IconGrip className="w-3.5 h-3.5" />
+            </div>
+            <Link href={`/presets/${preset.id}`} className="min-w-0">
+              <h3 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">
+                {preset.name}
+              </h3>
+            </Link>
+          </div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(preset.id, preset.name);
+            }}
+            className="text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5"
+          >
+            <IconTrash className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <div className="space-y-1 text-xs text-muted-foreground pl-5">
+          <p>
+            <span className="text-foreground/60">Char:</span>{' '}
+            {truncate(preset.charInfo, 60)}
+          </p>
+          <p>
+            <span className="text-foreground/60">User:</span>{' '}
+            {truncate(preset.userCard, 60)}
+          </p>
+          {(preset.plotData?.currentMainLineCn || preset.plotData?.currentMainLine) && (
+            <p>
+              <span className="text-foreground/60">剧情:</span>{' '}
+              {truncate(preset.plotData.currentMainLineCn || preset.plotData.currentMainLine, 40)}
+            </p>
+          )}
+        </div>
+        <div className="pt-1 border-t border-jai-muted ml-5">
+          <span className={`text-[11px] ${status.color}`}>
+            {status.label}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function PresetsPage() {
   const [presets, setPresets] = useState<Preset[]>([]);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [overIdx, setOverIdx] = useState<number | null>(null);
-  const dragCounterRef = useRef(0);
 
   const loadPresets = useCallback(() => {
     setPresets(getPresets());
@@ -32,47 +132,28 @@ export default function PresetsPage() {
     [loadPresets],
   );
 
-  const handleDragStart = (idx: number) => {
-    setDragIdx(idx);
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
-  const handleDragEnter = (idx: number) => {
-    dragCounterRef.current++;
-    setOverIdx(idx);
-  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-  const handleDragLeave = () => {
-    dragCounterRef.current--;
-    if (dragCounterRef.current === 0) {
-      setOverIdx(null);
-    }
-  };
+    const oldIndex = presets.findIndex((p) => p.id === active.id);
+    const newIndex = presets.findIndex((p) => p.id === over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (idx: number) => {
-    if (dragIdx === null || dragIdx === idx) {
-      setDragIdx(null);
-      setOverIdx(null);
-      dragCounterRef.current = 0;
-      return;
-    }
-    const newPresets = [...presets];
-    const [moved] = newPresets.splice(dragIdx, 1);
-    newPresets.splice(idx, 0, moved);
+    const newPresets = arrayMove(presets, oldIndex, newIndex);
     setPresets(newPresets);
     reorderPresets(newPresets.map((p) => p.id));
-    setDragIdx(null);
-    setOverIdx(null);
-    dragCounterRef.current = 0;
-  };
-
-  const handleDragEnd = () => {
-    setDragIdx(null);
-    setOverIdx(null);
-    dragCounterRef.current = 0;
   };
 
   const truncate = (text: string, max: number) => {
@@ -111,75 +192,25 @@ export default function PresetsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {presets.map((preset, idx) => {
-            const status = getSessionStatus(preset.id);
-            const isDragging = dragIdx === idx;
-            const isDragOver = overIdx === idx && dragIdx !== idx;
-            return (
-              <Card
-                key={preset.id}
-                draggable
-                onDragStart={() => handleDragStart(idx)}
-                onDragEnter={() => handleDragEnter(idx)}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(idx)}
-                onDragEnd={handleDragEnd}
-                className={`border-jai-card-border hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group ${isDragging ? 'opacity-40 scale-[0.97]' : ''} ${isDragOver ? 'border-primary/60 shadow-md ring-1 ring-primary/20' : ''}`}
-              >
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-1.5 flex-1 min-w-0">
-                      <div
-                        className="mt-0.5 cursor-grab active:cursor-grabbing text-jai-text-secondary/40 hover:text-jai-text-secondary transition-colors shrink-0"
-                        onMouseDown={(e) => e.stopPropagation()}
-                      >
-                        <IconGrip className="w-3.5 h-3.5" />
-                      </div>
-                      <Link href={`/presets/${preset.id}`} className="min-w-0">
-                        <h3 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">
-                          {preset.name}
-                        </h3>
-                      </Link>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(preset.id, preset.name);
-                      }}
-                      className="text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5"
-                    >
-                      <IconTrash className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="space-y-1 text-xs text-muted-foreground pl-5">
-                    <p>
-                      <span className="text-foreground/60">Char:</span>{' '}
-                      {truncate(preset.charInfo, 60)}
-                    </p>
-                    <p>
-                      <span className="text-foreground/60">User:</span>{' '}
-                      {truncate(preset.userCard, 60)}
-                    </p>
-                    {(preset.plotData?.currentMainLineCn || preset.plotData?.currentMainLine) && (
-                      <p>
-                        <span className="text-foreground/60">剧情:</span>{' '}
-                        {truncate(preset.plotData.currentMainLineCn || preset.plotData.currentMainLine, 40)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="pt-1 border-t border-jai-muted ml-5">
-                    <span className={`text-[11px] ${status.color}`}>
-                      {status.label}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={presets.map((p) => p.id)} strategy={rectSortingStrategy}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {presets.map((preset) => (
+                <SortablePresetCard
+                  key={preset.id}
+                  preset={preset}
+                  onDelete={handleDelete}
+                  truncate={truncate}
+                  getSessionStatus={getSessionStatus}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );

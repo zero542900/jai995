@@ -165,9 +165,48 @@ export default function InstructionsPage() {
     [loadInstructions],
   );
 
-  const handleCreate = useCallback(() => {
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
+  const handleAutoSummarize = useCallback(async () => {
+    if (!newContent.trim()) return;
+    const apiKey = localStorage.getItem('jai_api_key');
+    if (!apiKey) return;
+    setIsSummarizing(true);
+    try {
+      const res = await fetch('/api/instruction-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newContent.trim(), apiKey }),
+      });
+      const data = await res.json();
+      if (data.summary) setNewSummary(data.summary);
+    } catch {
+      // silently fail
+    }
+    setIsSummarizing(false);
+  }, [newContent]);
+
+  const handleCreate = useCallback(async () => {
     if (!newName.trim() || !newContent.trim()) return;
-    createInstruction(newName.trim(), newContent.trim(), newSummary.trim() || newName.trim());
+    let finalSummary = newSummary.trim() || newName.trim();
+    // Auto-generate summary if user didn't provide one
+    if (!newSummary.trim()) {
+      const apiKey = localStorage.getItem('jai_api_key');
+      if (apiKey) {
+        try {
+          const res = await fetch('/api/instruction-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: newContent.trim(), apiKey }),
+          });
+          const data = await res.json();
+          if (data.summary) finalSummary = data.summary;
+        } catch {
+          // fallback to name
+        }
+      }
+    }
+    createInstruction(newName.trim(), newContent.trim(), finalSummary);
     setNewName('');
     setNewSummary('');
     setNewContent('');
@@ -226,13 +265,23 @@ export default function InstructionsPage() {
               onChange={(e) => setNewName(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
-            <input
-              type="text"
-              placeholder="中文简介（卡片上显示的描述，选填，默认使用名称）"
-              value={newSummary}
-              onChange={(e) => setNewSummary(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="中文简介（卡片上显示的描述，选填，留空自动生成）"
+                value={newSummary}
+                onChange={(e) => setNewSummary(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                onClick={handleAutoSummarize}
+                disabled={isSummarizing || !newContent.trim()}
+                className="shrink-0 px-2.5 py-2 rounded-lg border border-border text-xs text-jai-text-secondary hover:text-jai-accent hover:border-jai-accent/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isSummarizing ? '生成中...' : '自动总结'}
+              </button>
+            </div>
             <textarea
               placeholder="完整指令内容"
               value={newContent}

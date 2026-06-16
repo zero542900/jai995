@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { IconTrash, IconGrip } from '@/components/icons';
-import { getPresets, deletePreset, getSessionsByPreset, reorderPresets } from '@/lib/storage';
+import { IconTrash, IconGrip, IconDownload, IconUpload } from '@/components/icons';
+import { getPresets, deletePreset, getSessionsByPreset, reorderPresets, exportPresetData, importPresetData } from '@/lib/storage';
+import type { ExportData } from '@/lib/storage';
 import type { Preset } from '@/lib/types';
 import {
   DndContext,
@@ -29,6 +30,7 @@ import { CSS } from '@dnd-kit/utilities';
 function SortablePresetCard({
   preset,
   onDelete,
+  onExport,
   truncate,
   getSessionStatus,
   isSelected,
@@ -36,6 +38,7 @@ function SortablePresetCard({
 }: {
   preset: Preset;
   onDelete: (id: string, name: string) => void;
+  onExport: (id: string, name: string) => void;
   truncate: (text: string, max: number) => string;
   getSessionStatus: (presetId: string) => { label: string; color: string };
   isSelected: boolean;
@@ -80,16 +83,29 @@ function SortablePresetCard({
               </h3>
             </Link>
           </div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(preset.id, preset.name);
-            }}
-            className="text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5"
-          >
-            <IconTrash className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onExport(preset.id, preset.name);
+              }}
+              className="text-muted-foreground hover:text-primary md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5"
+              title="导出"
+            >
+              <IconDownload className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(preset.id, preset.name);
+              }}
+              className="text-muted-foreground hover:text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5"
+            >
+              <IconTrash className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
         <div className="space-y-1 text-xs text-muted-foreground pl-5">
           <p>
@@ -117,7 +133,7 @@ function SortablePresetCard({
   );
 }
 
-function DetailPanel({ preset, truncate }: { preset: Preset | null; truncate: (text: string, max: number) => string }) {
+function DetailPanel({ preset, truncate, onExport }: { preset: Preset | null; truncate: (text: string, max: number) => string; onExport: () => void }) {
   if (!preset) {
     return (
       <Card className="border-jai-card-border h-full">
@@ -190,10 +206,14 @@ function DetailPanel({ preset, truncate }: { preset: Preset | null; truncate: (t
           )}
         </div>
 
-        <div className="pt-2 border-t border-jai-card-border">
+        <div className="pt-2 border-t border-jai-card-border space-y-2">
           <Link href={`/presets/${preset.id}`}>
             <Button size="sm" className="w-full">进入预设</Button>
           </Link>
+          <Button size="sm" variant="outline" className="w-full" onClick={onExport}>
+            <IconDownload className="w-3.5 h-3.5 mr-1.5" />
+            导出预设
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -268,15 +288,57 @@ export default function PresetsPage() {
 
   const selectedPreset = presets.find(p => p.id === selectedId) || null;
 
+  const handleExport = useCallback((id: string, name: string) => {
+    const data = exportPresetData(id);
+    if (!data) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `JAI_${name.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_')}_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleImport = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text) as ExportData;
+        if (!data.version || !data.preset) {
+          alert('无效的预设文件');
+          return;
+        }
+        const newId = importPresetData(data);
+        setSelectedId(newId);
+        loadPresets();
+      } catch {
+        alert('导入失败：文件格式错误');
+      }
+    };
+    input.click();
+  }, [loadPresets]);
+
   return (
     <div className="page-enter space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">预设库</h1>
-        <Link href="/">
-          <Button size="sm" variant="outline">
-            + 新建预设
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={handleImport}>
+            <IconUpload className="w-3.5 h-3.5 mr-1.5" />
+            导入
           </Button>
-        </Link>
+          <Link href="/">
+            <Button size="sm" variant="outline">
+              + 新建预设
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {presets.length === 0 ? (
@@ -306,6 +368,7 @@ export default function PresetsPage() {
                       key={preset.id}
                       preset={preset}
                       onDelete={handleDelete}
+                      onExport={handleExport}
                       truncate={truncate}
                       getSessionStatus={getSessionStatus}
                       isSelected={selectedId === preset.id}
@@ -319,7 +382,7 @@ export default function PresetsPage() {
 
           {/* Right: Detail Panel (PC only) */}
           <div className="hidden md:block w-[340px] shrink-0 sticky top-4 self-start">
-            <DetailPanel preset={selectedPreset} truncate={truncate} />
+            <DetailPanel preset={selectedPreset} truncate={truncate} onExport={() => selectedPreset && handleExport(selectedPreset.id, selectedPreset.name)} />
           </div>
         </div>
       )}

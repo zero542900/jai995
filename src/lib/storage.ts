@@ -436,6 +436,59 @@ export function deleteSession(id: string): void {
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
 }
 
+// ========== Export / Import ==========
+
+export interface ExportData {
+  version: 1;
+  preset: Omit<Preset, 'id' | 'createdAt' | 'updatedAt'>;
+  sessions: Array<{
+    name: string;
+    messages: ChatMessage[];
+  }>;
+  exportedAt: number;
+}
+
+export function exportPresetData(presetId: string): ExportData | null {
+  const preset = getPreset(presetId);
+  if (!preset) return null;
+  const sessions = getSessionsByPreset(presetId);
+  const { id: _id, createdAt: _c, updatedAt: _u, ...presetData } = preset;
+  return {
+    version: 1,
+    preset: presetData,
+    sessions: sessions.map((s) => ({
+      name: s.name,
+      messages: s.messages,
+    })),
+    exportedAt: Date.now(),
+  };
+}
+
+export function importPresetData(data: ExportData): string {
+  const newPresetId = generateId();
+  const now = Date.now();
+  const preset: Preset = {
+    ...data.preset,
+    id: newPresetId,
+    createdAt: now,
+    updatedAt: now,
+  };
+  savePreset(preset);
+  for (const sess of data.sessions) {
+    const session: Session = {
+      id: generateId(),
+      presetId: newPresetId,
+      name: sess.name,
+      messages: sess.messages,
+      longTermMemory: '',
+      createdAt: now,
+      updatedAt: now,
+    };
+    saveSession(session);
+  }
+  return newPresetId;
+}
+
 // ========== Helpers ==========
 
 export function generateId(): string {

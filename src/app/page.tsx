@@ -14,29 +14,34 @@ import type { GenerateHistory } from '@/lib/types';
 interface CardSection {
   title: string;
   fields: { key: string; value: string }[];
+  rawText?: string;
 }
 
 function parseCardSections(text: string): CardSection[] {
   const sections: CardSection[] = [];
-  const sectionRegex = /^# (.+)$/gm;
+  // Match lines starting with # (with optional leading whitespace)
+  const sectionRegex = /^[ \t]*# (.+)$/gm;
   const matches: { title: string; startIndex: number }[] = [];
   let match;
   while ((match = sectionRegex.exec(text)) !== null) {
-    matches.push({ title: match[1], startIndex: match.index + match[0].length });
+    matches.push({ title: match[1].trim(), startIndex: match.index + match[0].length });
   }
+
+  // No sections found — return empty, will trigger fallback
+  if (matches.length === 0) return [];
+
   for (let i = 0; i < matches.length; i++) {
     const start = matches[i].startIndex;
-    const end = i + 1 < matches.length ? matches[i + 1].startIndex - matches[i + 1].title.length - 2 : text.length;
+    const end = i + 1 < matches.length ? matches[i + 1].startIndex - (matches[i + 1].title.length + 2) : text.length;
     const sectionText = text.slice(start, end).trim();
     const fields: { key: string; value: string }[] = [];
-    const fieldRegex = /\*\*([^*]+)\*\*:\s*([\s\S]*?)(?=\n\*\*|$)/g;
+    // Match **Key**: Value — allow multiline values until next **Key**: or end
+    const fieldRegex = /\*\*([^*]+)\*\*:\s*([\s\S]*?)(?=\n[ \t]*\*\*|$)/g;
     let fMatch;
     while ((fMatch = fieldRegex.exec(sectionText)) !== null) {
       fields.push({ key: fMatch[1].trim(), value: fMatch[2].trim() });
     }
-    if (fields.length > 0 || sectionText.length > 0) {
-      sections.push({ title: matches[i].title, fields });
-    }
+    sections.push({ title: matches[i].title, fields, rawText: sectionText });
   }
   return sections;
 }
@@ -45,6 +50,15 @@ function parseCardSections(text: string): CardSection[] {
 function UserCardView({ text, label }: { text: string; label?: string }) {
   const sections = useMemo(() => parseCardSections(text), [text]);
   if (!text) return null;
+  // Fallback: if parsing yields nothing, show raw text
+  if (sections.length === 0) {
+    return (
+      <div>
+        {label && <div className="text-xs text-muted-foreground mb-1">{label}</div>}
+        <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap text-jai-text font-mono">{text}</div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-3">
       {label && <div className="text-xs text-muted-foreground mb-1">{label}</div>}
@@ -58,9 +72,13 @@ function UserCardView({ text, label }: { text: string; label?: string }) {
               <div key={fIdx} className="text-xs md:text-sm leading-relaxed">
                 <span className="font-medium text-jai-primary">{field.key}</span>
                 <span className="text-muted-foreground mx-1">:</span>
-                <span className="text-jai-text">{field.value}</span>
+                <span className="text-jai-text whitespace-pre-wrap">{field.value}</span>
               </div>
             ))}
+            {/* Render any leftover text that wasn't parsed as fields */}
+            {section.rawText && section.fields.length === 0 && (
+              <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap text-jai-text">{section.rawText}</div>
+            )}
           </div>
         </div>
       ))}

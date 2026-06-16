@@ -81,6 +81,14 @@ export interface GenerateHistory {
   createdAt: number;
 }
 
+export interface ExpandHistory {
+  id: string;
+  brief: string;
+  englishText: string;
+  chineseText: string;
+  createdAt: number;
+}
+
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;

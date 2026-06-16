@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction, GenerateHistory } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -10,6 +10,7 @@ const KEYS = {
   USER_TEMPLATE: 'jai_user_template',
   INSTRUCTIONS: 'jai_instructions',
   GENERATE_HISTORY: 'jai_generate_history',
+  EXPAND_HISTORY: 'jai_expand_history',
 } as const;
 
 // ========== API Key ==========
@@ -239,6 +240,39 @@ export function deleteGenerateHistoryEntry(id: string): void {
   if (typeof window === 'undefined') return;
   const history = getGenerateHistory().filter(h => h.id !== id);
   localStorage.setItem(KEYS.GENERATE_HISTORY, JSON.stringify(history));
+}
+
+// ========== Expand History ==========
+
+const MAX_EXPAND_HISTORY = 5;
+
+export function getExpandHistory(): ExpandHistory[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(KEYS.EXPAND_HISTORY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addExpandHistory(entry: ExpandHistory): void {
+  if (typeof window === 'undefined') return;
+  const history = getExpandHistory();
+  history.unshift(entry); // newest first
+  if (history.length > MAX_EXPAND_HISTORY) history.length = MAX_EXPAND_HISTORY;
+  localStorage.setItem(KEYS.EXPAND_HISTORY, JSON.stringify(history));
+}
+
+export function clearExpandHistory(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(KEYS.EXPAND_HISTORY);
+}
+
+export function deleteExpandHistoryEntry(id: string): void {
+  if (typeof window === 'undefined') return;
+  const history = getExpandHistory().filter(h => h.id !== id);
+  localStorage.setItem(KEYS.EXPAND_HISTORY, JSON.stringify(history));
 }
 
 // ========== Seed Default Instructions ==========

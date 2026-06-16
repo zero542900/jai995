@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IconBack, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown } from '@/components/icons';
+import { IconBack, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown, IconHistory } from '@/components/icons';
 import { copyToClipboard } from '@/lib/utils';
-import type { PlotData } from '@/lib/types';
+import type { PlotData, ExpandHistory } from '@/lib/types';
+import { addExpandHistory, getExpandHistory, deleteExpandHistoryEntry } from '@/lib/storage';
 
 // ========== Types ==========
 interface ChatMessage {
@@ -146,6 +147,8 @@ function ChatPageInner() {
   const [expandResult, setExpandResult] = useState<{ en: string; cn: string } | null>(null);
   const [expandFlipped, setExpandFlipped] = useState(false);
   const [expandTranslating, setExpandTranslating] = useState(false);
+  const [showExpandHistory, setShowExpandHistory] = useState(false);
+  const [expandHistory, setExpandHistory] = useState<ExpandHistory[]>([]);
 
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
@@ -509,6 +512,16 @@ function ChatPageInner() {
       }
 
       setExpandResult({ en: fullText.trim(), cn: '' });
+      // Save to expand history
+      if (fullText.trim()) {
+        addExpandHistory({
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+          brief: expandBrief,
+          englishText: fullText.trim(),
+          chineseText: '',
+          createdAt: Date.now(),
+        });
+      }
     } catch {
       showNotification('扩写失败');
     } finally {
@@ -540,6 +553,24 @@ function ChatPageInner() {
     }
     setExpandFlipped(prev => !prev);
   };
+
+  const handleLoadExpandHistory = useCallback((entry: ExpandHistory) => {
+    setExpandResult({ en: entry.englishText, cn: entry.chineseText });
+    setExpandBrief(entry.brief);
+    setExpandFlipped(false);
+    setThinkingContent('');
+    setShowExpandHistory(false);
+  }, []);
+
+  const handleShowExpandHistory = useCallback(() => {
+    setExpandHistory(getExpandHistory());
+    setShowExpandHistory(true);
+  }, []);
+
+  const handleDeleteExpandHistory = useCallback((id: string) => {
+    deleteExpandHistoryEntry(id);
+    setExpandHistory(getExpandHistory());
+  }, []);
 
   const handleMemory = async () => {
     if (!currentPreset) { showNotification('请选择预设'); return; }
@@ -893,7 +924,7 @@ function ChatPageInner() {
                       <p className="text-sm whitespace-pre-wrap">{expandFlipped ? expandResult.cn : expandResult.en}{expandLoading && !expandFlipped && <span className="inline-block w-0.5 h-4 bg-jai-accent animate-pulse ml-0.5 align-text-bottom" />}</p>
                     )}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button onClick={() => copyContent(expandResult.en)} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
                       <IconCopy className="w-3 h-3" /> 复制英文
                     </button>
@@ -906,7 +937,46 @@ function ChatPageInner() {
                     <button onClick={() => { setExpandResult(null); setThinkingContent(''); }} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
                       <IconEdit className="w-3 h-3" /> 重新编辑
                     </button>
+                    <button onClick={handleShowExpandHistory} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-jai-muted text-jai-accent hover:bg-jai-card-border">
+                      <IconHistory className="w-3 h-3" /> 历史
+                    </button>
                   </div>
+                  {/* Expand History Panel */}
+                  {showExpandHistory && (
+                    <div className="border border-jai-card-border rounded-xl p-3 mt-2 bg-jai-bg/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-jai-accent">扩写历史（最近5次）</span>
+                        <button onClick={() => setShowExpandHistory(false)} className="text-xs text-jai-text-secondary hover:text-jai-text">收起</button>
+                      </div>
+                      {expandHistory.length === 0 ? (
+                        <p className="text-xs text-jai-text-secondary text-center py-2">暂无历史</p>
+                      ) : (
+                        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                          {expandHistory.map(entry => (
+                            <div
+                              key={entry.id}
+                              onClick={() => handleLoadExpandHistory(entry)}
+                              className="p-2 rounded-lg border border-jai-card-border bg-jai-card hover:bg-jai-bg/50 cursor-pointer group"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-muted-foreground">
+                                  {new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteExpandHistory(entry.id); }}
+                                  className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors p-0.5 opacity-0 group-hover:opacity-100"
+                                >
+                                  删除
+                                </button>
+                              </div>
+                              <p className="text-xs text-jai-text-secondary mt-1 line-clamp-1">梗概: {entry.brief}</p>
+                              <p className="text-xs text-jai-text mt-1 line-clamp-2 whitespace-pre-wrap">{entry.englishText}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>

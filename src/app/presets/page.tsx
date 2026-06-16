@@ -31,11 +31,15 @@ function SortablePresetCard({
   onDelete,
   truncate,
   getSessionStatus,
+  isSelected,
+  onSelect,
 }: {
   preset: Preset;
   onDelete: (id: string, name: string) => void;
   truncate: (text: string, max: number) => string;
   getSessionStatus: (presetId: string) => { label: string; color: string };
+  isSelected: boolean;
+  onSelect: (id: string) => void;
 }) {
   const {
     attributes,
@@ -57,7 +61,8 @@ function SortablePresetCard({
     <Card
       ref={setNodeRef}
       style={style}
-      className={`border-jai-card-border hover:border-primary/40 hover:shadow-sm cursor-pointer group ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''}`}
+      onClick={() => onSelect(preset.id)}
+      className={`border-jai-card-border hover:border-primary/40 hover:shadow-sm cursor-pointer group ${isDragging ? 'opacity-50 z-50 shadow-lg' : ''} ${isSelected ? 'border-jai-accent ring-1 ring-jai-accent/30' : ''}`}
     >
       <CardContent className="p-4 space-y-2">
         <div className="flex items-start justify-between">
@@ -69,7 +74,7 @@ function SortablePresetCard({
             >
               <IconGrip className="w-3.5 h-3.5" />
             </div>
-            <Link href={`/presets/${preset.id}`} className="min-w-0">
+            <Link href={`/presets/${preset.id}`} onClick={e => e.stopPropagation()} className="min-w-0">
               <h3 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">
                 {preset.name}
               </h3>
@@ -89,16 +94,16 @@ function SortablePresetCard({
         <div className="space-y-1 text-xs text-muted-foreground pl-5">
           <p>
             <span className="text-foreground/60">Char:</span>{' '}
-            {truncate(preset.charInfo, 60)}
+            {truncate(preset.charInfo, 100)}
           </p>
           <p>
-            <span className="text-foreground/60">User:</span>{' '}
-            {truncate(preset.userCard, 60)}
+            <span className="text-foreground/60">性格:</span>{' '}
+            {truncate(preset.userPersonality, 100)}
           </p>
           {(preset.plotData?.currentMainLineCn || preset.plotData?.currentMainLine) && (
             <p>
               <span className="text-foreground/60">剧情:</span>{' '}
-              {truncate(preset.plotData.currentMainLineCn || preset.plotData.currentMainLine, 40)}
+              {truncate(preset.plotData.currentMainLineCn || preset.plotData.currentMainLine, 60)}
             </p>
           )}
         </div>
@@ -112,8 +117,92 @@ function SortablePresetCard({
   );
 }
 
+function DetailPanel({ preset, truncate }: { preset: Preset | null; truncate: (text: string, max: number) => string }) {
+  if (!preset) {
+    return (
+      <Card className="border-jai-card-border h-full">
+        <CardContent className="py-16 text-center">
+          <p className="text-sm text-muted-foreground">点击左侧预设查看详情</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-jai-card-border h-full">
+      <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)]">
+        <div>
+          <h3 className="text-sm font-semibold text-jai-accent">{preset.name}</h3>
+        </div>
+
+        <div className="space-y-2.5">
+          <div>
+            <div className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide mb-1">Char 信息</div>
+            <p className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap bg-jai-muted/50 rounded-lg p-2.5">
+              {preset.charInfo || '—'}
+            </p>
+          </div>
+
+          <div>
+            <div className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide mb-1">性格要求</div>
+            <p className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap bg-jai-muted/50 rounded-lg p-2.5">
+              {preset.userPersonality || '—'}
+            </p>
+          </div>
+
+          <div>
+            <div className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide mb-1">User 卡</div>
+            <p className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap bg-jai-muted/50 rounded-lg p-2.5 max-h-[150px] overflow-y-auto">
+              {preset.userCard || '—'}
+            </p>
+          </div>
+
+          {preset.longTermMemory && (
+            <div>
+              <div className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide mb-1">长期记忆</div>
+              <p className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap bg-jai-muted/50 rounded-lg p-2.5 max-h-[150px] overflow-y-auto">
+                {preset.longTermMemory}
+              </p>
+            </div>
+          )}
+
+          {(preset.plotData?.currentMainLine || preset.plotData?.currentMainLineCn) && (
+            <div>
+              <div className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide mb-1">剧情主线</div>
+              <p className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap bg-jai-muted/50 rounded-lg p-2.5">
+                {preset.plotData.currentMainLineCn || preset.plotData.currentMainLine}
+              </p>
+              {preset.plotData.progressDesc && (
+                <p className="text-[11px] text-jai-text-secondary mt-1.5">
+                  {preset.plotData.progressDescCn || preset.plotData.progressDesc}
+                </p>
+              )}
+            </div>
+          )}
+
+          {preset.greeting && (
+            <div>
+              <div className="text-[11px] font-medium text-jai-text-secondary uppercase tracking-wide mb-1">开场白</div>
+              <p className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap bg-jai-muted/50 rounded-lg p-2.5 max-h-[150px] overflow-y-auto">
+                {preset.greeting}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-2 border-t border-jai-card-border">
+          <Link href={`/presets/${preset.id}`}>
+            <Button size="sm" className="w-full">进入预设</Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PresetsPage() {
   const [presets, setPresets] = useState<Preset[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const loadPresets = useCallback(() => {
     setPresets(getPresets());
@@ -127,10 +216,11 @@ export default function PresetsPage() {
     (id: string, name: string) => {
       if (confirm(`确定删除预设「${name}」吗？相关会话也会一并删除。`)) {
         deletePreset(id);
+        if (selectedId === id) setSelectedId(null);
         loadPresets();
       }
     },
-    [loadPresets],
+    [loadPresets, selectedId],
   );
 
   const sensors = useSensors(
@@ -176,6 +266,8 @@ export default function PresetsPage() {
     return { label: '未打开', color: 'text-muted-foreground' };
   };
 
+  const selectedPreset = presets.find(p => p.id === selectedId) || null;
+
   return (
     <div className="page-enter space-y-6">
       <div className="flex items-center justify-between">
@@ -199,25 +291,37 @@ export default function PresetsPage() {
           </CardContent>
         </Card>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={presets.map((p) => p.id)} strategy={rectSortingStrategy}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {presets.map((preset) => (
-                <SortablePresetCard
-                  key={preset.id}
-                  preset={preset}
-                  onDelete={handleDelete}
-                  truncate={truncate}
-                  getSessionStatus={getSessionStatus}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <div className="flex gap-4 md:flex-row flex-col">
+          {/* Left: Card List */}
+          <div className="flex-1 min-w-0">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={presets.map((p) => p.id)} strategy={rectSortingStrategy}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {presets.map((preset) => (
+                    <SortablePresetCard
+                      key={preset.id}
+                      preset={preset}
+                      onDelete={handleDelete}
+                      truncate={truncate}
+                      getSessionStatus={getSessionStatus}
+                      isSelected={selectedId === preset.id}
+                      onSelect={setSelectedId}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
+
+          {/* Right: Detail Panel (PC only) */}
+          <div className="hidden md:block w-[340px] shrink-0 sticky top-4 self-start">
+            <DetailPanel preset={selectedPreset} truncate={truncate} />
+          </div>
+        </div>
       )}
     </div>
   );

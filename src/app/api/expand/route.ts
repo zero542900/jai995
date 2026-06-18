@@ -4,7 +4,7 @@ import { callDeepSeek, validateApiKey, WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMA
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { brief, charInfo, userCard, userPersonality, chatHistory, longTermMemory, personMode, apiKey, mainLinePrompt, thinkingEnabled, modelChoice } = body;
+    const { brief, charInfo, userCard, chatHistory, longTermMemory, personMode, apiKey, mainLinePrompt, thinkingEnabled, modelChoice } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -43,7 +43,7 @@ ${mainLinePrompt ? `\nMAIN STORYLINE:\n${mainLinePrompt}` : ''}
 
 CONTEXT:
 - Character (Char): ${charInfo || '(not provided)'}
-- User Persona: ${userCard || userPersonality || '(not provided)'}
+- User Persona: ${userCard || '(not provided)'}
 ${longTermMemory ? `- Long-term Memory: ${longTermMemory}` : ''}
 
 CURRENT SCENE:

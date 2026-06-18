@@ -221,11 +221,7 @@ export const WRITING_STYLE_INSTRUCTION = `
 7.1 禁止一切比喻、隐喻、拟人、象征、夸张、借代、类比。
 7.2 严禁使用任何引发联想的比拟词，包括但不限于：像、好像、仿佛、似乎、如同、犹如、宛如、若、似、似的、一般、般、如……一样。
 7.3 对感官对象的描述只限于可直接观察或测量的物理属性：形状、大小、颜色、明暗、质地、温度、湿度、声音高低长短、气味类型、动作轨迹、速度、力度，不做任何他物比较。
-    - 错误："她的声音像蜜糖。"
-    - 正确："她的声音带气声，尾音上扬。"
-    - 错误："他僵在原地，仿佛一尊石像。"
-    - 正确："他停下，四肢不再移动，肩膀线条收紧。"
-7.4 禁止将情感、氛围等抽象概念附着于物体进行变形描写（例如"空气沉重得像铅块"），只记录可感知的具体现象。
+7.4 禁止将情感、氛围等抽象概念附着于物体进行变形描写，只记录可感知的具体现象。
 7.5 如有必要对感受加以说明，只能使用无比喻的生理反应描述（如"皮肤起了一层细粒""胃部抽紧"），不得用"像……"解释。
 
 Ending & Termination Rule: All generated text MUST end on a concrete action, sensory detail, or a short line of dialogue. Strictly forbidden to conclude with any form of summary, moralizing, foreshadowing, or editorial judgment (e.g., "Things were about to change irreversibly," "A new chapter was beginning," "This foreshadowed..."). The output must cut off sharply at a factual or sensory beat. 严禁在结尾使用"事情正在起变化"、"新的篇章即将开启"、"这预示着"等评判性语句。

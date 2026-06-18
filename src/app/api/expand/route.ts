@@ -73,7 +73,7 @@ Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
       messages: [{ role: 'user', content: `Expand this brief outline into a complete passage from the User's perspective:\n\n${brief}` }],
       systemPrompt,
       stream: true,
-      maxTokens: thinkingEnabled ? 2500 : 900,
+      maxTokens: thinkingEnabled ? 4000 : 900,
     });
 
     return streamResponse(createSSEStream(response));

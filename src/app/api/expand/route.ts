@@ -52,11 +52,14 @@ ${chatHistory || '(This is the beginning of the story)'}
 BRIEF OUTLINE TO EXPAND:
 ${brief}
 
-INSTRUCTIONS:
+${thinkingEnabled ? `REASONING DISCIPLINE: Keep your reasoning concise and efficient. Do not over-analyze — focus on key decisions about perspective, tone, and structure. Reserve the majority of your token budget for the actual expanded passage.
+
+` : ``}INSTRUCTIONS:
 Expand this brief outline into a polished, complete passage from the User's perspective.
 Do NOT invent major events or new dialogue.
 Follow the user's outline strictly.
-Write a complete, fully expanded passage — do not shorten or rush the ending.
+Keep the output within 400-600 words.
+Do NOT cut off or truncate the ending — if you are approaching the word limit, wrap up the scene naturally.
 
 ${WRITING_STYLE_INSTRUCTION}
 

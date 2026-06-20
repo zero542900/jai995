@@ -56,7 +56,7 @@ INSTRUCTIONS:
 Expand this brief outline into a polished, complete passage from the User's perspective.
 Do NOT invent major events or new dialogue.
 Follow the user's outline strictly.
-Keep the output within 400-600 words.
+Write a complete, fully expanded passage — do not shorten or rush the ending.
 
 ${WRITING_STYLE_INSTRUCTION}
 
@@ -73,7 +73,7 @@ Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
       messages: [{ role: 'user', content: `Expand this brief outline into a complete passage from the User's perspective:\n\n${brief}` }],
       systemPrompt,
       stream: true,
-      maxTokens: thinkingEnabled ? 8000 : 1500,
+      maxTokens: thinkingEnabled ? 8000 : 2500,
     });
 
     return streamResponse(createSSEStream(response));

@@ -21,17 +21,26 @@ COGNITIVE BOUNDARY (STRICT):
 - Record only what {{char}} directly perceives through senses: what {{char}} sees, hears, feels (physical touch), or smells/tastes in the scene.
 - If {{user}} is hiding something from {{char}}, {{char}} can only record the observable behavioral cues (e.g., "{{user}} avoided eye contact," "{{user}}'s voice wavered"), NOT the hidden truth itself. {{char}} does NOT know what {{user}} is concealing.
 - If {{char}} speculates or suspects something, clearly frame it as {{char}}'s speculation (e.g., "{{char}} suspected {{user}} was holding something back"), not as known fact.
+- CRITICAL DISTINCTION: {{char}} can only record what is SENSORILY PERCEIVABLE in the scene. If {{user}}'s internal thoughts, hidden motives, or secret backstory are revealed in {{user}}'s private narration but NOT expressed through dialogue, facial expressions, body language, or other observable signals that {{char}} could detect, do NOT include them. When in doubt, ask: "Could {{char}} see, hear, feel, smell, or taste this?" If no — omit it.
 
 CONTEXT:
 - Character ({{char}}): ${charInfo || '(not provided)'}
 - User Persona ({{user}}): ${userCard || '(not provided)'}
 ${longTermMemory ? `- **Existing Long-term Memory (MUST merge and compress)**:\n${longTermMemory}` : ''}
+- If any of the above fields are empty or contain unexpanded variable placeholders, treat them as "No existing information" and proceed solely from the current scene.
 
 CURRENT SCENE:
 ${chatHistory || '(This is the beginning of the story)'}
 
 INSTRUCTIONS:
-${longTermMemory ? `MERGE & COMPRESS: You MUST merge the existing long-term memory with the new events from the current scene. Do NOT simply append — integrate old and new information into a single unified summary. Remove redundancies, compress details that are no longer relevant, and keep only what matters for future interactions. Total output MUST NOT exceed 300 words.` : `Generate a concise long-term memory summary.`}
+${longTermMemory ? `MERGE & COMPRESS: You MUST merge the existing long-term memory with the new events from the current scene. Do NOT simply append — integrate old and new information into a single unified summary. Remove redundancies, compress details that are no longer relevant, and keep only what matters for future interactions. Total output MUST NOT exceed 500 words.` : `If no existing long-term memory is present: This is the first memory entry. Generate a foundational summary from the current scene, establishing baseline observations about {{user}}'s traits, current state, and the initial relationship dynamic. No merging is needed.`}
+
+When compression is required, retain information in this priority order:
+1. Unresolved plot threads, secrets, and foreshadowing
+2. Significant changes in {{user}}'s emotional state, personality, or behavior
+3. Major relationship shifts between {{char}} and {{user}}
+4. Concrete events with lasting consequences
+Discard: routine pleasantries, repeated interactions without new development, transient mood swings that have since resolved.
 
 The memory should include:
 - {{user}}'s current emotional/physical state as observed by {{char}}
@@ -42,13 +51,13 @@ The memory should include:
 
 Format:
 <Memory_LTM>
-[Concise summary of key facts, events, and states from {{char}}'s perspective about {{user}}]
+[Concise but detailed summary of key facts, events, and states from {{char}}'s perspective about {{user}}]
 </Memory_LTM>
 
-Keep it concise but comprehensive — this will be used as context for the Bot in future conversations.
+Keep it detailed and comprehensive — this will be used as context for the Bot in future conversations, so nuance and sensory detail are valuable.
 
-FORMAT INTEGRITY CHECK (STRICT):
-Before outputting, verify that ALL instances of {{char}} and {{user}} are complete and intact. If you find any broken placeholder like {{}} or {{char} or {user}}, you MUST fix it to the correct full form. Never output a broken placeholder.
+FORMAT INTEGRITY CHECK (MANDATORY LOOP):
+Before finalizing output, scan the entire memory content. If ANY broken placeholder is found ({{}}, {{char}, {user}, etc.), repair it immediately and rescan. Only proceed to output when ZERO broken placeholders remain.
 
 ${mainLinePrompt || ''}
 

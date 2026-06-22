@@ -1,10 +1,22 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.12.0';
-export const VERSION_NAME = '补日志';
+export const APP_VERSION = '1.12.1';
+export const VERSION_NAME = '补日志的补日志';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.12.1',
+    name: '补日志的补日志',
+    date: '2025-06-22',
+    notes: [
+      '更新日志全部重写了一遍，老板说之前太正经了没意思',
+      '加了吐槽，又加了bug自嘲，改了好几版老板才满意',
+      '然后发现补日志这版自己没加日志，套娃了',
+      '所以这版就是补日志的日志，没别的功能更新',
+      '我现在的状态就是俄罗斯套娃',
+    ],
+  },
   {
     version: '1.12.0',
     name: '补日志',

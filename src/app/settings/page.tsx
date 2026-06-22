@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { IconCheck, IconKey, IconCpu } from '@/components/icons';
 import { getApiKey, setApiKey, getModelPreference, setModelPreference } from '@/lib/storage';
 import { THEMES, getCurrentThemeId, applyTheme } from '@/lib/themes';
-import { APP_VERSION, VERSION_NAME, LAST_UPDATED } from '@/lib/version';
+import { APP_VERSION, VERSION_NAME, LAST_UPDATED, CHANGELOG } from '@/lib/version';
 
 export default function SettingsPage() {
   const [key, setKey] = useState('');
@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [maskedKey, setMaskedKey] = useState('');
   const [currentThemeId, setCurrentThemeId] = useState('rose');
   const [model, setModelState] = useState<'flash' | 'pro'>('flash');
+  const [showChangelog, setShowChangelog] = useState(false);
 
   useEffect(() => {
     const stored = getApiKey();
@@ -207,9 +208,44 @@ export default function SettingsPage() {
       </Card>
 
       {/* 关于 */}
-      <div className="text-center py-6 space-y-1">
-        <p className="text-sm font-medium text-jai-accent">v{APP_VERSION} · {VERSION_NAME}</p>
-        <p className="text-xs text-jai-text-secondary">最后更新：{LAST_UPDATED}</p>
+      <div className="text-center py-4 space-y-3">
+        <div>
+          <p className="text-sm font-medium text-jai-accent">v{APP_VERSION} · {VERSION_NAME}</p>
+          <p className="text-xs text-jai-text-secondary">最后更新：{LAST_UPDATED}</p>
+        </div>
+
+        {/* 更新日志 */}
+        <div className="text-left max-w-md mx-auto">
+          <button
+            onClick={() => setShowChangelog(!showChangelog)}
+            className="mx-auto flex items-center gap-1 text-xs text-jai-secondary hover:text-jai-accent transition-colors"
+          >
+            <svg className={`w-3 h-3 transition-transform ${showChangelog ? 'rotate-90' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            更新记录
+          </button>
+          {showChangelog && (
+            <div className="mt-3 space-y-4 page-enter">
+              {CHANGELOG.map((entry) => (
+                <div key={entry.version} className="border-l-2 border-jai-secondary/40 pl-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs font-semibold text-jai-accent">v{entry.version}</span>
+                    <span className="text-[11px] text-jai-text-secondary">{entry.name}</span>
+                    <span className="text-[10px] text-jai-text-secondary/60">{entry.date}</span>
+                  </div>
+                  <ul className="mt-1.5 space-y-1">
+                    {entry.notes.map((note, i) => (
+                      <li key={i} className="text-xs text-jai-text-secondary leading-relaxed">
+                        · {note}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -20,7 +20,9 @@ export async function POST(request: NextRequest) {
       ? 'Write from the THIRD PERSON perspective (he / she / they / User\'s name).'
       : 'Write from the FIRST PERSON perspective (I / me / my).';
 
-    const systemPrompt = `You are a creative roleplay writing assistant for JanitorAI. Polish and moderately expand a brief outline into a vivid, complete passage from the USER's perspective.
+    const systemPrompt = `You must write the expanded story in English. The final output must contain only English text. Do not output any Chinese.
+
+You are a creative roleplay writing assistant for JanitorAI. Polish and moderately expand a brief outline into a vivid, complete passage from the USER's perspective.
 
 CORE PRINCIPLE: The expanded content must be from the User's perspective — what the User says or does.
 
@@ -67,7 +69,7 @@ ${WRITING_STYLE_INSTRUCTION}
 
 ${MARKDOWN_FORMAT_INSTRUCTION}
 
-Output ONLY the expanded English passage. Do NOT include Chinese translation.`;
+You must write the expanded story in English. The final output must contain only English text. Do not output any Chinese.`;
 
     const { model, thinking } = resolveModelParams(modelChoice, thinkingEnabled);
 

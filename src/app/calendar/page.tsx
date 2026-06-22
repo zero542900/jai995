@@ -1,16 +1,28 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
-  getPeriodRecords,
-  createPeriodRecord,
-  savePeriodRecord,
-  deletePeriodRecord,
+  getPeriodDays,
+  savePeriodDay,
+  createPeriodDay,
+  deletePeriodDay,
 } from '@/lib/storage';
-import type { PeriodRecord, FlowLevel } from '@/lib/types';
+import type { PeriodDay, FlowLevel } from '@/lib/types';
 
-// ========== Date helpers ==========
+// ========== Constants ==========
+
+const PREDICTED_BG = 'rgba(200, 130, 130, 0.18)';
+const OVULATION_COLOR = '#7DB8A0';
+
+const flowConfig: Record<FlowLevel, { label: string; bg: string; color: string }> = {
+  light: { label: '少', bg: 'rgba(200, 130, 130, 0.35)', color: '#C4A2A2' },
+  medium: { label: '中', bg: 'rgba(200, 100, 100, 0.5)', color: '#B06868' },
+  heavy: { label: '多', bg: 'rgba(200, 80, 80, 0.7)', color: '#9C4848' },
+};
+
+// ========== Date utils ==========
 
 function toDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -24,194 +36,194 @@ function parseDate(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
-function daysBetween(a: string, b: string): number {
-  const d1 = parseDate(a);
-  const d2 = parseDate(b);
-  return Math.round((d2.getTime() - d1.getTime()) / 86400000);
-}
-
 function addDays(dateStr: string, n: number): string {
   const d = parseDate(dateStr);
   d.setDate(d.getDate() + n);
   return toDateStr(d);
 }
 
-function getMonthMatrix(year: number, month: number): (Date | null)[][] {
-  const firstDay = new Date(year, month, 1);
-  const startWeekday = firstDay.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const weeks: (Date | null)[][] = [];
-  let currentWeek: (Date | null)[] = [];
-
-  for (let i = 0; i < startWeekday; i++) currentWeek.push(null);
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    currentWeek.push(new Date(year, month, day));
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-  }
-
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) currentWeek.push(null);
-    weeks.push(currentWeek);
-  }
-
-  return weeks;
+function daysBetween(a: string, b: string): number {
+  return Math.round((parseDate(b).getTime() - parseDate(a).getTime()) / 86400000);
 }
 
-// ========== Flow styles ==========
+// ========== Cycle calculation ==========
 
-const flowConfig: Record<FlowLevel, { label: string; color: string; bg: string }> = {
-  light: { label: '少', color: '#F5B0B0', bg: 'rgba(245,176,176,0.35)' },
-  medium: { label: '中', color: '#E08080', bg: 'rgba(224,128,128,0.45)' },
-  heavy: { label: '多', color: '#C05050', bg: 'rgba(192,80,80,0.55)' },
-};
+interface CycleStats {
+  avgCycle: number;
+  avgPeriod: number;
+  nextStart: string;
+  nextEnd: string;
+  ovulation: string;
+  cycleCount: number;
+  cycleMin: number;
+  cycleMax: number;
+}
 
-const PREDICTED_BG = 'rgba(200,170,170,0.15)';
-const OVULATION_COLOR = '#7DB8A0';
+interface PeriodSegment {
+  startDate: string;
+  endDate: string;
+  days: string[]; // all date strings in this segment
+}
+
+/**
+ * 从逐日记录中提取连续的经期段
+ * 连续日期（间隔<=2天视为连续，容忍偶尔漏记）组成一个经期段
+ */
+function extractSegments(dayRecords: PeriodDay[]): PeriodSegment[] {
+  if (dayRecords.length === 0) return [];
+
+  const sorted = [...dayRecords].sort((a, b) => a.date.localeCompare(b.date));
+  const segments: PeriodSegment[] = [];
+  let currentSegment: PeriodSegment = {
+    startDate: sorted[0].date,
+    endDate: sorted[0].date,
+    days: [sorted[0].date],
+  };
+
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = daysBetween(sorted[i - 1].date, sorted[i].date);
+    if (gap <= 2) {
+      // 连续，归入当前段
+      currentSegment.endDate = sorted[i].date;
+      currentSegment.days.push(sorted[i].date);
+    } else {
+      // 断开，开始新段
+      segments.push(currentSegment);
+      currentSegment = {
+        startDate: sorted[i].date,
+        endDate: sorted[i].date,
+        days: [sorted[i].date],
+      };
+    }
+  }
+  segments.push(currentSegment);
+  return segments;
+}
+
+function calculateCycle(segments: PeriodSegment[]): CycleStats | null {
+  if (segments.length < 2) return null;
+
+  // 1. 周期长度（相邻段开始日之间的天数）
+  const cycles: number[] = [];
+  for (let i = 1; i < segments.length; i++) {
+    const diff = daysBetween(segments[i - 1].startDate, segments[i].startDate);
+    if (diff >= 21 && diff <= 60) {
+      cycles.push(diff);
+    }
+  }
+
+  if (cycles.length === 0) {
+    const lastTwoDiff = daysBetween(
+      segments[segments.length - 2].startDate,
+      segments[segments.length - 1].startDate
+    );
+    cycles.push(lastTwoDiff);
+  }
+
+  const avgCycle = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
+
+  // 2. 经期平均长度
+  const periodLengths = segments.map((s) => s.days.length).filter((len) => len > 0 && len <= 15);
+  const avgPeriod = periodLengths.length > 0
+    ? Math.round(periodLengths.reduce((a, b) => a + b, 0) / periodLengths.length)
+    : 5;
+
+  // 3. 预测下次经期
+  const lastStart = segments[segments.length - 1].startDate;
+  const nextStart = addDays(lastStart, avgCycle);
+  const nextEnd = addDays(nextStart, avgPeriod - 1);
+  const ovulation = addDays(nextStart, -14);
+
+  return {
+    avgCycle,
+    avgPeriod,
+    nextStart,
+    nextEnd,
+    ovulation,
+    cycleCount: cycles.length,
+    cycleMin: Math.min(...cycles),
+    cycleMax: Math.max(...cycles),
+  };
+}
+
+// ========== Main Component ==========
 
 export default function CalendarPage() {
-  const [records, setRecords] = useState<PeriodRecord[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [dayRecords, setDayRecords] = useState<PeriodDay[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setRecords(getPeriodRecords().sort((a, b) => a.startDate.localeCompare(b.startDate)));
-    setMounted(true);
-  }, []);
-
+  const today = new Date();
+  const todayStr = toDateStr(today);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  const monthMatrix = useMemo(() => getMonthMatrix(year, month), [year, month]);
-  const todayStr = toDateStr(new Date());
 
-  // ========== Calculate cycle stats (based on user-provided algorithm) ==========
+  useEffect(() => {
+    setMounted(true);
+    setDayRecords(getPeriodDays());
+  }, []);
 
-  const cycleStats = useMemo(() => {
-    if (!records || records.length < 2) return null;
+  // ========== Segments & cycle stats ==========
 
-    // 1. 计算所有有效周期长度（21-60天）
-    const cycles: number[] = [];
-    for (let i = 1; i < records.length; i++) {
-      const diff = daysBetween(records[i - 1].startDate, records[i].startDate);
-      if (diff >= 21 && diff <= 60) {
-        cycles.push(diff);
-      }
-    }
+  const segments = useMemo(() => extractSegments(dayRecords), [dayRecords]);
+  const cycleStats = useMemo(() => calculateCycle(segments), [segments]);
 
-    // 所有周期被过滤，回退到最近两次原始天数
-    if (cycles.length === 0) {
-      const lastTwoDiff = daysBetween(
-        records[records.length - 2].startDate,
-        records[records.length - 1].startDate
-      );
-      cycles.push(lastTwoDiff);
-    }
+  // ========== Day sets ==========
 
-    // 2. 平均周期
-    const avgCycle = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
-
-    // 3. 经期平均长度（过滤异常 0-15天）
-    const periodLengths: number[] = [];
-    for (const r of records) {
-      if (r.endDate) {
-        const len = daysBetween(r.startDate, r.endDate) + 1;
-        if (len > 0 && len <= 15) {
-          periodLengths.push(len);
-        }
-      }
-    }
-    const avgPeriod = periodLengths.length > 0
-      ? Math.round(periodLengths.reduce((a, b) => a + b, 0) / periodLengths.length)
-      : 5;
-
-    // 4. 预测下一次月经开始日
-    const lastStart = records[records.length - 1].startDate;
-    const nextStart = addDays(lastStart, avgCycle);
-
-    // 5. 预测结束日
-    const nextEnd = addDays(nextStart, avgPeriod - 1);
-
-    // 6. 排卵日（黄体期固定14天）
-    const ovulation = addDays(nextStart, -14);
-
-    // 7. 周期波动范围
-    const cycleMin = Math.min(...cycles);
-    const cycleMax = Math.max(...cycles);
-
-    return {
-      avgCycle,
-      avgPeriod,
-      nextStart,
-      nextEnd,
-      ovulation,
-      cycleCount: cycles.length,
-      cycleMin,
-      cycleMax,
-    };
-  }, [records]);
-
-  // ========== Compute period day sets & predictions ==========
-
-  const { periodDays, predictedDays, ovulationDays } = useMemo(() => {
-    const pDays = new Set<string>();
-    const oDays = new Set<string>();
-
-    for (const r of records) {
-      const len = daysBetween(r.startDate, r.endDate);
-      for (let i = 0; i <= len; i++) {
-        pDays.add(addDays(r.startDate, i));
-      }
+  const { periodDaysMap, predictedDays, ovulationDays } = useMemo(() => {
+    const pMap = new Map<string, FlowLevel>();
+    for (const r of dayRecords) {
+      pMap.set(r.date, r.flow);
     }
 
     const predDays = new Set<string>();
     if (cycleStats) {
       for (let i = 0; i < cycleStats.avgPeriod; i++) {
         const d = addDays(cycleStats.nextStart, i);
-        if (!pDays.has(d)) predDays.add(d);
+        if (!pMap.has(d)) predDays.add(d);
       }
-      oDays.add(cycleStats.ovulation);
-    } else if (records.length === 1) {
-      // 单条记录默认28天周期
-      const lastStart = records[0].startDate;
-      const nextStart = addDays(lastStart, 28);
+    } else if (segments.length === 1) {
+      const nextStart = addDays(segments[0].startDate, 28);
       for (let i = 0; i < 5; i++) {
         const d = addDays(nextStart, i);
-        if (!pDays.has(d)) predDays.add(d);
+        if (!pMap.has(d)) predDays.add(d);
       }
-      oDays.add(addDays(nextStart, -14));
     }
 
-    return { periodDays: pDays, predictedDays: predDays, ovulationDays: oDays };
-  }, [records, cycleStats]);
+    const oDays = new Set<string>();
+    if (cycleStats) {
+      oDays.add(cycleStats.ovulation);
+    } else if (segments.length === 1) {
+      oDays.add(addDays(segments[0].startDate, 28 - 14));
+    }
 
-  // ========== Summary stats ==========
+    return { periodDaysMap: pMap, predictedDays: predDays, ovulationDays: oDays };
+  }, [dayRecords, cycleStats, segments]);
+
+  // ========== Summary ==========
 
   const summary = useMemo(() => {
-    if (records.length === 0) return null;
+    if (dayRecords.length === 0) return null;
 
     if (!cycleStats) {
-      // 单条记录
-      const lastStart = records[0].startDate;
-      const nextPredicted = addDays(lastStart, 28);
-      const daysUntilNext = daysBetween(todayStr, nextPredicted);
-      const periodLen = daysBetween(records[0].startDate, records[0].endDate) + 1;
-      return {
-        avgCycle: 0,
-        avgPeriod: periodLen,
-        nextPredicted,
-        daysUntilNext,
-        cycleMin: 0,
-        cycleMax: 0,
-      };
+      if (segments.length === 1) {
+        const lastStart = segments[0].startDate;
+        const nextPredicted = addDays(lastStart, 28);
+        const daysUntilNext = daysBetween(todayStr, nextPredicted);
+        return {
+          avgCycle: 0,
+          avgPeriod: segments[0].days.length,
+          nextPredicted,
+          daysUntilNext,
+          cycleMin: 0,
+          cycleMax: 0,
+        };
+      }
+      return null;
     }
 
     const daysUntilNext = daysBetween(todayStr, cycleStats.nextStart);
-
     return {
       avgCycle: cycleStats.avgCycle,
       avgPeriod: cycleStats.avgPeriod,
@@ -220,22 +232,41 @@ export default function CalendarPage() {
       cycleMin: cycleStats.cycleMin,
       cycleMax: cycleStats.cycleMax,
     };
-  }, [records, todayStr, cycleStats]);
+  }, [dayRecords, cycleStats, segments, todayStr]);
 
-  // ========== Day info lookup ==========
+  // ========== Month matrix ==========
 
-  function getDayRecord(dateStr: string): PeriodRecord | undefined {
-    return records.find((r) => {
-      const len = daysBetween(r.startDate, r.endDate);
-      for (let i = 0; i <= len; i++) {
-        if (addDays(r.startDate, i) === dateStr) return true;
+  const monthMatrix = useMemo(() => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startWeekday = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    const weeks: (Date | null)[][] = [];
+    let week: (Date | null)[] = [];
+
+    for (let i = 0; i < startWeekday; i++) week.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      week.push(new Date(year, month, d));
+      if (week.length === 7) {
+        weeks.push(week);
+        week = [];
       }
-      return false;
-    });
+    }
+    if (week.length > 0) {
+      while (week.length < 7) week.push(null);
+      weeks.push(week);
+    }
+    return weeks;
+  }, [year, month]);
+
+  // ========== Day status ==========
+
+  function getDayFlow(dateStr: string): FlowLevel | undefined {
+    return periodDaysMap.get(dateStr);
   }
 
   function getDayStatus(dateStr: string): 'period' | 'predicted' | 'ovulation' | 'today' | 'normal' {
-    if (periodDays.has(dateStr)) return 'period';
+    if (periodDaysMap.has(dateStr)) return 'period';
     if (ovulationDays.has(dateStr)) return 'ovulation';
     if (predictedDays.has(dateStr)) return 'predicted';
     if (dateStr === todayStr) return 'today';
@@ -244,26 +275,22 @@ export default function CalendarPage() {
 
   // ========== Actions ==========
 
-  function handleDayClick(dateStr: string) {
-    setSelectedDate(dateStr);
-  }
-
-  function handleSaveRecord(startDate: string, endDate: string, flow: FlowLevel, notes: string, existingId?: string) {
+  function handleSaveDay(dateStr: string, flow: FlowLevel, notes: string, existingId?: string) {
     if (existingId) {
-      const existing = records.find((r) => r.id === existingId);
+      const existing = dayRecords.find((r) => r.id === existingId);
       if (existing) {
-        savePeriodRecord({ ...existing, startDate, endDate, flow, notes, updatedAt: Date.now() });
+        savePeriodDay({ ...existing, flow, notes, updatedAt: Date.now() });
       }
     } else {
-      createPeriodRecord(startDate, endDate, flow, notes);
+      createPeriodDay(dateStr, flow, notes);
     }
-    setRecords(getPeriodRecords().sort((a, b) => a.startDate.localeCompare(b.startDate)));
+    setDayRecords(getPeriodDays());
     setSelectedDate(null);
   }
 
-  function handleDeleteRecord(id: string) {
-    deletePeriodRecord(id);
-    setRecords(getPeriodRecords().sort((a, b) => a.startDate.localeCompare(b.startDate)));
+  function handleDeleteDay(date: string) {
+    deletePeriodDay(date);
+    setDayRecords(getPeriodDays());
     setSelectedDate(null);
   }
 
@@ -274,6 +301,16 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
+      {/* Mobile settings gear */}
+      <div className="md:hidden fixed top-0 right-0 z-30 p-3">
+        <Link href="/settings" className="block p-2 rounded-lg text-jai-text-secondary hover:text-jai-accent transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </Link>
+      </div>
+
       <div className="max-w-2xl mx-auto p-4 md:p-6 pt-14 md:pt-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -320,7 +357,7 @@ export default function CalendarPage() {
               if (!date) return <div key={idx} className="aspect-square" />;
               const dateStr = toDateStr(date);
               const status = getDayStatus(dateStr);
-              const record = getDayRecord(dateStr);
+              const flow = getDayFlow(dateStr);
 
               return (
                 <button
@@ -334,7 +371,7 @@ export default function CalendarPage() {
                   )}
                   style={
                     status === 'period'
-                      ? { backgroundColor: record ? flowConfig[record.flow].bg : 'rgba(200,80,80,0.4)' }
+                      ? { backgroundColor: flow ? flowConfig[flow].bg : 'rgba(200,80,80,0.4)' }
                       : status === 'predicted'
                         ? { backgroundColor: PREDICTED_BG }
                         : undefined
@@ -358,9 +395,9 @@ export default function CalendarPage() {
                     />
                   )}
                   {/* Period day marker */}
-                  {status === 'period' && record && (
+                  {status === 'period' && flow && (
                     <span className="text-[8px] text-jai-accent opacity-70 leading-none">
-                      {flowConfig[record.flow].label}
+                      {flowConfig[flow].label}
                     </span>
                   )}
                 </button>
@@ -414,9 +451,9 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {records.length === 0 && (
+        {dayRecords.length === 0 && (
           <div className="mt-6 text-center text-sm text-jai-text-secondary py-8">
-            点击日期记录经期开始日，记录两次后自动预测周期
+            点击日期记录当天经期，记录两次后自动预测周期
           </div>
         )}
       </div>
@@ -425,40 +462,37 @@ export default function CalendarPage() {
       {selectedDate && (
         <DayModal
           dateStr={selectedDate}
-          record={getDayRecord(selectedDate)}
-          status={getDayStatus(selectedDate)}
-          onSave={handleSaveRecord}
-          onDelete={handleDeleteRecord}
+          dayRecord={dayRecords.find((r) => r.date === selectedDate)}
+          onSave={handleSaveDay}
+          onDelete={handleDeleteDay}
           onClose={() => setSelectedDate(null)}
         />
       )}
     </div>
   );
+
+  function handleDayClick(dateStr: string) {
+    setSelectedDate(dateStr);
+  }
 }
 
 // ========== Day Modal Component ==========
 
 function DayModal({
   dateStr,
-  record,
-  status,
+  dayRecord,
   onSave,
   onDelete,
   onClose,
 }: {
   dateStr: string;
-  record?: PeriodRecord;
-  status: string;
-  onSave: (startDate: string, endDate: string, flow: FlowLevel, notes: string, existingId?: string) => void;
-  onDelete: (id: string) => void;
+  dayRecord?: PeriodDay;
+  onSave: (dateStr: string, flow: FlowLevel, notes: string, existingId?: string) => void;
+  onDelete: (date: string) => void;
   onClose: () => void;
 }) {
-  const existingRecord = record && record.startDate === dateStr ? record : undefined;
-
-  const [startDate, setStartDate] = useState(existingRecord?.startDate || dateStr);
-  const [endDate, setEndDate] = useState(existingRecord?.endDate || addDays(dateStr, 4));
-  const [flow, setFlow] = useState<FlowLevel>(existingRecord?.flow || 'medium');
-  const [notes, setNotes] = useState(existingRecord?.notes || '');
+  const [flow, setFlow] = useState<FlowLevel>(dayRecord?.flow || 'medium');
+  const [notes, setNotes] = useState(dayRecord?.notes || '');
 
   const dateLabel = parseDate(dateStr).toLocaleDateString('zh-CN', {
     month: 'long',
@@ -485,35 +519,9 @@ function DayModal({
           </button>
         </div>
 
-        {/* Date range */}
-        <div className="space-y-3 mb-4">
-          <div>
-            <label className="text-xs text-jai-text-secondary block mb-1">开始日</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                if (e.target.value > endDate) setEndDate(e.target.value);
-              }}
-              className="w-full px-3 py-2 rounded-lg bg-jai-input-bg border border-jai-card-border text-sm text-jai-text focus:outline-none focus:border-jai-accent"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-jai-text-secondary block mb-1">结束日</label>
-            <input
-              type="date"
-              value={endDate}
-              min={startDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-jai-input-bg border border-jai-card-border text-sm text-jai-text focus:outline-none focus:border-jai-accent"
-            />
-          </div>
-        </div>
-
         {/* Flow selection */}
         <div className="mb-4">
-          <label className="text-xs text-jai-text-secondary block mb-1.5">流量</label>
+          <label className="text-xs text-jai-text-secondary block mb-1.5">当日流量</label>
           <div className="flex gap-2">
             {(Object.keys(flowConfig) as FlowLevel[]).map((level) => (
               <button
@@ -547,19 +555,19 @@ function DayModal({
 
         {/* Actions */}
         <div className="flex gap-2">
-          {existingRecord && (
+          {dayRecord && (
             <button
-              onClick={() => onDelete(existingRecord.id)}
+              onClick={() => onDelete(dateStr)}
               className="px-4 py-2 rounded-full text-xs font-medium text-red-400 hover:bg-red-50 transition-colors"
             >
               删除
             </button>
           )}
           <button
-            onClick={() => onSave(startDate, endDate, flow, notes, existingRecord?.id)}
+            onClick={() => onSave(dateStr, flow, notes, dayRecord?.id)}
             className="flex-1 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90 bg-jai-accent"
           >
-            {existingRecord ? '保存修改' : '记录经期'}
+            {dayRecord ? '保存修改' : '记录当天'}
           </button>
         </div>
       </div>

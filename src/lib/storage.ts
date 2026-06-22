@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodRecord, FlowLevel } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -437,48 +437,48 @@ export function deleteSession(id: string): void {
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
 }
 
-// ========== Period Records ==========
+// ========== Period Days ==========
 
-export function getPeriodRecords(): PeriodRecord[] {
+export function getPeriodDays(): PeriodDay[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(KEYS.PERIOD_RECORDS);
-    return raw ? JSON.parse(raw) : [];
+    const days: PeriodDay[] = raw ? JSON.parse(raw) : [];
+    return days.sort((a, b) => a.date.localeCompare(b.date));
   } catch {
     return [];
   }
 }
 
-export function savePeriodRecord(record: PeriodRecord): void {
+export function savePeriodDay(day: PeriodDay): void {
   if (typeof window === 'undefined') return;
-  const records = getPeriodRecords();
-  const idx = records.findIndex((r) => r.id === record.id);
+  const days = getPeriodDays();
+  const idx = days.findIndex((d) => d.date === day.date);
   if (idx >= 0) {
-    records[idx] = { ...record, updatedAt: Date.now() };
+    days[idx] = { ...day, updatedAt: Date.now() };
   } else {
-    records.push(record);
+    days.push(day);
   }
-  localStorage.setItem(KEYS.PERIOD_RECORDS, JSON.stringify(records));
+  localStorage.setItem(KEYS.PERIOD_RECORDS, JSON.stringify(days));
 }
 
-export function deletePeriodRecord(id: string): void {
+export function deletePeriodDay(date: string): void {
   if (typeof window === 'undefined') return;
-  const records = getPeriodRecords().filter((r) => r.id !== id);
-  localStorage.setItem(KEYS.PERIOD_RECORDS, JSON.stringify(records));
+  const days = getPeriodDays().filter((d) => d.date !== date);
+  localStorage.setItem(KEYS.PERIOD_RECORDS, JSON.stringify(days));
 }
 
-export function createPeriodRecord(startDate: string, endDate: string, flow: FlowLevel, notes?: string): PeriodRecord {
-  const record: PeriodRecord = {
+export function createPeriodDay(date: string, flow: FlowLevel, notes?: string): PeriodDay {
+  const day: PeriodDay = {
     id: generateId(),
-    startDate,
-    endDate,
+    date,
     flow,
     notes: notes || '',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  savePeriodRecord(record);
-  return record;
+  savePeriodDay(day);
+  return day;
 }
 
 // ========== Export / Import ==========

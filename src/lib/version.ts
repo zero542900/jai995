@@ -1,10 +1,21 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.14.1';
-export const VERSION_NAME = '来例假了';
+export const APP_VERSION = '1.15.0';
+export const VERSION_NAME = '逐日记录';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.15.0',
+    name: '逐日记录',
+    date: '2025-06-22',
+    notes: [
+      '老板说每天流量不一样要单独记，我之前是整个经期一个flow，偷懒了',
+      '改成逐日记录了，每天独立选流量，点日期就选，再点就改',
+      '系统自动从连续天数推算经期段，不用手动填开始结束日了',
+      '数据结构全换了，还好没人用过旧版不然得写迁移逻辑',
+    ],
+  },
   {
     version: '1.14.1',
     name: '来例假了',

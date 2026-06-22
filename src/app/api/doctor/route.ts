@@ -44,18 +44,17 @@ export async function POST(request: NextRequest) {
 
     if (healthProfile) {
       const parts: string[] = ['【健康档案】'];
-      if (healthProfile.age) parts.push(`年龄: ${healthProfile.age}`);
-      if (healthProfile.height) parts.push(`身高: ${healthProfile.height}`);
-      if (healthProfile.weight) parts.push(`体重: ${healthProfile.weight}`);
-      if (healthProfile.medicalHistory) parts.push(`既往史: ${healthProfile.medicalHistory}`);
-      if (healthProfile.medications) parts.push(`用药: ${healthProfile.medications}`);
-      if (healthProfile.allergies) parts.push(`过敏: ${healthProfile.allergies}`);
-      if (healthProfile.notes) parts.push(`备注: ${healthProfile.notes}`);
+      parts.push(`年龄: ${healthProfile.age || '未填写'}`);
+      parts.push(`身高体重: ${healthProfile.heightWeight || '未填写'}`);
+      parts.push(`既往病史: ${healthProfile.medicalHistory || '未填写'}`);
+      parts.push(`当前用药: ${healthProfile.currentMedications || '未填写'}`);
+      parts.push(`过敏史: ${healthProfile.allergies || '未填写'}`);
+      parts.push(`备注: ${healthProfile.notes || '未填写'}`);
       contextParts.push(parts.join(', '));
     }
 
     const contextBlock = contextParts.length > 0
-      ? `\n\n--- PATIENT DATA ---\n${contextParts.join('\n')}\n--- END DATA ---\n\nUse this data to make personalized observations. Be snarky but medically accurate.`
+      ? `\n\n--- PATIENT DATA ---\n${contextParts.join('\n')}\n--- END DATA ---\n\nUse ONLY the data listed above. If a field says "未填写", it means the user has NOT provided that information — do NOT invent or assume any medical history, medications, allergies, or symptoms that are not explicitly listed here. Only comment on what you can see. If you don't have data, say so sarcastically instead of making things up.`
       : '';
 
     const systemPrompt = HOUSE_PERSONA + contextBlock;

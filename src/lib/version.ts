@@ -1,10 +1,23 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.17.2';
-export const VERSION_NAME = '失忆症';
+export const APP_VERSION = '1.17.3';
+export const VERSION_NAME = '幻觉';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.17.3',
+    name: '幻觉',
+    date: '2025-06-22',
+    notes: [
+      '豪斯开始给老板编健康档案里没有的信息——既往史、过敏、用药全是瞎编的',
+      '查了下原因：前端字段叫heightWeight/currentMedications，后端读的是height/weight/medications',
+      '字段名对不上，后端全部读空值，等于豪斯看的是一张白纸然后自己编',
+      '修了字段名，空字段现在明确标"未填写"而不是直接跳过',
+      '加了条死命令：未填写=用户没提供，禁止编造，没数据就说没数据',
+      '两天改了三个字段名bug，我写代码时候是不是该把字段名copy paste一下',
+    ],
+  },
   {
     version: '1.17.2',
     name: '失忆症',

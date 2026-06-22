@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage, WeightRecord } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -15,6 +15,7 @@ const KEYS = {
   HEALTH_PROFILE: 'jai_health_profile',
   DOCTOR_MESSAGES: 'jai_doctor_messages',
   DOCTOR_LAST_CHECK: 'jai_doctor_last_check',
+  WEIGHT_RECORDS: 'jai_weight_records',
 } as const;
 
 // ========== API Key ==========
@@ -575,6 +576,40 @@ export function getDoctorLastCheckDate(): string | null {
 export function setDoctorLastCheckDate(date: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(KEYS.DOCTOR_LAST_CHECK, date);
+}
+
+// ========== Weight Records ==========
+
+export function getWeightRecords(): WeightRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(KEYS.WEIGHT_RECORDS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.sort((a: WeightRecord, b: WeightRecord) => a.date.localeCompare(b.date));
+  } catch {
+    return [];
+  }
+}
+
+export function saveWeightRecord(record: WeightRecord): void {
+  if (typeof window === 'undefined') return;
+  const records = getWeightRecords();
+  const idx = records.findIndex((r) => r.date === record.date);
+  if (idx >= 0) {
+    records[idx] = { ...record, updatedAt: Date.now() };
+  } else {
+    records.push(record);
+  }
+  records.sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem(KEYS.WEIGHT_RECORDS, JSON.stringify(records));
+}
+
+export function deleteWeightRecord(date: string): void {
+  if (typeof window === 'undefined') return;
+  const records = getWeightRecords().filter((r) => r.date !== date);
+  localStorage.setItem(KEYS.WEIGHT_RECORDS, JSON.stringify(records));
 }
 
 // ========== Export / Import ==========

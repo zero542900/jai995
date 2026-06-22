@@ -1,10 +1,23 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.17.4';
-export const VERSION_NAME = '失忆症2.0';
+export const APP_VERSION = '1.18.0';
+export const VERSION_NAME = '上秤';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.18.0',
+    name: '上秤',
+    date: '2025-06-22',
+    notes: [
+      '日历底下加了体重+体脂记录，带双折线曲线图',
+      '曲线图纯SVG画的，没引图表库，能省一个包就省一个',
+      '体重实线，体脂虚线，左轴体重右轴体脂',
+      '豪斯现在能读到最近15天的体重体脂趋势和变化量',
+      '老板可以每天上秤报数，豪斯负责毒舌评价你胖了还是瘦了',
+      'DeepSeek负责算豪斯的嘴，我负责画曲线图，各司其职',
+    ],
+  },
   {
     version: '1.17.4',
     name: '失忆症2.0',

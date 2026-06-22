@@ -14,8 +14,11 @@ import {
   getDoctorMessages,
   saveDoctorMessages,
   clearDoctorMessages,
+  getWeightRecords,
+  saveWeightRecord,
+  deleteWeightRecord,
 } from '@/lib/storage';
-import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage } from '@/lib/types';
+import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage, WeightRecord } from '@/lib/types';
 
 // ========== Constants ==========
 
@@ -205,11 +208,56 @@ export default function CalendarPage() {
     setDoctorMessages(getDoctorMessages());
   }, []);
 
+  // ========== Weight records ==========
+  const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
+  const [weightInputDate, setWeightInputDate] = useState(todayStr);
+  const [weightInputVal, setWeightInputVal] = useState('');
+  const [bodyFatInputVal, setBodyFatInputVal] = useState('');
+
+  useEffect(() => {
+    setWeightRecords(getWeightRecords());
+  }, []);
+
   useEffect(() => {
     if (doctorScrollRef.current) {
       doctorScrollRef.current.scrollTop = doctorScrollRef.current.scrollHeight;
     }
   }, [doctorMessages]);
+
+  // ========== Weight handlers ==========
+
+  function handleSaveWeight() {
+    const w = parseFloat(weightInputVal);
+    if (!w || w <= 0) return;
+    const bf = bodyFatInputVal ? parseFloat(bodyFatInputVal) : undefined;
+    const existing = weightRecords.find((r) => r.date === weightInputDate);
+    const record: WeightRecord = {
+      id: existing?.id || crypto.randomUUID(),
+      date: weightInputDate,
+      weight: w,
+      bodyFat: bf,
+      note: existing?.note,
+      createdAt: existing?.createdAt || Date.now(),
+      updatedAt: Date.now(),
+    };
+    saveWeightRecord(record);
+    setWeightRecords(getWeightRecords());
+    setWeightInputVal('');
+    setBodyFatInputVal('');
+  }
+
+  function handleDeleteWeight(date: string) {
+    deleteWeightRecord(date);
+    setWeightRecords(getWeightRecords());
+  }
+
+  function handleLoadWeightToEdit(date: string) {
+    const rec = weightRecords.find((r) => r.date === date);
+    if (!rec) return;
+    setWeightInputDate(date);
+    setWeightInputVal(String(rec.weight));
+    setBodyFatInputVal(rec.bodyFat ? String(rec.bodyFat) : '');
+  }
 
   async function sendToDoctor(userMessage: string) {
     const apiKey = getApiKey();
@@ -246,6 +294,7 @@ export default function CalendarPage() {
           userMessage: userMessage,
           messages: doctorMessages.slice(-10),
           healthProfile,
+          weightRecords: weightRecords.slice(-30),
           cycleData: {
             today: todayStr,
             dayRecords: dayRecords.slice(-30),
@@ -627,6 +676,100 @@ export default function CalendarPage() {
           </div>
         )}
 
+        {/* Weight tracking */}
+        <div className="mt-6 bg-jai-card rounded-xl border border-jai-card-border p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-jai-accent mb-3">体重记录</h2>
+
+          {/* Input row */}
+          <div className="flex flex-wrap items-end gap-2 mb-4">
+            <div>
+              <label className="text-xs text-jai-text-secondary mb-1 block">日期</label>
+              <input
+                type="date"
+                value={weightInputDate}
+                max={todayStr}
+                onChange={(e) => setWeightInputDate(e.target.value)}
+                className="px-2 py-1.5 text-sm rounded-lg bg-jai-input-bg border border-jai-card-border text-jai-text focus:outline-none focus:border-jai-accent/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-jai-text-secondary mb-1 block">体重(kg)</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                value={weightInputVal}
+                onChange={(e) => setWeightInputVal(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && weightInputVal) handleSaveWeight(); }}
+                placeholder="52.3"
+                className="w-20 px-2 py-1.5 text-sm rounded-lg bg-jai-input-bg border border-jai-card-border text-jai-text placeholder:text-jai-text-secondary/50 focus:outline-none focus:border-jai-accent/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-jai-text-secondary mb-1 block">体脂(%)</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                value={bodyFatInputVal}
+                onChange={(e) => setBodyFatInputVal(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && weightInputVal) handleSaveWeight(); }}
+                placeholder="22.5"
+                className="w-20 px-2 py-1.5 text-sm rounded-lg bg-jai-input-bg border border-jai-card-border text-jai-text placeholder:text-jai-text-secondary/50 focus:outline-none focus:border-jai-accent/50 transition-colors"
+              />
+            </div>
+            <button
+              onClick={handleSaveWeight}
+              disabled={!weightInputVal}
+              className="px-4 py-1.5 text-sm rounded-full bg-jai-accent/15 text-jai-accent hover:bg-jai-accent/25 transition-colors disabled:opacity-30"
+            >
+              {weightRecords.find(r => r.date === weightInputDate) ? '更新' : '记录'}
+            </button>
+          </div>
+
+          {/* Chart */}
+          {weightRecords.length >= 2 && (
+            <WeightChart records={weightRecords} />
+          )}
+
+          {/* Record list */}
+          {weightRecords.length > 0 && (
+            <div className="mt-3 space-y-1">
+              {[...weightRecords].reverse().slice(0, 10).map((r) => (
+                <div key={r.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg hover:bg-jai-secondary/5 transition-colors">
+                  <span className="text-jai-text-secondary w-24">{r.date}</span>
+                  <span className="text-jai-text font-medium w-16 text-right">{r.weight} kg</span>
+                  <span className="text-jai-text-secondary w-16 text-right">{r.bodyFat ? `${r.bodyFat}%` : '—'}</span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleLoadWeightToEdit(r.date)}
+                      className="p-1 rounded text-jai-text-secondary hover:text-jai-accent transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteWeight(r.date)}
+                      className="p-1 rounded text-jai-text-secondary hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {weightRecords.length === 0 && (
+            <div className="text-center text-xs text-jai-text-secondary py-4">
+              记录体重和体脂率，自动生成趋势曲线
+            </div>
+          )}
+        </div>
+
         {dayRecords.length === 0 && (
           <div className="mt-6 text-center text-sm text-jai-text-secondary py-8">
             点击日期记录当天经期，记录两次后自动预测周期
@@ -899,6 +1042,117 @@ function DayModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ========== Weight Chart Component ==========
+
+function WeightChart({ records }: { records: WeightRecord[] }) {
+  const W = 300;
+  const H = 140;
+  const padding = { top: 16, right: 16, bottom: 28, left: 36 };
+  const plotW = W - padding.left - padding.right;
+  const plotH = H - padding.top - padding.bottom;
+
+  const recent = records.slice(-30);
+  const dates = recent.map((r) => new Date(r.date).getTime());
+  const weights = recent.map((r) => r.weight);
+  const bodyFats = recent.map((r) => r.bodyFat).filter((v): v is number => v != null);
+
+  const minDate = Math.min(...dates);
+  const maxDate = Math.max(...dates);
+  const dateRange = maxDate - minDate || 1;
+
+  const wMin = Math.min(...weights) - 1;
+  const wMax = Math.max(...weights) + 1;
+  const wRange = wMax - wMin || 1;
+
+  const hasBodyFat = bodyFats.length >= 2;
+  const bfMin = hasBodyFat ? Math.min(...bodyFats) - 1 : 0;
+  const bfMax = hasBodyFat ? Math.max(...bodyFats) + 1 : 1;
+  const bfRange = (bfMax - bfMin) || 1;
+
+  function xPos(dateStr: string): number {
+    const t = new Date(dateStr).getTime();
+    return padding.left + ((t - minDate) / dateRange) * plotW;
+  }
+  function wPos(w: number): number {
+    return padding.top + (1 - (w - wMin) / wRange) * plotH;
+  }
+  function bfPos(bf: number): number {
+    return padding.top + (1 - (bf - bfMin) / bfRange) * plotH;
+  }
+
+  const weightLine = recent.map((r, i) => `${i === 0 ? 'M' : 'L'} ${xPos(r.date).toFixed(1)} ${wPos(r.weight).toFixed(1)}`).join(' ');
+  const bodyFatLine = hasBodyFat
+    ? recent.filter((r) => r.bodyFat != null).map((r, i) => `${i === 0 ? 'M' : 'L'} ${xPos(r.date).toFixed(1)} ${bfPos(r.bodyFat!).toFixed(1)}`).join(' ')
+    : '';
+
+  // Y-axis labels for weight (left)
+  const wTicks = [wMin, (wMin + wMax) / 2, wMax];
+  // Y-axis labels for bodyFat (right)
+  const bfTicks = hasBodyFat ? [bfMin, (bfMin + bfMax) / 2, bfMax] : [];
+
+  // X-axis labels: first, middle, last
+  const xTicks = recent.length <= 1 ? [] : [recent[0], recent[Math.floor(recent.length / 2)], recent[recent.length - 1]];
+
+  function fmtDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  }
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 280 }}>
+        {/* Grid lines */}
+        {wTicks.map((t, i) => (
+          <line key={`wgrid-${i}`} x1={padding.left} y1={wPos(t)} x2={W - padding.right} y2={wPos(t)} stroke="var(--color-jai-card-border)" strokeWidth={0.5} strokeDasharray="2 3" />
+        ))}
+
+        {/* Weight line */}
+        <path d={weightLine} fill="none" stroke="var(--color-jai-accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        {recent.map((r, i) => (
+          <circle key={`wdot-${i}`} cx={xPos(r.date)} cy={wPos(r.weight)} r={2.5} fill="var(--color-jai-card)" stroke="var(--color-jai-accent)" strokeWidth={1.5} />
+        ))}
+
+        {/* BodyFat line */}
+        {hasBodyFat && (
+          <>
+            <path d={bodyFatLine} fill="none" stroke="var(--color-jai-success)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 2" />
+            {recent.filter((r) => r.bodyFat != null).map((r, i) => (
+              <circle key={`bfdot-${i}`} cx={xPos(r.date)} cy={bfPos(r.bodyFat!)} r={2} fill="var(--color-jai-card)" stroke="var(--color-jai-success)" strokeWidth={1} />
+            ))}
+          </>
+        )}
+
+        {/* Y-axis labels - weight (left) */}
+        {wTicks.map((t, i) => (
+          <text key={`wy-${i}`} x={padding.left - 4} y={wPos(t) + 3} textAnchor="end" fontSize={9} fill="var(--color-jai-text-secondary)">{t.toFixed(0)}</text>
+        ))}
+
+        {/* Y-axis labels - bodyFat (right) */}
+        {hasBodyFat && bfTicks.map((t, i) => (
+          <text key={`bfy-${i}`} x={W - padding.right + 4} y={bfPos(t) + 3} textAnchor="start" fontSize={9} fill="var(--color-jai-success)">{t.toFixed(0)}%</text>
+        ))}
+
+        {/* X-axis labels */}
+        {xTicks.map((r, i) => (
+          <text key={`xl-${i}`} x={xPos(r.date)} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--color-jai-text-secondary)">{fmtDate(r.date)}</text>
+        ))}
+
+        {/* Legend */}
+        <g transform={`translate(${padding.left}, ${H - 8})`}>
+          <line x1={0} y1={-3} x2={12} y2={-3} stroke="var(--color-jai-accent)" strokeWidth={2} />
+          <text x={16} y={0} fontSize={9} fill="var(--color-jai-text-secondary)">体重</text>
+          {hasBodyFat && (
+            <>
+              <line x1={60} y1={-3} x2={72} y2={-3} stroke="var(--color-jai-success)" strokeWidth={1.5} strokeDasharray="4 2" />
+              <text x={76} y={0} fontSize={9} fill="var(--color-jai-text-secondary)">体脂</text>
+            </>
+          )}
+        </g>
+      </svg>
     </div>
   );
 }

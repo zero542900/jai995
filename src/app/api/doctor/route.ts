@@ -21,7 +21,7 @@ RULES:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, messages, cycleData, healthProfile, userMessage } = body;
+    const { apiKey, messages, cycleData, healthProfile, weightRecords, userMessage } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -50,6 +50,28 @@ export async function POST(request: NextRequest) {
       parts.push(`当前用药: ${healthProfile.currentMedications || '未填写'}`);
       parts.push(`过敏史: ${healthProfile.allergies || '未填写'}`);
       parts.push(`备注: ${healthProfile.notes || '未填写'}`);
+      contextParts.push(parts.join(', '));
+    }
+
+    if (weightRecords && Array.isArray(weightRecords) && weightRecords.length > 0) {
+      const parts: string[] = ['【体重体脂记录】'];
+      const recent = weightRecords.slice(-15);
+      for (const r of recent) {
+        parts.push(`${r.date}: 体重${r.weight}kg${r.bodyFat != null ? `, 体脂${r.bodyFat}%` : ''}`);
+      }
+      // Trend summary
+      if (recent.length >= 2) {
+        const first = recent[0];
+        const last = recent[recent.length - 1];
+        const wDiff = (last.weight - first.weight).toFixed(1);
+        const wTrend = parseFloat(wDiff) > 0 ? `+${wDiff}` : wDiff;
+        parts.push(`趋势: 体重${wTrend}kg`);
+        if (first.bodyFat != null && last.bodyFat != null) {
+          const bfDiff = (last.bodyFat - first.bodyFat).toFixed(1);
+          const bfTrend = parseFloat(bfDiff) > 0 ? `+${bfDiff}` : bfDiff;
+          parts.push(`体脂${bfTrend}%`);
+        }
+      }
       contextParts.push(parts.join(', '));
     }
 

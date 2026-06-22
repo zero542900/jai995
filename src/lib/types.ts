@@ -119,6 +119,16 @@ export interface DoctorMessage {
   timestamp: number;
 }
 
+export interface WeightRecord {
+  id: string;
+  date: string;
+  weight: number;
+  bodyFat?: number;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;

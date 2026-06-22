@@ -1,10 +1,22 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.17.0';
-export const VERSION_NAME = '豪斯来了';
+export const APP_VERSION = '1.17.1';
+export const VERSION_NAME = 'z-index';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.17.1',
+    name: 'z-index',
+    date: '2025-06-22',
+    notes: [
+      '豪斯聊天面板的输入框被底部导航栏挡住了',
+      '原因：面板z-40比导航栏z-50低，导航栏直接盖在输入框上面',
+      '改了俩字，z-40改z-60，完事',
+      '顺手加了个safe-area-inset-bottom适配iPhone刘海屏底部',
+      '就这种bug我写的时候眼睛是瞎的吗',
+    ],
+  },
   {
     version: '1.17.0',
     name: '豪斯来了',

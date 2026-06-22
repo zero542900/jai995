@@ -1002,7 +1002,7 @@ export default function CalendarPage() {
                     <button
                       onClick={() => setConfirmDeleteId(msg.id)}
                       title="删除"
-                      className="text-[10px] text-jai-text-secondary/40 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      className="text-[10px] text-jai-text-secondary/60 hover:text-red-500 transition-colors"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

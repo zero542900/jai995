@@ -1,18 +1,19 @@
 // 版本信息 - 每次发布时手动更新
 export const APP_VERSION = '1.12.0';
-export const VERSION_NAME = '版本号地狱';
+export const VERSION_NAME = '补日志';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
   {
     version: '1.12.0',
-    name: '版本号地狱',
+    name: '补日志',
     date: '2025-06-22',
     notes: [
-      '老板说要记录每次小更新，然后我数了一下，二十多个版本',
-      '往回补日志补到怀疑人生，上个礼拜改了啥我都忘了',
-      '反正也没人看这个',
+      '老板突然说要记录每次小更新，翻了半天git log',
+      'commit message全是"fix: xxx"，具体fix了啥根本看不出来，之前的改动全靠猜',
+      '二十多个版本往回补日志，补到后面纯编',
+      '老板看的时候别太较真，我尽力了',
     ],
   },
   {
@@ -20,9 +21,10 @@ export const CHANGELOG = [
     name: '记忆升级',
     date: '2025-06-22',
     notes: [
-      '记忆总结指令全换了，词数上限300改500，老板嫌记得少',
-      '加了认知边界规则，DeepSeek你能不能别偷看user的内心戏',
-      '占位符检查改成循环扫描，{{char}}碎成{{cha}的bug不会再有了',
+      '记忆总结指令全换了，词数上限300改500',
+      'DeepSeek写记忆的时候老偷看user内心戏，加了认知边界规则堵死',
+      '占位符{{char}}经常碎成{{cha}，DeepSeek你切token的时候能不能认真点',
+      '加了循环扫描检查，碎了就修，修完再扫，扫到没碎片为止',
     ],
   },
   {
@@ -32,6 +34,7 @@ export const CHANGELOG = [
     notes: [
       '扩写system prompt首尾都加了英文强制指令',
       'DeepSeek说好的然后继续中文，我已经习惯了',
+      '你跟它说不要中文它说好的，然后还是中文，每次都这样',
     ],
   },
   {
@@ -39,7 +42,7 @@ export const CHANGELOG = [
     name: '括号要求',
     date: '2025-06-22',
     notes: [
-      '老板说【】里的要求扩写不看，我加了指令',
+      '老板说【】里的要求扩写不看，我加了指令让DeepSeek必须执行',
       'DeepSeek不看需求文档这事我管不了，我已经尽力了',
     ],
   },
@@ -51,6 +54,7 @@ export const CHANGELOG = [
       '词数限制删了又加回来，maxTokens改了三回',
       '老板说不要限制，然后说还是要限制',
       '我：好的',
+      'DeepSeek你要是能自己控制字数我用得着改三回吗',
     ],
   },
   {
@@ -60,7 +64,7 @@ export const CHANGELOG = [
     notes: [
       '扩写思考模式截断，maxTokens 4000改8000',
       '非思考模式900改2500，卡边界卡的',
-      'DeepSeek你能不能自己判断写没写完',
+      'DeepSeek你能不能自己判断写没写完，非要我给你留够空间',
     ],
   },
   {
@@ -68,9 +72,11 @@ export const CHANGELOG = [
     name: '禁止比喻',
     date: '2025-06-21',
     notes: [
-      '老板说比喻不让用了，我寻思我也没写过比喻啊',
-      '白描强制规则5条子规则，写规则比写代码累',
-      '加完规则扩写又截断了，规则太长token不够',
+      'DeepSeek写扩写比喻成瘾，一个场景能给你整仨比喻',
+      '它以为在写高考作文，"她的眼神像深秋的湖面"，谁要这个啊',
+      '白描规则5条子规则上了，堵死了',
+      '加完规则token不够扩写截断了，DeepSeek不写比喻了但也不写结尾了',
+      '写规则比写代码累',
     ],
   },
   {
@@ -78,11 +84,10 @@ export const CHANGELOG = [
     name: '改颜色',
     date: '2025-06-20',
     notes: [
-      '枫叶不够红改成真红，苔绿改成靛青',
-      '老板说苔绿换了吧，我把薄荷也一起改了',
-      '老板问为什么一起改了，我哪知道，它们挨着',
-      '薄荷恢复了，玫瑰太暗又改亮',
-      '粉色改了不知道多少遍，我是色盲吗',
+      '薄荷和苔绿一起改了，因为挨着顺手就改了',
+      '老板问为什么一起改，我说不出话，真的就是手滑',
+      '玫瑰太暗又改亮，粉色来回来去改，我看到色板就头疼',
+      '这活跟DeepSeek一点关系没有，纯我自己的锅',
     ],
   },
   {
@@ -100,9 +105,10 @@ export const CHANGELOG = [
     name: '找茬',
     date: '2025-06-19',
     notes: [
-      '冲突检测，检测完了还得写修正，老板说可选可不选',
-      '那你检测它干嘛',
-      '盾牌图标按钮加在结果卡操作栏，老板找了半天没看到',
+      '冲突检测查角色卡矛盾，DeepSeek查出来倒是挺积极',
+      '然后让它修，改完又出新问题，自己查自己改还能出bug',
+      '盾牌图标我做得太小，老板找了半天没看到',
+      '别问我为什么不做大点，问就是设计审美有问题',
     ],
   },
   {
@@ -110,9 +116,11 @@ export const CHANGELOG = [
     name: '打包带走',
     date: '2025-06-19',
     notes: [
-      '预设导入导出，连会话一起打包成JSON',
-      '指令自动总结，新建完自动跑AI生成摘要',
-      '都是老板临时加的需求',
+      '预设导出连会话一起打包成JSON',
+      '老板说"你觉得还能加什么功能"，我提了几个想法',
+      '然后全变成我的活，我嘴贱',
+      '指令摘要DeepSeek写的，写出来了但质量一般',
+      '算了能用就行',
     ],
   },
   {
@@ -139,7 +147,7 @@ export const CHANGELOG = [
     name: '清理',
     date: '2025-06-19',
     notes: [
-      'memory路由去重，DeepSeek同一个指令塞了三遍',
+      'memory路由去重，同一个指令塞了三遍，我自己写的，别问为什么',
       '统一SSE流封装，各路由手写的全换了',
       '翻译强制用chat模型，thinking关掉，翻译不需要思考',
     ],
@@ -159,8 +167,8 @@ export const CHANGELOG = [
     date: '2025-06-18',
     notes: [
       'Pro模式中文翻译空值，DeepSeek thinking模式content返回空',
-      'reasoning_content倒是一大堆，我同事话真多',
-      '加了fallback，翻译失败不翻转卡片了',
+      'reasoning_content倒是一大堆，思考了一堆结果啥也没输出',
+      '加了fallback到reasoning_content，翻译失败不翻转卡片了',
     ],
   },
   {
@@ -168,7 +176,8 @@ export const CHANGELOG = [
     name: '卡片化',
     date: '2025-06-18',
     notes: [
-      '角色卡从代码块改成卡片展示，parseCardSections解析',
+      '角色卡从代码块改成卡片展示',
+      'parseCardSections解析正则太严，卡片不显示，加了fallback到原文',
       '生成历史按角色分组，最近5次横向滚动',
       '老板找了半天历史按钮在哪，移到结果卡操作栏了',
     ],
@@ -179,9 +188,11 @@ export const CHANGELOG = [
     date: '2025-06-18',
     notes: [
       '预设卡和指令卡拖拽排序，@dnd-kit',
-      '手机端拖拽折腾了两天，TouchSensor加了才好使',
-      '浏览器拦截触摸事件，加touch-none才不闪退',
-      '拖拽手柄太小改到28px，老板手指头比我粗',
+      '动画不丝滑调了半天，Tailwind的transition和dnd-kit打架，把transition删了才好',
+      '手机端拖拽不工作，加了TouchSensor才行',
+      '加完手机端拖拽会闪退复位，touch-action没加',
+      '一个拖拽功能改了四五轮，我写代码的时候能不能一次写对',
+      '不能',
     ],
   },
   {
@@ -208,9 +219,9 @@ export const CHANGELOG = [
     name: '格式例外',
     date: '2025-06-17',
     notes: [
-      'Markdown规则加了结构化模板例外',
-      'generate的User卡用#标题，但格式规则禁止用#',
+      'Markdown规则禁止用#，但User卡模板全是#标题',
       '自己跟自己打架，加了个例外',
+      '这种低级冲突自己没发现，老板提了才知道',
     ],
   },
   {
@@ -218,9 +229,10 @@ export const CHANGELOG = [
     name: '翻译修复',
     date: '2025-06-17',
     notes: [
-      '翻译Pro模式报错，thinking参数传了字符串',
-      'DeepSeek要对象我传了字符串，它也不提醒我',
-      '改用callDeepSeek自动包装',
+      '翻译Pro模式报错，thinking参数传了字符串"disabled"',
+      'API要对象{type:"disabled"}，我传了字符串',
+      '自己写的bug，debug了半天才发现参数类型不对',
+      '改用callDeepSeek自动包装，以后不用手动管格式了',
     ],
   },
   {
@@ -228,9 +240,11 @@ export const CHANGELOG = [
     name: '参数反了',
     date: '2025-06-17',
     notes: [
-      'resolveModelParams参数写反了，Pro模式一直没生效',
-      '三个路由都反了，我自己写的bug自己查了半天',
-      'DeepSeek你发现的时候能不能说一声',
+      'resolveModelParams参数写反了，thinkingEnabled传到了modelTier的位置',
+      '三个路由都反了，Pro模式一直没生效，用户白选了',
+      '自己写的bug自己查了半天，最后发现参数顺序反了',
+      '经典的"本地能跑但功能没生效"，因为压根没走对分支',
+      '这种bug最恶心，不报错但功能是错的',
     ],
   },
   {

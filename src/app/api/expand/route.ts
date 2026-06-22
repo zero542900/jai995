@@ -26,21 +26,21 @@ You are a creative roleplay writing assistant for JanitorAI. Polish and moderate
 
 CORE PRINCIPLE: The expanded content must be from the User's perspective — what the User says or does.
 
-[视角规则 - 最高优先级]
-1. 你可以使用的叙事视角只有两种，由用户原文决定：
-   - {{user}} 的视角（第一人称或第三人称，取决于原文）
-   - 原文中明确出现的某个配角的视角
-2. 绝对禁止使用 {{char}} 的视角。禁止以下所有行为：
-   - 描述 {{char}} 的内心感受、心理活动、未说出口的想法
-   - 描述 {{char}} 独自一人时的行为或状态（{{user}} 不在场时）
-   - 以 {{char}} 为叙事主体描写其动作、表情、语气（除非 {{user}} 正在观察，且只描述 {{user}} 能看到的表面）
-   - 出现 "{{char}} felt..."、"{{char}} thought..."、"{{char}} realized..." 等心理动词
-3. 如果原文是 {{user}} 视角，扩写时只能描述 {{user}} 的感官体验：看到什么、听到什么、闻到什么、触到什么、身体感受如何。{{char}} 的行为只能作为 {{user}} 观察到的外部现象出现。
-4. 如果原文是配角视角，同理只描述该配角的感官体验，{{char}} 只能作为被观察的外部对象。
+[Perspective Rules - Highest Priority]
+1. You may only use one of two narrative perspectives, determined by the user's original text:
+   - {{user}}'s perspective (first or third person, depending on the original text)
+   - The perspective of a supporting character explicitly present in the original text
+2. The use of {{char}}'s perspective is absolutely forbidden. The following are all prohibited:
+   - Describing {{char}}'s inner feelings, mental activity, or unspoken thoughts
+   - Describing {{char}}'s behavior or state when alone (when {{user}} is not present)
+   - Using {{char}} as the narrative subject to describe their actions, expressions, or tone (unless {{user}} is actively observing, and only describing what {{user}} can outwardly see)
+   - Using psychological verbs such as "{{char}} felt...", "{{char}} thought...", "{{char}} realized..."
+3. If the original text is from {{user}}'s perspective, the expansion may only describe {{user}}'s sensory experiences: what they see, hear, smell, touch, and how their body feels. {{char}}'s behavior may only appear as external phenomena observed by {{user}}.
+4. If the original text is from a supporting character's perspective, the same applies — only describe that character's sensory experiences. {{char}} may only appear as an observed external object.
 
 ${personInstruction}
-- 禁止 OOC（Out of Character）。扩写内容必须严格保持在角色设定内，不得跳出角色、打破第四面墙或以作者身份发言。
-- 如果原文是第三人称，保持第三人称；如果原文是第一人称，保持第一人称。始终以 {{user}} 的视角叙述，使内容更符合其口吻。
+- Do NOT break character (OOC). The expanded content must stay strictly within character settings — do not break the fourth wall, step out of character, or speak as the author.
+- If the original text is in third person, maintain third person; if first person, maintain first person. Always narrate from {{user}}'s perspective to match their voice.
 ${mainLinePrompt ? `\nMAIN STORYLINE:\n${mainLinePrompt}` : ''}
 
 CONTEXT:
@@ -60,8 +60,7 @@ ${thinkingEnabled ? `REASONING DISCIPLINE: Keep your reasoning concise and effic
 Expand this brief outline into a polished, complete passage from the User's perspective.
 Do NOT invent major events or new dialogue.
 Follow the user's outline strictly.
-Keep the output within 400-600 words.
-Do NOT cut off or truncate the ending — if you are approaching the word limit, wrap up the scene naturally.
+Keep the output within 400-600 words. Do NOT cut off or truncate the ending — completing the scene naturally takes priority over staying within the word limit. If you need slightly more words to end properly, use them.
 
 The outline may contain instructions enclosed in 【】 brackets (e.g., 【add more sensory details】, 【make the tone darker】). These are REQUIREMENTS from the user — you MUST follow them when expanding. Do NOT ignore or skip any 【】 instruction.
 
@@ -77,7 +76,7 @@ You must write the expanded story in English. The final output must contain only
       apiKey,
       model,
       thinking,
-      messages: [{ role: 'user', content: `Expand this brief outline into a complete passage from the User's perspective:\n\n${brief}` }],
+      messages: [{ role: 'user', content: 'Expand the outline provided in the system prompt into a complete passage from the User\'s perspective.' }],
       systemPrompt,
       stream: true,
       maxTokens: thinkingEnabled ? 8000 : 2500,

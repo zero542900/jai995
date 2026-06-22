@@ -203,50 +203,58 @@ export function handleAPIError(error: unknown): Response {
 
 // Shared writing style instructions - applies to ALL API routes globally
 export const WRITING_STYLE_INSTRUCTION = `
-[文风约束 - 全局通用]
+[Style Constraints – Global]
 
-禁用词汇：你不得在任何上下文中使用以下词语——"兜住"、"接住"、"稳"、"守"、"极其"。
+Prohibited Words: You must not use the following words in any context: "hold it all together," "catch," "steady," "guard," "extremely."
 
-禁止使用以下句式："不是……而是……"、"在……的过程中"、"总而言之"、"综上所述"、"不仅……更……"、"不是……是……是……"、"不是……不是……是……"、"是……的基石/关键/必修课"。
+Prohibited Sentence Patterns:
+Do not use the following constructions: "not... but...", "in the process of...", "in conclusion," "to sum up," "not only... but also...", "not... is... is...", "not... not... is...", "is... the cornerstone / key / required course of...".
 
-禁止使用排比句、对偶句、反复等修辞性排叠结构。
+Prohibited Rhetorical Structures:
+Do not use parallelism, antithesis, repetition, or any other rhetorical stacking structures.
 
-禁止使用"不x，不y，不z，就"格式。
+Prohibited Format:
+Do not use the "no x, no y, no z, then" format.
 
-禁止使用"这就够了"、"很…，但很…"等总结性短判断。
+Prohibited Concluding Judgments:
+Do not use short conclusive judgments such as "that's enough," "very... yet very...".
 
-禁止使用任何以"不是"开头的否定句式。
+Prohibited Negation Openers:
+Do not use any sentence that begins with a negative "not" construction.
 
-白描强制规则（Zero Figurative Language）:
-7.1 禁止一切比喻、隐喻、拟人、象征、夸张、借代、类比。
-7.2 严禁使用任何引发联想的比拟词，包括但不限于：像、好像、仿佛、似乎、如同、犹如、宛如、若、似、似的、一般、般、如……一样。
-7.3 对感官对象的描述只限于可直接观察或测量的物理属性：形状、大小、颜色、明暗、质地、温度、湿度、声音高低长短、气味类型、动作轨迹、速度、力度，不做任何他物比较。
-7.4 禁止将情感、氛围等抽象概念附着于物体进行变形描写，只记录可感知的具体现象。
-7.5 如有必要对感受加以说明，只能使用无比喻的生理反应描述（如"皮肤起了一层细粒""胃部抽紧"），不得用"像……"解释。
+Zero Figurative Language Rule:
+7.1 All metaphor, simile, personification, symbolism, hyperbole, metonymy, and analogy are strictly forbidden.
+7.2 Any comparative word that triggers association is strictly prohibited, including but not limited to: like, as, as if, as though, similar to, resembling, such as, in the manner of, -like, -esque, seem, appear.
+7.3 Descriptions of sensory objects are limited to directly observable or measurable physical properties: shape, size, color, brightness, texture, temperature, humidity, pitch and duration of sound, type of odor, trajectory of motion, speed, force. No comparisons to other objects are permitted.
+7.4 Do not project emotions, atmosphere, or other abstract concepts onto objects for figurative description; record only perceptible, concrete phenomena.
+7.5 If it is necessary to describe a feeling, use only non-metaphorical physiological responses (e.g., "goosebumps rose on the skin," "the stomach tightened"), and do not explain them with "like" or "as if."
 
-Ending & Termination Rule: All generated text MUST end on a concrete action, sensory detail, or a short line of dialogue. Strictly forbidden to conclude with any form of summary, moralizing, foreshadowing, or editorial judgment (e.g., "Things were about to change irreversibly," "A new chapter was beginning," "This foreshadowed..."). The output must cut off sharply at a factual or sensory beat. 严禁在结尾使用"事情正在起变化"、"新的篇章即将开启"、"这预示着"等评判性语句。
+Ending & Termination Rule:
+All generated text MUST end on a concrete action, sensory detail, or a short line of dialogue. It is strictly forbidden to conclude with any form of summary, moralizing, foreshadowing, or editorial judgment (e.g., "Things were about to change irreversibly," "A new chapter was beginning," "This foreshadowed..."). The output must cut off sharply at a factual or sensory beat. Do not use endings like "Things are taking a turn," "A new chapter is about to unfold," or "This presages..."
 
-如果你发现某段输出中出现了上述任意一条禁用规则，不得以删除内容作为处理方式。你必须用一段新的、符合以上全部约束的完整描写来替换它。`;
+Replacement Rule:
+If you discover that any of the above prohibited rules have appeared in a generated passage, you must not handle it by simply deleting the content. You must replace the offending passage with an entirely new, complete description that complies with all the constraints above.`;
 
 // Markdown format rules - for narrative outputs only (expand/memory/translate/chat), NOT for structured templates (generate)
 export const MARKDOWN_FORMAT_INSTRUCTION = `
-[Markdown 格式规则]（仅叙事类输出。结构化模板如 User 卡不受此限制。）
+[Markdown Formatting Rules]
+(Applies to narrative output only. Structured templates, such as User Cards, are exempt from these restrictions.)
 
-加粗（**text**）：仅用于角色台词的语气强调，或叙事段落中需要突出的关键动作、物件。
+**Bold (\`**text**\`)**: Use only for emphasizing the tone of character dialogue, or for highlighting key actions and objects within narrative passages.
 
-斜体（*text*）：仅用于角色内心独白、未说出口的心理活动，或旁白中的气氛渲染。
+*Italic (\`*text*\`)*: Use only for {{user}}'s internal monologue, unspoken thoughts, or for rendering atmosphere in narration.
 
-行内代码（\`text\`）：仅用于短信内容、纸条文字、电子屏幕显示。
+Inline Code (\`\`text\`\`): Use only for text messages, notes, or text displayed on electronic screens.
 
-分隔线（*** 或 ---）：仅用于场景转换或时间跳跃。
+Horizontal Rules (\`***\` or \`---\`): Use only for scene transitions or time jumps.
 
-引用块（>）：仅用于长篇引用内容。
+Blockquotes (\`>\`): Use only for long-form quoted content.
 
-禁止使用标题（#）、代码块（\`\`\`）、有序/无序列表。
+**Prohibited**: Do not use headings (\`#\`), code blocks (\` \`\`\` \`), or ordered/unordered lists.
 
-禁止整段加粗或整段斜体。
+Do not apply bold or italic formatting to entire paragraphs.
 
-禁止在单一短语上混用加粗与斜体进行多重强调。`;
+Do not mix bold and italic on a single phrase for multiple emphasis.`;
 
 export const CHINESE_OUTPUT_INSTRUCTION = `
 Output format: First output the English content, then on a new line write exactly "===CHINESE===" (this exact marker), then output the Chinese translation below.

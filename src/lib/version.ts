@@ -1,10 +1,23 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.12.1';
-export const VERSION_NAME = '补日志的补日志';
+export const APP_VERSION = '1.13.0';
+export const VERSION_NAME = '指令全英化';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.13.0',
+    name: '指令全英化',
+    date: '2025-06-22',
+    notes: [
+      '老板突然说文风约束和Markdown规则要全英文，说中文指令会影响DeepSeek输出',
+      '我寻思用了几个月中文指令不是一直好好的吗，但老板说改就改',
+      '改完发现还有四个冲突：指令语言矛盾、斜体规则没限定角色、brief重复发、词数和不截断打架',
+      '四个一起修了，视角规则也顺手翻成英文了',
+      '现在整个扩写指令全是英文，就剩【】括号里的中文是用户写的',
+      'DeepSeek要是再输出中文我就真没办法了',
+    ],
+  },
   {
     version: '1.12.1',
     name: '补日志的补日志',

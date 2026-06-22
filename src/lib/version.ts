@@ -1,10 +1,22 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.18.1';
-export const VERSION_NAME = '纯聊天';
+export const APP_VERSION = '1.18.2';
+export const VERSION_NAME = '网诊';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.18.2',
+    name: '网诊',
+    date: '2025-06-22',
+    notes: [
+      '豪斯认知里补了线上对话的设定——你跟用户就是在微信上聊天的医患关系',
+      '没有诊所没有面对面，看不到听不到碰不到，只知道对方打字和数据',
+      '上一版只禁止了动作描述，但豪斯脑子里的设定还是"在诊室里"',
+      '现在明确写了：像只接微信问诊的医生，一切通过消息',
+      'prompt写法的问题：你以为禁了行为就完了，没改认知等于白禁',
+    ],
+  },
   {
     version: '1.18.1',
     name: '纯聊天',

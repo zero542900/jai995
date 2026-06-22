@@ -18,6 +18,7 @@ import {
   saveWeightRecord,
   deleteWeightRecord,
 } from '@/lib/storage';
+import { IconFlip } from '@/components/icons';
 import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage, WeightRecord } from '@/lib/types';
 
 // ========== Constants ==========
@@ -202,6 +203,9 @@ export default function CalendarPage() {
   const [doctorMessages, setDoctorMessages] = useState<DoctorMessage[]>([]);
   const [doctorInput, setDoctorInput] = useState('');
   const [doctorStreaming, setDoctorStreaming] = useState(false);
+  const [doctorTranslating, setDoctorTranslating] = useState<string | null>(null);
+  const [doctorTranslations, setDoctorTranslations] = useState<Record<string, string>>({});
+  const [doctorFlipped, setDoctorFlipped] = useState<Set<string>>(new Set());
   const doctorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -257,6 +261,39 @@ export default function CalendarPage() {
     setWeightInputDate(date);
     setWeightInputVal(String(rec.weight));
     setBodyFatInputVal(rec.bodyFat ? String(rec.bodyFat) : '');
+  }
+
+  async function handleDoctorTranslate(msgId: string, content: string) {
+    // Already translated → just flip
+    if (doctorTranslations[msgId]) {
+      setDoctorFlipped(prev => {
+        const next = new Set(prev);
+        if (next.has(msgId)) next.delete(msgId);
+        else next.add(msgId);
+        return next;
+      });
+      return;
+    }
+    // Need to translate first
+    const apiKey = getApiKey();
+    if (!apiKey) return;
+    setDoctorTranslating(msgId);
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content, apiKey, context: 'House M.D. doctor message' }),
+      });
+      if (!res.ok) throw new Error('Translation failed');
+      const data = await res.json();
+      const translation = data.translation || '';
+      setDoctorTranslations(prev => ({ ...prev, [msgId]: translation }));
+      setDoctorFlipped(prev => new Set(prev).add(msgId));
+    } catch {
+      // silently fail
+    } finally {
+      setDoctorTranslating(null);
+    }
   }
 
   async function sendToDoctor(userMessage: string) {
@@ -858,20 +895,35 @@ export default function CalendarPage() {
                 </div>
               )}
               {doctorMessages.map(msg => (
-                <div key={msg.id} className={cn('flex flex-col', msg.role === 'user' ? 'items-end' : 'items-start')}>
+                <div key={msg.id} className={cn('flex flex-col gap-0.5', msg.role === 'user' ? 'items-end' : 'items-start')}>
                   <div
                     className={cn(
-                      'max-w-[80%] rounded-2xl px-3 py-2 text-sm',
+                      'max-w-[85%] rounded-2xl px-3 py-2 text-sm break-words',
                       msg.role === 'user'
                         ? 'bg-jai-accent/15 text-jai-text'
                         : 'bg-jai-secondary/10 text-jai-text'
                     )}
                   >
-                    {msg.content || '...'}
+                    {doctorFlipped.has(msg.id) && doctorTranslations[msg.id]
+                      ? doctorTranslations[msg.id]
+                      : msg.content || '...'}
                   </div>
-                  <span className="text-[10px] text-jai-text-secondary/60 mt-0.5 px-1">
-                    {new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  <div className={cn('flex items-center gap-2 px-1', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
+                    <span className="text-[10px] text-jai-text-secondary/60">
+                      {new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    {msg.role === 'assistant' && (
+                      <button
+                        onClick={() => handleDoctorTranslate(msg.id, msg.content)}
+                        disabled={doctorTranslating === msg.id}
+                        title="翻译"
+                        className="flex items-center gap-0.5 text-[10px] text-jai-text-secondary/60 hover:text-jai-accent transition-colors disabled:opacity-40"
+                      >
+                        <IconFlip className="w-2.5 h-2.5" />
+                        {doctorTranslating === msg.id ? '...' : ''}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {doctorStreaming && (

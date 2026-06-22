@@ -1,10 +1,20 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.18.2';
-export const VERSION_NAME = '网诊';
+export const APP_VERSION = '1.18.3';
+export const VERSION_NAME = '看不懂';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.18.3',
+    name: '看不懂',
+    date: '2025-06-22',
+    note: '豪斯气泡加了翻译按钮',
+    notes: [
+      '豪斯气泡加了翻译按钮，跟会话页一个翻译规则',
+      '豪斯说话太装逼看不懂的时候点一下就翻中文了，再点一下翻回去'
+    ]
+  },
   {
     version: '1.18.2',
     name: '网诊',

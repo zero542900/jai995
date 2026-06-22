@@ -235,7 +235,7 @@ export default function SettingsPage() {
                     <span className="text-[10px] text-jai-text-secondary/60">{entry.date}</span>
                   </div>
                   <ul className="mt-1.5 space-y-1">
-                    {entry.notes.map((note, i) => (
+                    {entry.notes?.map((note, i) => (
                       <li key={i} className="text-xs text-jai-text-secondary leading-relaxed">
                         · {note}
                       </li>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { IconCheck, IconKey, IconCpu } from '@/components/icons';
 import { getApiKey, setApiKey, getModelPreference, setModelPreference } from '@/lib/storage';
 import { THEMES, getCurrentThemeId, applyTheme } from '@/lib/themes';
+import { APP_VERSION, VERSION_NAME, LAST_UPDATED } from '@/lib/version';
 
 export default function SettingsPage() {
   const [key, setKey] = useState('');
@@ -204,6 +205,12 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 关于 */}
+      <div className="text-center py-6 space-y-1">
+        <p className="text-sm font-medium text-jai-accent">v{APP_VERSION} · {VERSION_NAME}</p>
+        <p className="text-xs text-jai-text-secondary">最后更新：{LAST_UPDATED}</p>
+      </div>
     </div>
   );
 }

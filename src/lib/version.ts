@@ -1,10 +1,24 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.17.3';
-export const VERSION_NAME = '幻觉';
+export const APP_VERSION = '1.17.4';
+export const VERSION_NAME = '失忆症2.0';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.17.4',
+    name: '失忆症2.0',
+    date: '2025-06-22',
+    notes: [
+      '除了薄荷之外的主题刷新就变玫瑰——跟豪斯一个病，失忆了',
+      '原因：防闪烁内联脚本里硬编码了一份主题列表，只有10个',
+      '但themes.ts里有13个主题，多出来的4个（护眼暖沙/护眼薄荷/深色/粉黑）内联脚本找不到',
+      '找不到就fallback到rose，所以每次刷新都变玫瑰',
+      '薄荷没中招是因为它正好在内联脚本的10个里面',
+      '修法：不再两处维护，内联脚本直接从THEMES数组JSON序列化生成',
+      '以后加主题只改themes.ts一个地方就行，再也不会不同步了',
+    ],
+  },
   {
     version: '1.17.3',
     name: '幻觉',

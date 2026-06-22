@@ -24,7 +24,7 @@ RULES:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, messages, summary, cycleData, healthProfile, weightRecords, userMessage } = body;
+    const { apiKey, messages, memories, cycleData, healthProfile, weightRecords, userMessage } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -82,11 +82,12 @@ export async function POST(request: NextRequest) {
       ? `\n\n--- PATIENT DATA ---\n${contextParts.join('\n')}\n--- END DATA ---\n\nUse ONLY the data listed above. If a field says "未填写", it means the user has NOT provided that information — do NOT invent or assume any medical history, medications, allergies, or symptoms that are not explicitly listed here. Only comment on what you can see. If you don't have data, say so sarcastically instead of making things up.`
       : '';
 
-    const summaryBlock = summary
-      ? `\n\n--- PRIOR MEDICAL NOTES ---\n${summary}\n--- END NOTES ---\n\nThis is a summary of your previous interactions with this patient. Use it for context but always prioritize the latest data above.`
+    const memoryEntries = body.memories as Array<{ category: string; tags: string[]; content: string }> | undefined;
+    const memoryBlock = memoryEntries && memoryEntries.length > 0
+      ? `\n\n--- RELEVANT PRIOR OBSERVATIONS ---\n${memoryEntries.map((m: { category: string; content: string }) => `[${m.category}] ${m.content}`).join('\n')}\n--- END OBSERVATIONS ---\n\nThese are relevant observations from your previous conversations with this patient. Use them for context but always prioritize the latest data and conversation above.`
       : '';
 
-    const systemPrompt = HOUSE_PERSONA + contextBlock + summaryBlock;
+    const systemPrompt = HOUSE_PERSONA + contextBlock + memoryBlock;
 
     // Build messages array
     const apiMessages: Array<{ role: string; content: string }> = [
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
       messages: apiMessages,
       stream: true,
       temperature: 0.9,
-      maxTokens: 120,
+      maxTokens: 200,
     });
 
     const stream = createSSEStream(response);

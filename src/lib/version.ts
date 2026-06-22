@@ -1,10 +1,28 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.19.1';
-export const VERSION_NAME = '常驻';
-export const LAST_UPDATED = '2025-06-22';
+export const APP_VERSION = '1.20.0';
+export const VERSION_NAME = '海马体';
+export const LAST_UPDATED = '2025-06-23';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.20.0',
+    name: '海马体',
+    date: '2025-06-23',
+    note: '豪斯记忆系统重构——从压缩摘要改成了条目化长期记忆，关键词检索按需召回',
+    notes: [
+      '把原来那个压缩摘要全删了，换了套新的记忆系统',
+      '每聊完一轮自动提取结构化记忆条目（症状/用药/周期/饮食/心理/通用）',
+      '发消息时按关键词搜索相关记忆，只有沾边的才塞进去，省token',
+      '记忆条目支持更新覆盖，新观测会替换旧的',
+      '医疗记录弹窗里能看到所有记忆条目，支持单条删除',
+      '豪斯回复maxTokens从120提到200，不能再截断了',
+      '对话历史保留20条（原来10条），上下文更长',
+      'DeepSeek那个extract接口比我想象的听话，没乱编',
+      '我老板说"记忆要一直更新，提到相关话题才搜"——得，直接上RAG',
+      '结果RAG太重了，纯localStorage搞了个穷人版关键词匹配，够用',
+    ],
+  },
   {
     version: '1.19.1',
     name: '常驻',

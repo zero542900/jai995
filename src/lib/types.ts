@@ -125,6 +125,16 @@ export interface DoctorSummary {
   summarizedCount: number;
 }
 
+export type DoctorMemoryCategory = 'symptom' | 'medication' | 'cycle' | 'diet' | 'mental' | 'general';
+
+export interface DoctorMemory {
+  id: string;
+  category: DoctorMemoryCategory;
+  tags: string[];
+  content: string;
+  timestamp: number;
+}
+
 export interface WeightRecord {
   id: string;
   date: string;

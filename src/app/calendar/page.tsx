@@ -14,15 +14,18 @@ import {
   getDoctorMessages,
   saveDoctorMessages,
   clearDoctorMessages,
-  getDoctorSummary,
-  saveDoctorSummary,
+  getDoctorMemories,
+  addDoctorMemory,
+  updateDoctorMemory,
+  deleteDoctorMemory,
+  searchDoctorMemories,
   deleteDoctorMessage,
   getWeightRecords,
   saveWeightRecord,
   deleteWeightRecord,
 } from '@/lib/storage';
 import { IconFlip } from '@/components/icons';
-import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage, DoctorSummary, WeightRecord } from '@/lib/types';
+import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage, DoctorMemory, WeightRecord } from '@/lib/types';
 
 // ========== Constants ==========
 
@@ -212,12 +215,12 @@ export default function CalendarPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [medicalRecordsOpen, setMedicalRecordsOpen] = useState(false);
-  const [doctorSummary, setDoctorSummary] = useState<DoctorSummary | null>(null);
+  const [doctorMemories, setDoctorMemories] = useState<DoctorMemory[]>([]);
   const doctorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDoctorMessages(getDoctorMessages());
-    setDoctorSummary(getDoctorSummary());
+    setDoctorMemories(getDoctorMemories());
   }, []);
 
   function handleDeleteMessage(id: string) {
@@ -229,7 +232,7 @@ export default function CalendarPage() {
   function handleClearAll() {
     clearDoctorMessages();
     setDoctorMessages([]);
-    setDoctorSummary(null);
+    setDoctorMemories([]);
     setConfirmClearAll(false);
   }
 
@@ -345,13 +348,16 @@ export default function CalendarPage() {
 
     const healthProfile = getHealthProfile();
     try {
+      // Search for relevant memories based on user message keywords
+      const relevantMemories = searchDoctorMemories(userMessage).slice(0, 10);
+
       const res = await fetch('/api/doctor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userMessage: userMessage,
-          messages: doctorMessages.slice(-10),
-          summary: doctorSummary?.summary || null,
+          messages: doctorMessages.slice(-20),
+          memories: relevantMemories,
           healthProfile,
           weightRecords: weightRecords.slice(-30),
           cycleData: {
@@ -406,41 +412,56 @@ export default function CalendarPage() {
       const finalMessages = [...updatedMessages, { ...assistantMsg, content: fullText }];
       saveDoctorMessages(finalMessages);
 
-      // Compress if over 30 messages (15 rounds) - keep latest 10, summarize rest
-      if (finalMessages.length > 30) {
-        try {
-          const apiKey = getApiKey();
-          if (apiKey) {
-            const toSummarize = finalMessages.slice(0, finalMessages.length - 10);
-            const convText = toSummarize.map(m => `${m.role === 'user' ? '患者' : 'House'}: ${m.content}`).join('\n');
-            const existingSummary = getDoctorSummary();
-            const summarizeRes = await fetch('/api/doctor/summarize', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                text: convText,
-                existingSummary: existingSummary?.summary || null,
-                apiKey,
-              }),
-            });
-            if (summarizeRes.ok) {
-              const sumData = await summarizeRes.json();
-              const newSummary: DoctorSummary = {
-                summary: sumData.summary,
-                updatedAt: Date.now(),
-                summarizedCount: toSummarize.length + (existingSummary?.summarizedCount || 0),
-              };
-              saveDoctorSummary(newSummary);
-              setDoctorSummary(newSummary);
-              // Keep only the latest 10 messages
-              const trimmed = finalMessages.slice(-10);
-              saveDoctorMessages(trimmed);
-              setDoctorMessages(trimmed);
+      // Extract structured memories from this conversation turn
+      try {
+        const apiKey = getApiKey();
+        if (apiKey) {
+          const convText = `患者: ${userMessage}\nHouse: ${fullText}`;
+          const extractRes = await fetch('/api/doctor/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversation: convText, apiKey }),
+          });
+          if (extractRes.ok) {
+            const extractData = await extractRes.json();
+            if (extractData.entries && extractData.entries.length > 0) {
+              for (const entry of extractData.entries) {
+                // Check if this entry replaces an existing one
+                if (entry.replaces_tag) {
+                  const existing = doctorMemories.find(m =>
+                    m.tags.some(t => t.toLowerCase().includes(entry.replaces_tag.toLowerCase()))
+                  );
+                  if (existing) {
+                    updateDoctorMemory(existing.id, {
+                      content: entry.content,
+                      tags: [...new Set([...existing.tags, ...entry.tags])],
+                      timestamp: Date.now(),
+                    });
+                  } else {
+                    addDoctorMemory({
+                      id: crypto.randomUUID(),
+                      category: entry.category,
+                      tags: entry.tags,
+                      content: entry.content,
+                      timestamp: Date.now(),
+                    });
+                  }
+                } else {
+                  addDoctorMemory({
+                    id: crypto.randomUUID(),
+                    category: entry.category,
+                    tags: entry.tags,
+                    content: entry.content,
+                    timestamp: Date.now(),
+                  });
+                }
+              }
+              setDoctorMemories(getDoctorMemories());
             }
           }
-        } catch {
-          // Compression failed, keep all messages
         }
+      } catch {
+        // Memory extraction failed, non-critical
       }
     } catch {
       const errorMsg: DoctorMessage = {
@@ -1059,7 +1080,7 @@ export default function CalendarPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30" onClick={() => setConfirmClearAll(false)}>
           <div className="bg-jai-card rounded-xl border border-jai-card-border p-5 max-w-[280px] w-full mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
             <div className="text-sm font-medium text-jai-text mb-1">清空所有对话？</div>
-            <div className="text-xs text-jai-text-secondary mb-4">包括历史摘要也会一起删除，不可恢复。</div>
+            <div className="text-xs text-jai-text-secondary mb-1">包括记忆和对话都会一起删除，不可恢复。</div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setConfirmClearAll(false)} className="px-3 py-1.5 text-xs rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors">取消</button>
               <button onClick={handleClearAll} className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">清空</button>
@@ -1079,13 +1100,28 @@ export default function CalendarPage() {
               </button>
             </div>
             <div className="overflow-y-auto flex-1 space-y-3">
-              {doctorSummary ? (
-                <div className="bg-jai-secondary/8 rounded-lg p-3 border border-jai-card-border">
-                  <div className="text-[10px] text-jai-text-secondary mb-1">历史摘要 · 更新于 {new Date(doctorSummary.updatedAt).toLocaleString('zh-CN')}</div>
-                  <div className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap">{doctorSummary.summary}</div>
-                </div>
+              {/* Memory entries */}
+              <div className="text-[10px] text-jai-text-secondary font-medium">长期记忆</div>
+              {doctorMemories.length === 0 ? (
+                <div className="text-center text-xs text-jai-text-secondary py-2">暂无记忆条目</div>
               ) : (
-                <div className="text-center text-xs text-jai-text-secondary py-4">暂无历史摘要</div>
+                <div className="space-y-1.5">
+                  {doctorMemories.map(m => (
+                    <div key={m.id} className="flex items-start gap-2 bg-jai-secondary/8 rounded-lg px-2.5 py-2 border border-jai-card-border">
+                      <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-jai-accent/15 text-jai-accent font-medium">{m.category}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-jai-text leading-relaxed">{m.content}</div>
+                        <div className="text-[9px] text-jai-text-secondary/60 mt-0.5">{m.tags.join(' · ')} · {new Date(m.timestamp).toLocaleDateString('zh-CN')}</div>
+                      </div>
+                      <button
+                        onClick={() => { deleteDoctorMemory(m.id); setDoctorMemories(getDoctorMemories()); }}
+                        className="shrink-0 p-0.5 rounded text-jai-text-secondary/40 hover:text-red-400 transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
               <div className="text-[10px] text-jai-text-secondary font-medium pt-2 border-t border-jai-card-border">近期对话</div>
               {doctorMessages.length === 0 ? (

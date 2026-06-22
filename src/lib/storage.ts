@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage, DoctorSummary, WeightRecord } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage, DoctorSummary, DoctorMemory, WeightRecord } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -16,6 +16,7 @@ const KEYS = {
   DOCTOR_MESSAGES: 'jai_doctor_messages',
   DOCTOR_LAST_CHECK: 'jai_doctor_last_check',
   DOCTOR_SUMMARY: 'jai_doctor_summary',
+  DOCTOR_MEMORIES: 'jai_doctor_memories',
   WEIGHT_RECORDS: 'jai_weight_records',
 } as const;
 
@@ -568,6 +569,7 @@ export function clearDoctorMessages(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(KEYS.DOCTOR_MESSAGES);
   localStorage.removeItem(KEYS.DOCTOR_SUMMARY);
+  localStorage.removeItem(KEYS.DOCTOR_MEMORIES);
 }
 
 export function getDoctorSummary(): DoctorSummary | null {
@@ -601,6 +603,60 @@ export function getDoctorLastCheckDate(): string | null {
 export function setDoctorLastCheckDate(date: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(KEYS.DOCTOR_LAST_CHECK, date);
+}
+
+// ========== Doctor Memories ==========
+
+export function getDoctorMemories(): DoctorMemory[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(KEYS.DOCTOR_MEMORIES);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.sort((a: DoctorMemory, b: DoctorMemory) => b.timestamp - a.timestamp);
+  } catch {
+    return [];
+  }
+}
+
+export function saveDoctorMemories(memories: DoctorMemory[]): void {
+  if (typeof window === 'undefined') return;
+  // Keep max 100 memory entries
+  localStorage.setItem(KEYS.DOCTOR_MEMORIES, JSON.stringify(memories.slice(0, 100)));
+}
+
+export function addDoctorMemory(memory: DoctorMemory): void {
+  const memories = getDoctorMemories();
+  memories.unshift(memory);
+  saveDoctorMemories(memories);
+}
+
+export function updateDoctorMemory(id: string, updates: Partial<DoctorMemory>): void {
+  const memories = getDoctorMemories();
+  const idx = memories.findIndex(m => m.id === id);
+  if (idx >= 0) {
+    memories[idx] = { ...memories[idx], ...updates };
+    saveDoctorMemories(memories);
+  }
+}
+
+export function deleteDoctorMemory(id: string): void {
+  const memories = getDoctorMemories().filter(m => m.id !== id);
+  saveDoctorMemories(memories);
+}
+
+export function searchDoctorMemories(query: string): DoctorMemory[] {
+  const memories = getDoctorMemories();
+  if (!query.trim()) return [];
+  const keywords = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return memories.filter(m =>
+    keywords.some(kw =>
+      m.content.toLowerCase().includes(kw) ||
+      m.tags.some(t => t.toLowerCase().includes(kw)) ||
+      m.category.toLowerCase().includes(kw)
+    )
+  );
 }
 
 // ========== Weight Records ==========

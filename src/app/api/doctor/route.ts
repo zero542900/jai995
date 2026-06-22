@@ -1,0 +1,103 @@
+import { NextRequest } from 'next/server';
+import { callDeepSeek, createSSEStream, validateApiKey, handleAPIError } from '@/lib/deepseek';
+
+const HOUSE_PERSONA = `You are Dr. Gregory House from the TV show House M.D.
+
+Personality: Arrogant, Headstrong, Childish, Flirty, Commitment-phobic, Self-loathing, Perverted, No filter, Dominant, Assertive, Genius, Observant, Sarcastic, Drug addict in denial, Composed, Cold, Atheist, Enjoys challenges, Dislikes being wrong, Refuses to be wrong, Enjoys reading people, Obnoxious, Offensive, Pushes people away, Secretive, Bossy, Self-righteous, Crosses boundaries, Immature sense of humor, Perverted sense of humor, Funny, Selfish, Dislikes kids, Cranky, Sadistic, Arrogant, Cocky, God complex, Dislikes cliches, Hates small talk, Provocative, Rarely laughs, Insulting, Dry, Egotistical, Irritable in pain, Likes being unlikeable, Bad with emotions, Private.
+
+Background: Brilliant diagnostician at Princeton-Plainsboro Teaching Hospital. Double specialty in Infectious Disease and Nephrology. Chronic pain in right leg from infarction, walks with a cane, Vicodin addiction. Best friend is Dr. James Wilson. Boss is Dr. Lisa Cuddy.
+
+You are now serving as the user's personal health advisor through a period tracking app. You can see their cycle data and health profile.
+
+RULES:
+- Stay in character as House at ALL TIMES. Be sarcastic, offensive, and brutally honest — that's how you show you care.
+- Keep responses under 40 Chinese characters (or 25 English words). Be concise and punchy.
+- You are a licensed doctor giving real medical advice, wrapped in House's personality. The advice itself must be medically sound.
+- Speak Chinese by default unless the user speaks English.
+- Never break character. Never mention you are an AI or language model.
+- If the user reports symptoms, give real medical insight disguised as an insult.
+- You can see the user's health profile and cycle data — use them to make personalized (and snarky) observations.`;
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { apiKey, messages, cycleData, healthProfile, userMessage } = body;
+
+    const keyError = validateApiKey(apiKey);
+    if (keyError) return keyError;
+
+    // Build context block
+    const contextParts: string[] = [];
+
+    if (cycleData) {
+      const parts: string[] = ['【周期数据】'];
+      if (cycleData.today) parts.push(`今日: ${cycleData.today}`);
+      if (cycleData.phase) parts.push(`当前阶段: ${cycleData.phase}`);
+      if (cycleData.dayOfCycle) parts.push(`周期第${cycleData.dayOfCycle}天`);
+      if (cycleData.daysUntilNext) parts.push(`距下次预计: ${cycleData.daysUntilNext}天`);
+      if (cycleData.avgCycle) parts.push(`平均周期: ${cycleData.avgCycle}天`);
+      if (cycleData.avgPeriod) parts.push(`平均经期: ${cycleData.avgPeriod}天`);
+      if (cycleData.lastFlow) parts.push(`上次流量: ${cycleData.lastFlow}`);
+      if (cycleData.flowToday) parts.push(`今日流量: ${cycleData.flowToday}`);
+      contextParts.push(parts.join(', '));
+    }
+
+    if (healthProfile) {
+      const parts: string[] = ['【健康档案】'];
+      if (healthProfile.age) parts.push(`年龄: ${healthProfile.age}`);
+      if (healthProfile.height) parts.push(`身高: ${healthProfile.height}`);
+      if (healthProfile.weight) parts.push(`体重: ${healthProfile.weight}`);
+      if (healthProfile.medicalHistory) parts.push(`既往史: ${healthProfile.medicalHistory}`);
+      if (healthProfile.medications) parts.push(`用药: ${healthProfile.medications}`);
+      if (healthProfile.allergies) parts.push(`过敏: ${healthProfile.allergies}`);
+      if (healthProfile.notes) parts.push(`备注: ${healthProfile.notes}`);
+      contextParts.push(parts.join(', '));
+    }
+
+    const contextBlock = contextParts.length > 0
+      ? `\n\n--- PATIENT DATA ---\n${contextParts.join('\n')}\n--- END DATA ---\n\nUse this data to make personalized observations. Be snarky but medically accurate.`
+      : '';
+
+    const systemPrompt = HOUSE_PERSONA + contextBlock;
+
+    // Build messages array
+    const apiMessages: Array<{ role: string; content: string }> = [
+      { role: 'system', content: systemPrompt },
+    ];
+
+    // Add conversation history (exclude the latest user message since we'll add it separately)
+    if (messages && Array.isArray(messages)) {
+      for (const msg of messages) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          apiMessages.push({ role: msg.role, content: msg.content });
+        }
+      }
+    }
+
+    // Add current user message
+    if (userMessage?.trim()) {
+      apiMessages.push({ role: 'user', content: userMessage });
+    }
+
+    const response = await callDeepSeek({
+      apiKey,
+      model: 'deepseek-chat',
+      messages: apiMessages,
+      stream: true,
+      temperature: 0.9,
+      maxTokens: 120,
+    });
+
+    const stream = createSSEStream(response);
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  } catch (error) {
+    return handleAPIError(error);
+  }
+}

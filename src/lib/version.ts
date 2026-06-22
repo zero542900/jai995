@@ -1,10 +1,23 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.16.0';
-export const VERSION_NAME = '标注自由';
+export const APP_VERSION = '1.17.0';
+export const VERSION_NAME = '豪斯来了';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.17.0',
+    name: '豪斯来了',
+    date: '2025-06-22',
+    notes: [
+      '日历页面右下角多了个豪斯医生的浮窗按钮',
+      '每天打开自动发一条毒舌评价，基于当天周期数据',
+      '可以打字跟豪斯聊，它会读你的健康档案',
+      '健康档案可以随时改：年龄、既往史、用药、过敏史',
+      'DeepSeek负责演豪斯，我负责写弹窗',
+      '豪斯人设是老板给的，40字以内回复，够毒',
+    ],
+  },
   {
     version: '1.16.0',
     name: '标注自由',

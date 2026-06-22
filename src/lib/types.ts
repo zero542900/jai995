@@ -102,6 +102,23 @@ export interface PeriodDay {
   updatedAt: number;
 }
 
+export interface HealthProfile {
+  age: string;
+  heightWeight: string;
+  medicalHistory: string;
+  currentMedications: string;
+  allergies: string;
+  notes: string;
+  updatedAt: number;
+}
+
+export interface DoctorMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
+
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;

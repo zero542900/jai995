@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -12,6 +12,9 @@ const KEYS = {
   GENERATE_HISTORY: 'jai_generate_history',
   EXPAND_HISTORY: 'jai_expand_history',
   PERIOD_RECORDS: 'jai_period_records',
+  HEALTH_PROFILE: 'jai_health_profile',
+  DOCTOR_MESSAGES: 'jai_doctor_messages',
+  DOCTOR_LAST_CHECK: 'jai_doctor_last_check',
 } as const;
 
 // ========== API Key ==========
@@ -512,6 +515,66 @@ export function createPeriodDay(date: string, flow: FlowLevel, notes?: string, i
   };
   savePeriodDay(day);
   return day;
+}
+
+// ========== Health Profile ==========
+
+export function getHealthProfile(): HealthProfile | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(KEYS.HEALTH_PROFILE);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function saveHealthProfile(profile: HealthProfile): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEYS.HEALTH_PROFILE, JSON.stringify(profile));
+}
+
+// ========== Doctor Messages ==========
+
+export function getDoctorMessages(): DoctorMessage[] {
+  if (typeof window === 'undefined') return [];
+  const raw = localStorage.getItem(KEYS.DOCTOR_MESSAGES);
+  if (!raw) return [];
+  try {
+    const messages = JSON.parse(raw);
+    // Keep last 50 messages
+    return messages.slice(-50);
+  } catch {
+    return [];
+  }
+}
+
+export function addDoctorMessage(msg: DoctorMessage): void {
+  if (typeof window === 'undefined') return;
+  const messages = getDoctorMessages();
+  messages.push(msg);
+  localStorage.setItem(KEYS.DOCTOR_MESSAGES, JSON.stringify(messages.slice(-50)));
+}
+
+export function saveDoctorMessages(messages: DoctorMessage[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEYS.DOCTOR_MESSAGES, JSON.stringify(messages.slice(-50)));
+}
+
+export function clearDoctorMessages(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(KEYS.DOCTOR_MESSAGES);
+}
+
+export function getDoctorLastCheckDate(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(KEYS.DOCTOR_LAST_CHECK);
+}
+
+export function setDoctorLastCheckDate(date: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEYS.DOCTOR_LAST_CHECK, date);
 }
 
 // ========== Export / Import ==========

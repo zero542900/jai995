@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
@@ -8,8 +8,13 @@ import {
   savePeriodDay,
   createPeriodDay,
   deletePeriodDay,
+  getApiKey,
+  getHealthProfile,
+  saveHealthProfile,
+  getDoctorMessages,
+  saveDoctorMessages,
 } from '@/lib/storage';
-import type { PeriodDay, FlowLevel } from '@/lib/types';
+import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage } from '@/lib/types';
 
 // ========== Constants ==========
 
@@ -186,6 +191,134 @@ export default function CalendarPage() {
     setMounted(true);
     setDayRecords(getPeriodDays());
   }, []);
+
+  // ========== Doctor panel ==========
+  const [doctorPanelOpen, setDoctorPanelOpen] = useState(false);
+  const [healthProfileOpen, setHealthProfileOpen] = useState(false);
+  const [doctorMessages, setDoctorMessages] = useState<DoctorMessage[]>([]);
+  const [doctorInput, setDoctorInput] = useState('');
+  const [doctorStreaming, setDoctorStreaming] = useState(false);
+  const doctorScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setDoctorMessages(getDoctorMessages());
+  }, []);
+
+  useEffect(() => {
+    if (doctorScrollRef.current) {
+      doctorScrollRef.current.scrollTop = doctorScrollRef.current.scrollHeight;
+    }
+  }, [doctorMessages]);
+
+  async function sendToDoctor(userMessage: string) {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      const errorMsg: DoctorMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '先去设置页填 API Key，我可没空等你。',
+        timestamp: Date.now(),
+      };
+      setDoctorMessages(prev => [...prev, errorMsg]);
+      saveDoctorMessages([...doctorMessages, errorMsg]);
+      return;
+    }
+
+    const userMsg: DoctorMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: userMessage,
+      timestamp: Date.now(),
+    };
+    const updatedMessages = [...doctorMessages, userMsg];
+    setDoctorMessages(updatedMessages);
+    saveDoctorMessages(updatedMessages);
+    setDoctorInput('');
+    setDoctorStreaming(true);
+
+    const healthProfile = getHealthProfile();
+    try {
+      const res = await fetch('/api/doctor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          history: doctorMessages.slice(-10),
+          healthProfile,
+          cycleData: {
+            today: todayStr,
+            dayRecords: dayRecords.slice(-30),
+            cycleStats,
+            summary,
+          },
+          apiKey,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Doctor API failed');
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No reader');
+
+      const assistantMsg: DoctorMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+      };
+      setDoctorMessages(prev => [...prev, assistantMsg]);
+
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value, { stream: true });
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                fullText += data.content;
+                setDoctorMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { ...updated[updated.length - 1], content: fullText };
+                  return updated;
+                });
+              }
+            } catch { /* skip */ }
+          }
+        }
+      }
+
+      const finalMessages = [...updatedMessages, { ...assistantMsg, content: fullText }];
+      saveDoctorMessages(finalMessages);
+    } catch {
+      const errorMsg: DoctorMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '...网络炸了，跟你的身体一样不靠谱。',
+        timestamp: Date.now(),
+      };
+      setDoctorMessages(prev => [...prev, errorMsg]);
+      saveDoctorMessages([...updatedMessages, errorMsg]);
+    } finally {
+      setDoctorStreaming(false);
+    }
+  }
+
+  // Auto-greeting on first open of the day
+  const lastGreetingDate = typeof window !== 'undefined' ? localStorage.getItem('doctor_last_greeting') : null;
+  useEffect(() => {
+    if (mounted && lastGreetingDate !== todayStr && doctorMessages.length === 0) {
+      localStorage.setItem('doctor_last_greeting', todayStr);
+      sendToDoctor('（自动日报）请根据我的周期数据给我今天的评价');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
 
   // ========== Segments & cycle stats ==========
 
@@ -510,6 +643,121 @@ export default function CalendarPage() {
           onClose={() => setSelectedDate(null)}
         />
       )}
+
+      {/* Doctor floating button */}
+      {!doctorPanelOpen && !healthProfileOpen && (
+        <button
+          onClick={() => setDoctorPanelOpen(true)}
+          className="fixed bottom-20 md:bottom-6 right-4 w-14 h-14 rounded-full bg-jai-accent text-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-20"
+          title="豪斯医生"
+        >
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+          </svg>
+        </button>
+      )}
+
+      {/* Doctor chat panel */}
+      {doctorPanelOpen && (
+        <div className="fixed inset-0 z-40 flex items-end md:items-center md:justify-end p-0 md:p-6">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setDoctorPanelOpen(false)} />
+          <div className="relative w-full md:w-96 bg-jai-card rounded-t-2xl md:rounded-2xl border border-jai-card-border shadow-xl flex flex-col" style={{ maxHeight: '70vh' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-jai-card-border">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-jai-accent/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-jai-accent" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-jai-accent">House</div>
+                  <div className="text-[10px] text-jai-text-secondary">诊断中...随时在线</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { setDoctorPanelOpen(false); setHealthProfileOpen(true); }}
+                  className="p-1.5 rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors"
+                  title="健康档案"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setDoctorPanelOpen(false)}
+                  className="p-1.5 rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div ref={doctorScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px]">
+              {doctorMessages.length === 0 && (
+                <div className="text-center text-xs text-jai-text-secondary py-8">
+                  跟我说点什么，或者报一下今天的状态
+                </div>
+              )}
+              {doctorMessages.map(msg => (
+                <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                  <div
+                    className={cn(
+                      'max-w-[80%] rounded-2xl px-3 py-2 text-sm',
+                      msg.role === 'user'
+                        ? 'bg-jai-accent/15 text-jai-text'
+                        : 'bg-jai-secondary/10 text-jai-text'
+                    )}
+                  >
+                    {msg.content || '...'}
+                  </div>
+                </div>
+              ))}
+              {doctorStreaming && (
+                <div className="flex justify-start">
+                  <div className="bg-jai-secondary/10 rounded-2xl px-3 py-2 text-sm text-jai-text-secondary">
+                    <span className="inline-block w-2 h-4 bg-jai-accent/50 animate-pulse" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="p-3 border-t border-jai-card-border">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={doctorInput}
+                  onChange={(e) => setDoctorInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && doctorInput.trim() && !doctorStreaming) { sendToDoctor(doctorInput.trim()); } }}
+                  placeholder="上报状态或提问..."
+                  disabled={doctorStreaming}
+                  className="flex-1 px-3 py-2 text-sm rounded-xl bg-jai-bg border border-jai-card-border text-jai-text placeholder:text-jai-text-secondary/50 focus:outline-none focus:border-jai-accent/50 transition-colors"
+                />
+                <button
+                  onClick={() => { if (doctorInput.trim() && !doctorStreaming) { sendToDoctor(doctorInput.trim()); } }}
+                  disabled={doctorStreaming || !doctorInput.trim()}
+                  className="w-9 h-9 rounded-xl bg-jai-accent/15 text-jai-accent flex items-center justify-center disabled:opacity-30 hover:bg-jai-accent/25 transition-colors flex-shrink-0"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Health profile modal */}
+      {healthProfileOpen && (
+        <HealthProfileModal onClose={() => setHealthProfileOpen(false)} />
+      )}
     </div>
   );
 
@@ -639,6 +887,69 @@ function DayModal({
           >
             {dayRecord ? '保存修改' : '记录当天'}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== Health Profile Modal Component ==========
+
+function HealthProfileModal({ onClose }: { onClose: () => void }) {
+  const [profile, setProfile] = useState<HealthProfile>(() => {
+    const saved = getHealthProfile();
+    return saved || { age: '', heightWeight: '', medicalHistory: '', currentMedications: '', allergies: '', notes: '', updatedAt: 0 };
+  });
+
+  const handleSave = () => {
+    saveHealthProfile({ ...profile, updatedAt: Date.now() });
+    onClose();
+  };
+
+  const fieldClass = "w-full px-3 py-2 text-sm rounded-xl bg-jai-bg border border-jai-card-border text-jai-text placeholder:text-jai-text-secondary/50 focus:outline-none focus:border-jai-accent/50 transition-colors";
+  const labelClass = "text-xs font-medium text-jai-text-secondary mb-1";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-jai-card rounded-2xl border border-jai-card-border shadow-xl p-5 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-jai-accent">健康档案</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className={labelClass}>年龄</label>
+            <input type="text" value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value })} placeholder="如 28" className={fieldClass} />
+          </div>
+          <div>
+            <label className={labelClass}>身高体重</label>
+            <input type="text" value={profile.heightWeight} onChange={(e) => setProfile({ ...profile, heightWeight: e.target.value })} placeholder="如 165cm / 55kg" className={fieldClass} />
+          </div>
+          <div>
+            <label className={labelClass}>既往病史</label>
+            <textarea value={profile.medicalHistory} onChange={(e) => setProfile({ ...profile, medicalHistory: e.target.value })} placeholder="如 多囊卵巢综合征、贫血..." rows={2} className={fieldClass} />
+          </div>
+          <div>
+            <label className={labelClass}>正在服用的药物</label>
+            <textarea value={profile.currentMedications} onChange={(e) => setProfile({ ...profile, currentMedications: e.target.value })} placeholder="如 布洛芬、维生素D..." rows={2} className={fieldClass} />
+          </div>
+          <div>
+            <label className={labelClass}>过敏史</label>
+            <input type="text" value={profile.allergies} onChange={(e) => setProfile({ ...profile, allergies: e.target.value })} placeholder="如 青霉素过敏" className={fieldClass} />
+          </div>
+          <div>
+            <label className={labelClass}>备注</label>
+            <textarea value={profile.notes} onChange={(e) => setProfile({ ...profile, notes: e.target.value })} placeholder="其他需要豪斯知道的..." rows={3} className={fieldClass} />
+          </div>
+        </div>
+        <div className="flex gap-2 mt-5">
+          <button onClick={onClose} className="flex-1 py-2 rounded-full text-sm border border-jai-card-border text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors">取消</button>
+          <button onClick={handleSave} className="flex-1 py-2 rounded-full text-sm font-medium text-white bg-jai-accent hover:opacity-90 transition-opacity">保存</button>
         </div>
       </div>
     </div>

@@ -1,10 +1,22 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.18.0';
-export const VERSION_NAME = '上秤';
+export const APP_VERSION = '1.18.1';
+export const VERSION_NAME = '纯聊天';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.18.1',
+    name: '纯聊天',
+    date: '2025-06-22',
+    notes: [
+      '豪斯开始加戏了——回复里带动作描述*raises eyebrow*这种',
+      '老板说我们是线上聊天不是RP，别整那些花里胡哨的',
+      'prompt里加了死命令：纯对话格式，禁止动作描述/舞台指示/星号RP',
+      '每条消息气泡下面加了时间戳，跟微信一样',
+      '豪斯你是个医生不是个演员，好好打字别演',
+    ],
+  },
   {
     version: '1.18.0',
     name: '上秤',

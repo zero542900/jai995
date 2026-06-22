@@ -858,7 +858,7 @@ export default function CalendarPage() {
                 </div>
               )}
               {doctorMessages.map(msg => (
-                <div key={msg.id} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                <div key={msg.id} className={cn('flex flex-col', msg.role === 'user' ? 'items-end' : 'items-start')}>
                   <div
                     className={cn(
                       'max-w-[80%] rounded-2xl px-3 py-2 text-sm',
@@ -869,6 +869,9 @@ export default function CalendarPage() {
                   >
                     {msg.content || '...'}
                   </div>
+                  <span className="text-[10px] text-jai-text-secondary/60 mt-0.5 px-1">
+                    {new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
               ))}
               {doctorStreaming && (

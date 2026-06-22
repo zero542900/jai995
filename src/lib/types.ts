@@ -89,6 +89,18 @@ export interface ExpandHistory {
   createdAt: number;
 }
 
+export type FlowLevel = 'light' | 'medium' | 'heavy';
+
+export interface PeriodRecord {
+  id: string;
+  startDate: string;   // ISO date string YYYY-MM-DD
+  endDate: string;      // ISO date string YYYY-MM-DD
+  flow: FlowLevel;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface GenerateRequest {
   charInfo: string;
   userPersonality: string;

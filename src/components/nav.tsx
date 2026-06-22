@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { IconMoon, IconGrid, IconChat, IconSettings, IconBook } from '@/components/icons';
+import { IconMoon, IconGrid, IconChat, IconSettings, IconBook, IconCalendar } from '@/components/icons';
 
 const navItems = [
   {
@@ -27,11 +27,18 @@ const navItems = [
     Icon: IconBook,
   },
   {
-    href: '/settings',
-    label: '设置',
-    Icon: IconSettings,
+    href: '/calendar',
+    label: '周期',
+    Icon: IconCalendar,
   },
 ];
+
+// Settings is shown in sidebar (desktop) but not in mobile bottom bar
+const settingsItem = {
+  href: '/settings',
+  label: '设置',
+  Icon: IconSettings,
+};
 
 export default function Nav() {
   const pathname = usePathname();
@@ -67,10 +74,25 @@ export default function Nav() {
               </Link>
             );
           })}
+          {/* Settings at bottom of sidebar */}
+          <div className="mt-auto">
+            <Link
+              href={settingsItem.href}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium',
+                pathname.startsWith('/settings')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <settingsItem.Icon className={cn('w-5 h-5', pathname.startsWith('/settings') && 'stroke-[2]')} />
+              <span className="hidden lg:inline">{settingsItem.label}</span>
+            </Link>
+          </div>
         </nav>
       </aside>
 
-      {/* Mobile bottom tab bar */}
+      {/* Mobile bottom tab bar - 5 items, no settings */}
       {!isDetailPage && !isChatPage && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
           <div className="flex items-center justify-around h-14 pb-[env(safe-area-inset-bottom)]">
@@ -92,6 +114,16 @@ export default function Nav() {
             })}
           </div>
         </nav>
+      )}
+
+      {/* Mobile settings gear - top right, shown on non-detail, non-chat pages */}
+      {!isDetailPage && !isChatPage && !pathname.startsWith('/settings') && (
+        <Link
+          href="/settings"
+          className="md:hidden fixed top-3 right-4 z-50 p-2 rounded-lg text-muted-foreground hover:text-accent-foreground transition-colors"
+        >
+          <IconSettings className="w-5 h-5" />
+        </Link>
       )}
     </>
   );

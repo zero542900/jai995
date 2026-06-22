@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { IconBack, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown, IconHistory } from '@/components/icons';
+import Link from 'next/link';
+import { IconBack, IconPen, IconBrain, IconCopy, IconFlip, IconRefresh, IconLock, IconSend, IconStop, IconTrash, IconEdit, IconKey, IconBook, IconCheck, IconPlot, IconChevronUp, IconChevronDown, IconHistory, IconSettings } from '@/components/icons';
 import { copyToClipboard } from '@/lib/utils';
 import type { PlotData, ExpandHistory } from '@/lib/types';
 import { addExpandHistory, getExpandHistory, deleteExpandHistoryEntry } from '@/lib/storage';
@@ -751,6 +752,9 @@ function ChatPageInner() {
         >
           {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
+        <Link href="/settings" className="p-1.5 text-jai-secondary hover:text-jai-accent transition-colors">
+          <IconSettings className="w-5 h-5" />
+        </Link>
       </div>
 
       {/* Plot summary indicator - fixed above scroll area */}

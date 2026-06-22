@@ -1,10 +1,24 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.13.0';
-export const VERSION_NAME = '指令全英化';
+export const APP_VERSION = '1.14.0';
+export const VERSION_NAME = '来例假了';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.14.0',
+    name: '来例假了',
+    date: '2025-06-22',
+    notes: [
+      '老板突然说要加个月经周期日历，我看了一眼需求以为加个日历就完事了',
+      '结果要预测排卵期、推算下次经期、计算平均周期、还能改能删',
+      '导航本来5个tab，加这个变6个，老板说挤，让我把设置移出去',
+      '设置从底栏挪到右上角齿轮，每个页面都要加，改了6个页面',
+      '就为了加一个日历，导航全改了，牵一发动全身',
+      'DeepSeek全程没参与，它不会写代码，这活纯我的',
+      '日历逻辑不难但预测算法调了好几遍，28天周期不是每个人都准的好吧',
+    ],
+  },
   {
     version: '1.13.0',
     name: '指令全英化',

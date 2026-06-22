@@ -73,6 +73,28 @@ function extractSegments(dayRecords: PeriodDay[]): PeriodSegment[] {
   if (dayRecords.length === 0) return [];
 
   const sorted = [...dayRecords].sort((a, b) => a.date.localeCompare(b.date));
+
+  // If any manual start markers exist, split segments by them
+  const startDays = sorted.filter((d) => d.isStart);
+
+  if (startDays.length > 0) {
+    const segments: PeriodSegment[] = [];
+    for (let s = 0; s < startDays.length; s++) {
+      const segStart = startDays[s].date;
+      const nextStart = s + 1 < startDays.length ? startDays[s + 1].date : '9999-12-31';
+      const segDays = sorted.filter((d) => d.date >= segStart && d.date < nextStart);
+      if (segDays.length === 0) continue;
+      const segEnd = segDays.find((d) => d.isEnd)?.date || segDays[segDays.length - 1].date;
+      segments.push({
+        startDate: segStart,
+        endDate: segEnd,
+        days: segDays.map((d) => d.date),
+      });
+    }
+    return segments;
+  }
+
+  // Fallback: auto-detect by gap <= 2 days
   const segments: PeriodSegment[] = [];
   let currentSegment: PeriodSegment = {
     startDate: sorted[0].date,
@@ -83,11 +105,12 @@ function extractSegments(dayRecords: PeriodDay[]): PeriodSegment[] {
   for (let i = 1; i < sorted.length; i++) {
     const gap = daysBetween(sorted[i - 1].date, sorted[i].date);
     if (gap <= 2) {
-      // 连续，归入当前段
-      currentSegment.endDate = sorted[i].date;
+      if (sorted[i].isEnd) currentSegment.endDate = sorted[i].date;
+      else if (!currentSegment.days.some((d) => dayRecords.find((r) => r.date === d)?.isEnd)) {
+        currentSegment.endDate = sorted[i].date;
+      }
       currentSegment.days.push(sorted[i].date);
     } else {
-      // 断开，开始新段
       segments.push(currentSegment);
       currentSegment = {
         startDate: sorted[i].date,
@@ -265,6 +288,10 @@ export default function CalendarPage() {
     return periodDaysMap.get(dateStr);
   }
 
+  function getDayRecord(dateStr: string): PeriodDay | undefined {
+    return dayRecords.find(d => d.date === dateStr);
+  }
+
   function getDayStatus(dateStr: string): 'period' | 'predicted' | 'ovulation' | 'today' | 'normal' {
     if (periodDaysMap.has(dateStr)) return 'period';
     if (ovulationDays.has(dateStr)) return 'ovulation';
@@ -275,14 +302,14 @@ export default function CalendarPage() {
 
   // ========== Actions ==========
 
-  function handleSaveDay(dateStr: string, flow: FlowLevel, notes: string, existingId?: string) {
+  function handleSaveDay(dateStr: string, flow: FlowLevel, notes: string, isStart: boolean, isEnd: boolean, existingId?: string) {
     if (existingId) {
       const existing = dayRecords.find((r) => r.id === existingId);
       if (existing) {
-        savePeriodDay({ ...existing, flow, notes, updatedAt: Date.now() });
+        savePeriodDay({ ...existing, flow, notes, isStart, isEnd, updatedAt: Date.now() });
       }
     } else {
-      createPeriodDay(dateStr, flow, notes);
+      createPeriodDay(dateStr, flow, notes, isStart, isEnd);
     }
     setDayRecords(getPeriodDays());
     setSelectedDate(null);
@@ -400,6 +427,21 @@ export default function CalendarPage() {
                       {flowConfig[flow].label}
                     </span>
                   )}
+                  {/* Start/End markers */}
+                  {(() => {
+                    const rec = getDayRecord(dateStr);
+                    if (!rec) return null;
+                    return (
+                      <>
+                        {rec.isStart && (
+                          <span className="absolute top-0 left-0 w-2 h-2 rounded-full bg-jai-accent" />
+                        )}
+                        {rec.isEnd && (
+                          <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-jai-accent opacity-50" />
+                        )}
+                      </>
+                    );
+                  })()}
                 </button>
               );
             })}
@@ -487,12 +529,14 @@ function DayModal({
 }: {
   dateStr: string;
   dayRecord?: PeriodDay;
-  onSave: (dateStr: string, flow: FlowLevel, notes: string, existingId?: string) => void;
+  onSave: (dateStr: string, flow: FlowLevel, notes: string, isStart: boolean, isEnd: boolean, existingId?: string) => void;
   onDelete: (date: string) => void;
   onClose: () => void;
 }) {
   const [flow, setFlow] = useState<FlowLevel>(dayRecord?.flow || 'medium');
   const [notes, setNotes] = useState(dayRecord?.notes || '');
+  const [isStart, setIsStart] = useState(dayRecord?.isStart || false);
+  const [isEnd, setIsEnd] = useState(dayRecord?.isEnd || false);
 
   const dateLabel = parseDate(dateStr).toLocaleDateString('zh-CN', {
     month: 'long',
@@ -541,6 +585,32 @@ function DayModal({
           </div>
         </div>
 
+        {/* Start/End Markers */}
+        <div className="mb-4 flex gap-3">
+          <button
+            onClick={() => setIsStart(!isStart)}
+            className={cn(
+              'flex-1 py-2 rounded-lg text-xs font-medium border transition-all',
+              isStart
+                ? 'bg-jai-accent text-white border-jai-accent'
+                : 'text-jai-text-secondary border-jai-card-border hover:border-jai-accent',
+            )}
+          >
+            {isStart ? '✓ 经期开始' : '标记开始日'}
+          </button>
+          <button
+            onClick={() => setIsEnd(!isEnd)}
+            className={cn(
+              'flex-1 py-2 rounded-lg text-xs font-medium border transition-all',
+              isEnd
+                ? 'bg-jai-accent text-white border-jai-accent'
+                : 'text-jai-text-secondary border-jai-card-border hover:border-jai-accent',
+            )}
+          >
+            {isEnd ? '✓ 经期结束' : '标记结束日'}
+          </button>
+        </div>
+
         {/* Notes */}
         <div className="mb-4">
           <label className="text-xs text-jai-text-secondary block mb-1">备注</label>
@@ -564,7 +634,7 @@ function DayModal({
             </button>
           )}
           <button
-            onClick={() => onSave(dateStr, flow, notes, dayRecord?.id)}
+            onClick={() => onSave(dateStr, flow, notes, isStart, isEnd, dayRecord?.id)}
             className="flex-1 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90 bg-jai-accent"
           >
             {dayRecord ? '保存修改' : '记录当天'}

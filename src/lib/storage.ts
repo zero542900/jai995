@@ -499,12 +499,14 @@ export function deletePeriodDay(date: string): void {
   localStorage.setItem(KEYS.PERIOD_RECORDS, JSON.stringify(days));
 }
 
-export function createPeriodDay(date: string, flow: FlowLevel, notes?: string): PeriodDay {
+export function createPeriodDay(date: string, flow: FlowLevel, notes?: string, isStart = false, isEnd = false): PeriodDay {
   const day: PeriodDay = {
     id: generateId(),
     date,
     flow,
     notes: notes || '',
+    isStart,
+    isEnd,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };

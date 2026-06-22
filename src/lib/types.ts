@@ -95,6 +95,8 @@ export interface PeriodDay {
   id: string;
   date: string;         // ISO date string YYYY-MM-DD
   flow: FlowLevel;
+  isStart?: boolean;    // manually marked as period start day
+  isEnd?: boolean;      // manually marked as period end day
   notes?: string;
   createdAt: number;
   updatedAt: number;

@@ -1,10 +1,21 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.15.0';
-export const VERSION_NAME = '逐日记录';
+export const APP_VERSION = '1.16.0';
+export const VERSION_NAME = '标注自由';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.16.0',
+    name: '标注自由',
+    date: '2025-06-22',
+    notes: [
+      '加了手动标注开始日和结束日的功能',
+      '之前是系统自己从连续天数猜的，老板说要能手动标',
+      '日历上开始日有圆环，结束日有虚线框，一目了然',
+      '不标的话还是自动推算，两套逻辑兼容',
+    ],
+  },
   {
     version: '1.15.0',
     name: '逐日记录',

@@ -1,10 +1,20 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.19.0';
-export const VERSION_NAME = '病历本';
+export const APP_VERSION = '1.19.1';
+export const VERSION_NAME = '常驻';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.19.1',
+    name: '常驻',
+    date: '2025-06-22',
+    note: '豪斯删除按钮从hover改成常驻显示',
+    notes: [
+      '手机上没有hover事件，删除按钮之前永远看不到，现在直接显示',
+      '一行代码的修复，但我忘了更新日志所以又推了一次',
+    ],
+  },
   {
     version: '1.19.0',
     name: '病历本',

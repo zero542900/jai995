@@ -1,10 +1,20 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.14.0';
+export const APP_VERSION = '1.14.1';
 export const VERSION_NAME = '来例假了';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.14.1',
+    name: '来例假了',
+    date: '2025-06-22',
+    notes: [
+      '老板给的周期计算函数比我写的完善多了，21-60天异常过滤、排卵预测、波动范围',
+      '我之前写的计算就是个玩具，直接换了',
+      '周期小结多了一行波动范围，看着专业多了',
+    ],
+  },
   {
     version: '1.14.0',
     name: '来例假了',

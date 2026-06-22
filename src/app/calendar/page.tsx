@@ -89,6 +89,72 @@ export default function CalendarPage() {
   const monthMatrix = useMemo(() => getMonthMatrix(year, month), [year, month]);
   const todayStr = toDateStr(new Date());
 
+  // ========== Calculate cycle stats (based on user-provided algorithm) ==========
+
+  const cycleStats = useMemo(() => {
+    if (!records || records.length < 2) return null;
+
+    // 1. 计算所有有效周期长度（21-60天）
+    const cycles: number[] = [];
+    for (let i = 1; i < records.length; i++) {
+      const diff = daysBetween(records[i - 1].startDate, records[i].startDate);
+      if (diff >= 21 && diff <= 60) {
+        cycles.push(diff);
+      }
+    }
+
+    // 所有周期被过滤，回退到最近两次原始天数
+    if (cycles.length === 0) {
+      const lastTwoDiff = daysBetween(
+        records[records.length - 2].startDate,
+        records[records.length - 1].startDate
+      );
+      cycles.push(lastTwoDiff);
+    }
+
+    // 2. 平均周期
+    const avgCycle = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
+
+    // 3. 经期平均长度（过滤异常 0-15天）
+    const periodLengths: number[] = [];
+    for (const r of records) {
+      if (r.endDate) {
+        const len = daysBetween(r.startDate, r.endDate) + 1;
+        if (len > 0 && len <= 15) {
+          periodLengths.push(len);
+        }
+      }
+    }
+    const avgPeriod = periodLengths.length > 0
+      ? Math.round(periodLengths.reduce((a, b) => a + b, 0) / periodLengths.length)
+      : 5;
+
+    // 4. 预测下一次月经开始日
+    const lastStart = records[records.length - 1].startDate;
+    const nextStart = addDays(lastStart, avgCycle);
+
+    // 5. 预测结束日
+    const nextEnd = addDays(nextStart, avgPeriod - 1);
+
+    // 6. 排卵日（黄体期固定14天）
+    const ovulation = addDays(nextStart, -14);
+
+    // 7. 周期波动范围
+    const cycleMin = Math.min(...cycles);
+    const cycleMax = Math.max(...cycles);
+
+    return {
+      avgCycle,
+      avgPeriod,
+      nextStart,
+      nextEnd,
+      ovulation,
+      cycleCount: cycles.length,
+      cycleMin,
+      cycleMax,
+    };
+  }, [records]);
+
   // ========== Compute period day sets & predictions ==========
 
   const { periodDays, predictedDays, ovulationDays } = useMemo(() => {
@@ -103,26 +169,14 @@ export default function CalendarPage() {
     }
 
     const predDays = new Set<string>();
-    if (records.length >= 2) {
-      const cycles: number[] = [];
-      for (let i = 1; i < records.length; i++) {
-        cycles.push(daysBetween(records[i - 1].startDate, records[i].startDate));
-      }
-      const avgCycle = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
-
-      const periodLens = records.map((r) => daysBetween(r.startDate, r.endDate) + 1);
-      const avgPeriod = Math.round(periodLens.reduce((a, b) => a + b, 0) / periodLens.length);
-
-      const lastStart = records[records.length - 1].startDate;
-      const nextStart = addDays(lastStart, avgCycle);
-
-      for (let i = 0; i < avgPeriod; i++) {
-        const d = addDays(nextStart, i);
+    if (cycleStats) {
+      for (let i = 0; i < cycleStats.avgPeriod; i++) {
+        const d = addDays(cycleStats.nextStart, i);
         if (!pDays.has(d)) predDays.add(d);
       }
-
-      oDays.add(addDays(nextStart, -14));
+      oDays.add(cycleStats.ovulation);
     } else if (records.length === 1) {
+      // 单条记录默认28天周期
       const lastStart = records[0].startDate;
       const nextStart = addDays(lastStart, 28);
       for (let i = 0; i < 5; i++) {
@@ -133,29 +187,40 @@ export default function CalendarPage() {
     }
 
     return { periodDays: pDays, predictedDays: predDays, ovulationDays: oDays };
-  }, [records]);
+  }, [records, cycleStats]);
 
   // ========== Summary stats ==========
 
   const summary = useMemo(() => {
     if (records.length === 0) return null;
 
-    const cycles: number[] = [];
-    for (let i = 1; i < records.length; i++) {
-      cycles.push(daysBetween(records[i - 1].startDate, records[i].startDate));
+    if (!cycleStats) {
+      // 单条记录
+      const lastStart = records[0].startDate;
+      const nextPredicted = addDays(lastStart, 28);
+      const daysUntilNext = daysBetween(todayStr, nextPredicted);
+      const periodLen = daysBetween(records[0].startDate, records[0].endDate) + 1;
+      return {
+        avgCycle: 0,
+        avgPeriod: periodLen,
+        nextPredicted,
+        daysUntilNext,
+        cycleMin: 0,
+        cycleMax: 0,
+      };
     }
-    const avgCycle = cycles.length > 0 ? Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length) : 0;
 
-    const periodLens = records.map((r) => daysBetween(r.startDate, r.endDate) + 1);
-    const avgPeriod = Math.round(periodLens.reduce((a, b) => a + b, 0) / periodLens.length);
+    const daysUntilNext = daysBetween(todayStr, cycleStats.nextStart);
 
-    const lastStart = records[records.length - 1].startDate;
-    const avgOr28 = avgCycle || 28;
-    const nextPredicted = addDays(lastStart, avgOr28);
-    const daysUntilNext = daysBetween(todayStr, nextPredicted);
-
-    return { avgCycle, avgPeriod, nextPredicted, daysUntilNext };
-  }, [records, todayStr]);
+    return {
+      avgCycle: cycleStats.avgCycle,
+      avgPeriod: cycleStats.avgPeriod,
+      nextPredicted: cycleStats.nextStart,
+      daysUntilNext,
+      cycleMin: cycleStats.cycleMin,
+      cycleMax: cycleStats.cycleMax,
+    };
+  }, [records, todayStr, cycleStats]);
 
   // ========== Day info lookup ==========
 
@@ -340,8 +405,11 @@ export default function CalendarPage() {
                 <div className="text-xs text-jai-text-secondary mt-1">距下次预计(天)</div>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-jai-card-border text-xs text-jai-text-secondary text-center">
-              下次预计开始日：{summary.nextPredicted}
+            <div className="mt-3 pt-3 border-t border-jai-card-border flex flex-col gap-1 text-xs text-jai-text-secondary text-center">
+              <span>下次预计开始日：{summary.nextPredicted}</span>
+              {summary.cycleMin > 0 && summary.cycleMax > 0 && (
+                <span>周期波动范围：{summary.cycleMin} - {summary.cycleMax} 天</span>
+              )}
             </div>
           </div>
         )}

@@ -1,10 +1,24 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.18.3';
-export const VERSION_NAME = '看不懂';
+export const APP_VERSION = '1.19.0';
+export const VERSION_NAME = '病历本';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.19.0',
+    name: '病历本',
+    date: '2025-06-22',
+    note: '豪斯记忆系统+删除确认+医疗记录浏览',
+    notes: [
+      '豪斯现在有长期记忆了——超过30条消息自动压缩成摘要，旧对话总结后只保留最近10条',
+      '每条消息hover出删除按钮，删之前还要再确认一遍',
+      '清空对话也要确认了，不会手滑误删',
+      '新增医疗记录面板——能翻看历史摘要和近期完整对话',
+      '删除的消息不会进入长期记忆，豪斯只记你没删的',
+      '压缩用了单独的summarize接口，DeepSeek你 summarize 给我好好干 别又编',
+    ],
+  },
   {
     version: '1.18.3',
     name: '看不懂',

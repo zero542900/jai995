@@ -24,7 +24,7 @@ RULES:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, messages, cycleData, healthProfile, weightRecords, userMessage } = body;
+    const { apiKey, messages, summary, cycleData, healthProfile, weightRecords, userMessage } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
@@ -82,7 +82,11 @@ export async function POST(request: NextRequest) {
       ? `\n\n--- PATIENT DATA ---\n${contextParts.join('\n')}\n--- END DATA ---\n\nUse ONLY the data listed above. If a field says "未填写", it means the user has NOT provided that information — do NOT invent or assume any medical history, medications, allergies, or symptoms that are not explicitly listed here. Only comment on what you can see. If you don't have data, say so sarcastically instead of making things up.`
       : '';
 
-    const systemPrompt = HOUSE_PERSONA + contextBlock;
+    const summaryBlock = summary
+      ? `\n\n--- PRIOR MEDICAL NOTES ---\n${summary}\n--- END NOTES ---\n\nThis is a summary of your previous interactions with this patient. Use it for context but always prioritize the latest data above.`
+      : '';
+
+    const systemPrompt = HOUSE_PERSONA + contextBlock + summaryBlock;
 
     // Build messages array
     const apiMessages: Array<{ role: string; content: string }> = [

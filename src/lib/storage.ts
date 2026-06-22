@@ -1,6 +1,6 @@
 // JAI Assistant - LocalStorage Utilities
 
-import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage, WeightRecord } from './types';
+import { Preset, Session, ChatMessage, Instruction, GenerateHistory, ExpandHistory, PeriodDay, FlowLevel, HealthProfile, DoctorMessage, DoctorSummary, WeightRecord } from './types';
 
 const KEYS = {
   PRESETS: 'jai_presets',
@@ -15,6 +15,7 @@ const KEYS = {
   HEALTH_PROFILE: 'jai_health_profile',
   DOCTOR_MESSAGES: 'jai_doctor_messages',
   DOCTOR_LAST_CHECK: 'jai_doctor_last_check',
+  DOCTOR_SUMMARY: 'jai_doctor_summary',
   WEIGHT_RECORDS: 'jai_weight_records',
 } as const;
 
@@ -566,6 +567,30 @@ export function saveDoctorMessages(messages: DoctorMessage[]): void {
 export function clearDoctorMessages(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(KEYS.DOCTOR_MESSAGES);
+  localStorage.removeItem(KEYS.DOCTOR_SUMMARY);
+}
+
+export function getDoctorSummary(): DoctorSummary | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(KEYS.DOCTOR_SUMMARY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as DoctorSummary;
+  } catch {
+    return null;
+  }
+}
+
+export function saveDoctorSummary(summary: DoctorSummary): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEYS.DOCTOR_SUMMARY, JSON.stringify(summary));
+}
+
+export function deleteDoctorMessage(id: string): DoctorMessage[] {
+  if (typeof window === 'undefined') return [];
+  const messages = getDoctorMessages().filter(m => m.id !== id);
+  saveDoctorMessages(messages);
+  return messages;
 }
 
 export function getDoctorLastCheckDate(): string | null {

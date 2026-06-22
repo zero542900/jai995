@@ -119,6 +119,12 @@ export interface DoctorMessage {
   timestamp: number;
 }
 
+export interface DoctorSummary {
+  summary: string;
+  updatedAt: number;
+  summarizedCount: number;
+}
+
 export interface WeightRecord {
   id: string;
   date: string;

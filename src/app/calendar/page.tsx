@@ -14,12 +14,15 @@ import {
   getDoctorMessages,
   saveDoctorMessages,
   clearDoctorMessages,
+  getDoctorSummary,
+  saveDoctorSummary,
+  deleteDoctorMessage,
   getWeightRecords,
   saveWeightRecord,
   deleteWeightRecord,
 } from '@/lib/storage';
 import { IconFlip } from '@/components/icons';
-import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage, WeightRecord } from '@/lib/types';
+import type { PeriodDay, FlowLevel, HealthProfile, DoctorMessage, DoctorSummary, WeightRecord } from '@/lib/types';
 
 // ========== Constants ==========
 
@@ -206,11 +209,29 @@ export default function CalendarPage() {
   const [doctorTranslating, setDoctorTranslating] = useState<string | null>(null);
   const [doctorTranslations, setDoctorTranslations] = useState<Record<string, string>>({});
   const [doctorFlipped, setDoctorFlipped] = useState<Set<string>>(new Set());
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [medicalRecordsOpen, setMedicalRecordsOpen] = useState(false);
+  const [doctorSummary, setDoctorSummary] = useState<DoctorSummary | null>(null);
   const doctorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDoctorMessages(getDoctorMessages());
+    setDoctorSummary(getDoctorSummary());
   }, []);
+
+  function handleDeleteMessage(id: string) {
+    const updated = deleteDoctorMessage(id);
+    setDoctorMessages(updated);
+    setConfirmDeleteId(null);
+  }
+
+  function handleClearAll() {
+    clearDoctorMessages();
+    setDoctorMessages([]);
+    setDoctorSummary(null);
+    setConfirmClearAll(false);
+  }
 
   // ========== Weight records ==========
   const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
@@ -330,6 +351,7 @@ export default function CalendarPage() {
         body: JSON.stringify({
           userMessage: userMessage,
           messages: doctorMessages.slice(-10),
+          summary: doctorSummary?.summary || null,
           healthProfile,
           weightRecords: weightRecords.slice(-30),
           cycleData: {
@@ -383,6 +405,43 @@ export default function CalendarPage() {
 
       const finalMessages = [...updatedMessages, { ...assistantMsg, content: fullText }];
       saveDoctorMessages(finalMessages);
+
+      // Compress if over 30 messages (15 rounds) - keep latest 10, summarize rest
+      if (finalMessages.length > 30) {
+        try {
+          const apiKey = getApiKey();
+          if (apiKey) {
+            const toSummarize = finalMessages.slice(0, finalMessages.length - 10);
+            const convText = toSummarize.map(m => `${m.role === 'user' ? '患者' : 'House'}: ${m.content}`).join('\n');
+            const existingSummary = getDoctorSummary();
+            const summarizeRes = await fetch('/api/doctor/summarize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: convText,
+                existingSummary: existingSummary?.summary || null,
+                apiKey,
+              }),
+            });
+            if (summarizeRes.ok) {
+              const sumData = await summarizeRes.json();
+              const newSummary: DoctorSummary = {
+                summary: sumData.summary,
+                updatedAt: Date.now(),
+                summarizedCount: toSummarize.length + (existingSummary?.summarizedCount || 0),
+              };
+              saveDoctorSummary(newSummary);
+              setDoctorSummary(newSummary);
+              // Keep only the latest 10 messages
+              const trimmed = finalMessages.slice(-10);
+              saveDoctorMessages(trimmed);
+              setDoctorMessages(trimmed);
+            }
+          }
+        } catch {
+          // Compression failed, keep all messages
+        }
+      }
     } catch {
       const errorMsg: DoctorMessage = {
         id: crypto.randomUUID(),
@@ -859,21 +918,30 @@ export default function CalendarPage() {
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => { clearDoctorMessages(); setDoctorMessages([]); }}
+                  onClick={() => { setMedicalRecordsOpen(true); }}
                   className="p-1.5 rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors"
-                  title="清空对话"
+                  title="医疗记录"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                   </svg>
                 </button>
                 <button
-                  onClick={() => { setDoctorPanelOpen(false); setHealthProfileOpen(true); }}
+                  onClick={() => { setHealthProfileOpen(true); }}
                   className="p-1.5 rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors"
                   title="健康档案"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setConfirmClearAll(true)}
+                  className="p-1.5 rounded-lg text-jai-text-secondary hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                  title="清空对话"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
                 <button
@@ -895,7 +963,15 @@ export default function CalendarPage() {
                 </div>
               )}
               {doctorMessages.map(msg => (
-                <div key={msg.id} className={cn('flex flex-col gap-0.5', msg.role === 'user' ? 'items-end' : 'items-start')}>
+                <div key={msg.id} className={cn('flex flex-col gap-0.5 group', msg.role === 'user' ? 'items-end' : 'items-start')}>
+                  {confirmDeleteId === msg.id ? (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20">
+                      <span className="text-[11px] text-red-600">删除这条？</span>
+                      <button onClick={() => handleDeleteMessage(msg.id)} className="text-[11px] px-2 py-0.5 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors">删除</button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="text-[11px] px-2 py-0.5 rounded-md text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors">取消</button>
+                    </div>
+                  ) : (
+                    <>
                   <div
                     className={cn(
                       'max-w-[85%] rounded-2xl px-3 py-2 text-sm break-words',
@@ -923,7 +999,18 @@ export default function CalendarPage() {
                         {doctorTranslating === msg.id ? '...' : ''}
                       </button>
                     )}
+                    <button
+                      onClick={() => setConfirmDeleteId(msg.id)}
+                      title="删除"
+                      className="text-[10px] text-jai-text-secondary/40 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
+                    </>
+                  )}
                 </div>
               ))}
               {doctorStreaming && (
@@ -965,6 +1052,57 @@ export default function CalendarPage() {
       {/* Health profile modal */}
       {healthProfileOpen && (
         <HealthProfileModal onClose={() => setHealthProfileOpen(false)} />
+      )}
+
+      {/* Confirm clear all */}
+      {confirmClearAll && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30" onClick={() => setConfirmClearAll(false)}>
+          <div className="bg-jai-card rounded-xl border border-jai-card-border p-5 max-w-[280px] w-full mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="text-sm font-medium text-jai-text mb-1">清空所有对话？</div>
+            <div className="text-xs text-jai-text-secondary mb-4">包括历史摘要也会一起删除，不可恢复。</div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setConfirmClearAll(false)} className="px-3 py-1.5 text-xs rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10 transition-colors">取消</button>
+              <button onClick={handleClearAll} className="px-3 py-1.5 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">清空</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Medical records modal */}
+      {medicalRecordsOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30" onClick={() => setMedicalRecordsOpen(false)}>
+          <div className="bg-jai-card rounded-xl border border-jai-card-border p-5 max-w-md w-full mx-4 shadow-xl max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-semibold text-jai-accent">医疗记录</div>
+              <button onClick={() => setMedicalRecordsOpen(false)} className="p-1 rounded-lg text-jai-text-secondary hover:bg-jai-secondary/10">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 space-y-3">
+              {doctorSummary ? (
+                <div className="bg-jai-secondary/8 rounded-lg p-3 border border-jai-card-border">
+                  <div className="text-[10px] text-jai-text-secondary mb-1">历史摘要 · 更新于 {new Date(doctorSummary.updatedAt).toLocaleString('zh-CN')}</div>
+                  <div className="text-xs text-jai-text leading-relaxed whitespace-pre-wrap">{doctorSummary.summary}</div>
+                </div>
+              ) : (
+                <div className="text-center text-xs text-jai-text-secondary py-4">暂无历史摘要</div>
+              )}
+              <div className="text-[10px] text-jai-text-secondary font-medium pt-2 border-t border-jai-card-border">近期对话</div>
+              {doctorMessages.length === 0 ? (
+                <div className="text-center text-xs text-jai-text-secondary py-4">暂无对话记录</div>
+              ) : (
+                doctorMessages.map(msg => (
+                  <div key={msg.id} className="flex flex-col gap-0.5">
+                    <div className="text-[10px] text-jai-text-secondary/60">{msg.role === 'user' ? '患者' : 'House'} · {new Date(msg.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className={cn('text-xs rounded-lg px-2 py-1.5', msg.role === 'user' ? 'bg-jai-accent/10 text-jai-text' : 'bg-jai-secondary/8 text-jai-text')}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

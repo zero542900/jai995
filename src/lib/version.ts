@@ -1,13 +1,23 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.17.1';
-export const VERSION_NAME = 'z-index';
+export const APP_VERSION = '1.17.2';
+export const VERSION_NAME = '失忆症';
 export const LAST_UPDATED = '2025-06-22';
 
 // 更新日志
 export const CHANGELOG = [
   {
-    version: '1.17.1',
-    name: 'z-index',
+    version: '1.17.2',
+    name: '失忆症',
+    date: '2025-06-22',
+    notes: [
+      '豪斯医生得了失忆症——前端发history后端读messages，字段名对不上',
+      '等于每次聊天豪斯都是从头开始，前面说的话全忘了',
+      '这不就是我写代码的时候变量名拼错然后debug两小时的翻版吗',
+      '顺手加了个清空对话的垃圾桶按钮，在面板header右侧',
+      '老板说豪斯没上下文记忆，其实记忆一直在发只是后端没收',
+    ],
+  },
+  {
     date: '2025-06-22',
     notes: [
       '豪斯聊天面板的输入框被底部导航栏挡住了',

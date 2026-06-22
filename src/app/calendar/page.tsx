@@ -660,9 +660,9 @@ export default function CalendarPage() {
 
       {/* Doctor chat panel */}
       {doctorPanelOpen && (
-        <div className="fixed inset-0 z-40 flex items-end md:items-center md:justify-end p-0 md:p-6">
+        <div className="fixed inset-0 z-[60] flex items-end md:items-center md:justify-end p-0 md:p-6">
           <div className="absolute inset-0 bg-black/20" onClick={() => setDoctorPanelOpen(false)} />
-          <div className="relative w-full md:w-96 bg-jai-card rounded-t-2xl md:rounded-2xl border border-jai-card-border shadow-xl flex flex-col" style={{ maxHeight: '70vh' }}>
+          <div className="relative w-full md:w-96 bg-jai-card rounded-t-2xl md:rounded-2xl border border-jai-card-border shadow-xl flex flex-col pb-[env(safe-area-inset-bottom)]" style={{ maxHeight: '70vh' }}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-jai-card-border">
               <div className="flex items-center gap-2">

@@ -61,6 +61,8 @@ Follow the user's outline strictly.
 Keep the output within 400-600 words.
 Do NOT cut off or truncate the ending — if you are approaching the word limit, wrap up the scene naturally.
 
+The outline may contain instructions enclosed in 【】 brackets (e.g., 【add more sensory details】, 【make the tone darker】). These are REQUIREMENTS from the user — you MUST follow them when expanding. Do NOT ignore or skip any 【】 instruction.
+
 ${WRITING_STYLE_INSTRUCTION}
 
 ${MARKDOWN_FORMAT_INSTRUCTION}

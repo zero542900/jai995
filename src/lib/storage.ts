@@ -443,7 +443,38 @@ export function getPeriodDays(): PeriodDay[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(KEYS.PERIOD_RECORDS);
-    const days: PeriodDay[] = raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Migrate old PeriodRecord format (startDate/endDate) to PeriodDay format
+    const days: PeriodDay[] = [];
+    for (const item of parsed) {
+      if (item.date && item.flow) {
+        // Already new format
+        days.push(item as PeriodDay);
+      } else if (item.startDate) {
+        // Old format: expand range into individual days
+        const start = new Date(item.startDate);
+        const end = item.endDate ? new Date(item.endDate) : start;
+        const cur = new Date(start);
+        while (cur <= end) {
+          const dateStr = cur.toISOString().split('T')[0];
+          days.push({
+            id: generateId(),
+            date: dateStr,
+            flow: item.flow || 'medium',
+            notes: '',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+          cur.setDate(cur.getDate() + 1);
+        }
+      }
+    }
+    // Save migrated data back
+    if (days.length > 0 && parsed.some((i: Record<string, unknown>) => i.startDate && !i.date)) {
+      localStorage.setItem(KEYS.PERIOD_RECORDS, JSON.stringify(days));
+    }
     return days.sort((a, b) => a.date.localeCompare(b.date));
   } catch {
     return [];

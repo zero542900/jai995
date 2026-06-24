@@ -1,10 +1,22 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.20.1';
-export const VERSION_NAME = '3000字';
-export const LAST_UPDATED = '2025-06-23';
+export const APP_VERSION = '1.20.2';
+export const VERSION_NAME = '时间线';
+export const LAST_UPDATED = '2025-06-25';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.20.2',
+    name: '时间线',
+    date: '2025-06-25',
+    notes: [
+      '修了记忆总结从中间开始的破bug',
+      '原来旧记忆在chatHistory里和longTermMemory里传了两遍，模型被绕晕了',
+      '现在chatHistory只放对话原文，旧记忆单独走longTermMemory参数，不重复',
+      '对话窗口从20条拉到50条，中间的事件不会再丢了',
+      '老板说记忆从中间总结我寻思不对啊，一看果然是重复传参把时间线搞乱了（╯°□°）╯︵ ┻━┻'
+    ]
+  },
   {
     version: '1.20.1',
     name: '3000字',

@@ -317,6 +317,7 @@ function ChatPageInner() {
   };
 
   const RECENT_MESSAGES_LIMIT = 20;
+  const MEMORY_MESSAGES_LIMIT = 50;
 
   const buildChatHistory = useCallback(() => {
     // Strategy: long-term memory summary + recent N messages
@@ -331,16 +332,11 @@ function ChatPageInner() {
   }, [messages, currentPreset?.longTermMemory]);
 
   const buildChatHistoryForMemory = useCallback(() => {
-    // Memory/inspiration/expand strip instructions — they shouldn't affect these
-    const ltm = currentPreset?.longTermMemory;
-    const recent = messages.slice(-RECENT_MESSAGES_LIMIT);
-    let history = '';
-    if (ltm && messages.length > RECENT_MESSAGES_LIMIT) {
-      history += `[Long-term Memory Summary]\n${ltm}\n\n[Recent Conversation]\n`;
-    }
-    history += recent.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${stripInstructions(m.content)}`).join('\n');
-    return history;
-  }, [messages, currentPreset?.longTermMemory]);
+    // For memory generation: only send conversation text, NOT long-term memory
+    // (longTermMemory is passed as a separate parameter to avoid duplication)
+    const recent = messages.slice(-MEMORY_MESSAGES_LIMIT);
+    return recent.map(m => `${m.role === 'user' ? 'User' : 'Char'}: ${stripInstructions(m.content)}`).join('\n');
+  }, [messages]);
 
   const buildMainLinePrompt = useCallback(() => {
     if (!currentMainLine.trim()) return '';

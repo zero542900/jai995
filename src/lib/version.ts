@@ -1,10 +1,17 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.20.0';
-export const VERSION_NAME = '海马体';
+export const APP_VERSION = '1.20.1';
+export const VERSION_NAME = '3000字';
 export const LAST_UPDATED = '2025-06-23';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.20.1',
+    name: '3000字',
+    date: '2025-06-23',
+    note: '记忆总结词数限制从500放开到3000，maxTokens给到6000防截断',
+    notes: ['记忆限制500→3000词', 'maxTokens 1500→6000']
+  },
   {
     version: '1.20.0',
     name: '海马体',

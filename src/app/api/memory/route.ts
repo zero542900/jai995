@@ -33,7 +33,7 @@ CURRENT SCENE:
 ${chatHistory || '(This is the beginning of the story)'}
 
 INSTRUCTIONS:
-${longTermMemory ? `MERGE & COMPRESS: You MUST merge the existing long-term memory with the new events from the current scene. Do NOT simply append — integrate old and new information into a single unified summary. Remove redundancies, compress details that are no longer relevant, and keep only what matters for future interactions. Total output MUST NOT exceed 500 words.` : `If no existing long-term memory is present: This is the first memory entry. Generate a foundational summary from the current scene, establishing baseline observations about {{user}}'s traits, current state, and the initial relationship dynamic. No merging is needed.`}
+${longTermMemory ? `MERGE & COMPRESS: You MUST merge the existing long-term memory with the new events from the current scene. Do NOT simply append — integrate old and new information into a single unified summary. Remove redundancies, compress details that are no longer relevant, and keep only what matters for future interactions. Total output MUST NOT exceed 3000 words.` : `If no existing long-term memory is present: This is the first memory entry. Generate a foundational summary from the current scene, establishing baseline observations about {{user}}'s traits, current state, and the initial relationship dynamic. No merging is needed.`}
 
 When compression is required, retain information in this priority order:
 1. Unresolved plot threads, secrets, and foreshadowing
@@ -72,7 +72,7 @@ ${CHINESE_OUTPUT_INSTRUCTION}`;
       messages: [{ role: 'user', content: 'Generate a long-term memory summary from {{char}}\'s perspective about {{user}} based on the current conversation context.' }],
       systemPrompt,
       stream: true,
-      maxTokens: 1500,
+      maxTokens: 6000,
     });
 
     return streamResponse(createSSEStream(response));

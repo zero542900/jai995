@@ -72,8 +72,9 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 
 # Relationships
 **Relationship to {{char}}**: 
-**Key Dynamic**: 
-**{{user}}'s Perception of {{char}}** (optional): 
+**Key Dynamic with {{char}}**: 
+**Family**: （如原设有家庭成员信息则必须填写；无则根据User背景推断至少一名核心家庭成员及关系张力）
+**Other Notable Connections** (optional): （如有提及则填写）
 
 # Background & History (Short Bio)
 **Brief Bio**: 

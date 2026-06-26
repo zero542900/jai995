@@ -1,18 +1,18 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.20.3';
-export const VERSION_NAME = '精简体'
+export const APP_VERSION = '1.20.4';
+export const VERSION_NAME = '全英化'
 export const LAST_UPDATED = '2025-06-25';
 
 // 更新日志
 export const CHANGELOG = [
   {
-    version: '1.20.3',
-    name: '精简体',
-    date: '2025-06-25',
+    version: '1.20.4',
+    name: '全英化',
+    date: '2025-06-26',
     notes: [
-      'User卡生成指令7/8条精简重写——体征罗列和去叙事化更直白了',
-      '新增第9条：关系字段补全规则——提到家人必须写，没提到也得推一个核心家庭关系',
-      '不然每次生成的User都是孤儿是吧',
+      'User卡生成system prompt全英文化——把那堆中文指令全换成英文了',
+      '老板说中文指令跟英文输出要求打架，那就统一呗',
+      'DeepSeek你看到英文指令别给我输出中文啊求你了',
     ],
   },
   {

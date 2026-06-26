@@ -34,8 +34,13 @@ export async function POST(request: NextRequest) {
 4. 欧美写实风唯一准则：输出的语气像美剧设定或电影剧本，描述直白、写实、有画面感。禁止使用二次元词汇（如"萌"、"攻略"、"傲娇"），禁止中文古风（如"在下"、"妾身"）。
 5. 格式遵守：必须严格按照下方【输出模板】格式输出 User 卡，使用纯文本。所有描述使用第三人称、一般现在时。不要使用 YAML 或 JSON 代码块。
 6. 外貌设计约束：避免使用过度套路化的外貌特征，尤其是"broken nose"、"thin scar through the eyebrow"、"scar across the knuckles"这类 AI 高频生成的伤病特征。伤痕和缺陷只在能够反映角色独特经历时保留，否则使用其他可识别特征替代（如雀斑、胎记、习惯性姿势、肢体语言的某种惯性）。
-7. 体征罗列原则：不得使用"外貌描写(Description)"，只进行"体征罗列(Listing)"。每个字段只能包含无叙事、无比喻、无氛围渲染的客观名词与尺寸。禁止出现任何完整的动作描写句（例如"Moves with..."）、心理联想句（例如"...that comes from growing up comfortable"）。
-8. 外貌字段的去叙事化：在 Body 字段中，严禁出现动作描写（如"He walks..."、"His fingers..."、"Moves with..."）、因果联想（如"...from years of..."、"because of..."）以及情绪氛围渲染（如"...a quiet grace"）。只允许罗列体型、肌肉分布、疤痕、体毛、骨骼结构等纯视觉事实。
+7. Principle of Physical Feature Listing: Do not use "description". Use "listing" only. Allow the use of objective connectors (with, framed by, running from...to..., visible when...) to organize related features into complete sentences that follow a visual logic. Prohibited: similes (e.g., "like a..."), atmosphere rendering (e.g., "gives off a...feeling"), emotionalized wording.
+8. Organizational Structure of the Appearance Fields:
+   - **Face**: Follow the order: face shape/contour → facial features → skin details. 1–3 natural sentences are allowed.
+   - **Hair**: Follow the order: color → texture → hairstyle structure.
+   - **Body**: Follow the order: overall build → muscle/bone structure → skin features (scars/tattoos/moles/body hair). 1–3 natural sentences are allowed.
+   Strictly prohibited: action descriptions (e.g., "when he turns his head..."), causal associations (e.g., "because of years of..."), emotional atmosphere rendering.
+   Allowed: clear listing of static visual facts, connected using basic sentence structures.
 
 ${WRITING_STYLE_INSTRUCTION}
 

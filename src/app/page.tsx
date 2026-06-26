@@ -89,7 +89,12 @@ function UserCardView({ text, label }: { text: string; label?: string }) {
 export default function GeneratePage() {
   const router = useRouter();
   const [charInfo, setCharInfo] = useState('');
-  const [userPersonality, setUserPersonality] = useState('');
+  const [userTraits, setUserTraits] = useState('');
+  const [userRelations, setUserRelations] = useState('');
+  const [userPast, setUserPast] = useState('');
+  const [aiInferTraits, setAiInferTraits] = useState(false);
+  const [aiInferRelations, setAiInferRelations] = useState(false);
+  const [aiInferPast, setAiInferPast] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [englishCard, setEnglishCard] = useState('');
   const [chineseCard, setChineseCard] = useState('');
@@ -123,8 +128,8 @@ export default function GeneratePage() {
       router.push('/settings');
       return;
     }
-    if (!userPersonality.trim()) {
-      alert('请输入用户性格要求（必填）');
+    if (!userTraits.trim() && !userRelations.trim() && !userPast.trim() && !aiInferTraits && !aiInferRelations && !aiInferPast) {
+      alert('请至少填写一项用户信息或开启AI推断');
       return;
     }
 
@@ -140,7 +145,9 @@ export default function GeneratePage() {
     try {
       const body: Record<string, string | boolean> = {
         charInfo: charInfo.trim(),
-        userPersonality: userPersonality.trim(),
+        userTraits: userTraits.trim() || (aiInferTraits ? '[AI推断]' : '[未填写]'),
+        userRelations: userRelations.trim() || (aiInferRelations ? '[AI推断]' : '[未填写]'),
+        userPast: userPast.trim() || (aiInferPast ? '[AI推断]' : '[未填写]'),
         greeting: greeting.trim(),
         apiKey,
         thinkingEnabled,
@@ -200,7 +207,7 @@ export default function GeneratePage() {
           englishCard: fullText,
           chineseCard: '',
           charInfo: charInfo.trim(),
-          userPersonality: userPersonality.trim(),
+          userPersonality: [userTraits.trim(), userRelations.trim(), userPast.trim()].filter(Boolean).join(' | ') || '(AI推断)',
           greeting: greeting.trim(),
           createdAt: Date.now(),
         };
@@ -216,7 +223,7 @@ export default function GeneratePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [charInfo, userPersonality, greeting, thinkingEnabled, modelChoice, router]);
+  }, [charInfo, userTraits, userRelations, userPast, aiInferTraits, aiInferRelations, aiInferPast, greeting, thinkingEnabled, modelChoice, router]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -278,15 +285,22 @@ export default function GeneratePage() {
     }
     const translations: Record<string, string> = {};
     if (chineseCard) translations.userCard = chineseCard;
-    const preset = createPreset(presetName.trim(), charInfo.trim(), englishCard, userPersonality.trim(), greeting.trim(), translations);
+    const preset = createPreset(presetName.trim(), charInfo.trim(), englishCard, [userTraits.trim(), userRelations.trim(), userPast.trim()].filter(Boolean).join(' | ') || '(AI推断)', greeting.trim(), translations);
     savePreset(preset);
     router.push('/presets');
-  }, [presetName, charInfo, englishCard, chineseCard, userPersonality, greeting, router]);
+  }, [presetName, charInfo, englishCard, chineseCard, userTraits, userRelations, userPast, greeting, router]);
 
   const handleLoadHistory = useCallback((entry: GenerateHistory) => {
     setEnglishCard(entry.englishCard);
     setChineseCard(entry.chineseCard);
-    setUserPersonality(entry.userPersonality);
+    // Backward compat: old entries have userPersonality, split into new fields
+    const up = entry.userPersonality || '';
+    setUserTraits(up);
+    setUserRelations('');
+    setUserPast('');
+    setAiInferTraits(false);
+    setAiInferRelations(false);
+    setAiInferPast(false);
     setShowFront(true);
     setThinkingContent('');
     setShowHistory(false);
@@ -403,15 +417,82 @@ export default function GeneratePage() {
 
       <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">User 性格要求 <span className="text-red-400 font-normal text-xs">— 必填</span></CardTitle>
+          <CardTitle className="text-base">性格关键词 <span className="text-muted-foreground font-normal text-xs">— 非必填</span></CardTitle>
         </CardHeader>
         <CardContent>
-          <Textarea
-            placeholder='简短描述你希望 User 具备的性格，如："冷面杀手、话少、会照顾人、童年创伤、喜欢听蓝调音乐"'
-            value={userPersonality}
-            onChange={(e) => setUserPersonality(e.target.value)}
-            className="min-h-[100px] resize-y text-sm"
-          />
+          <div className="flex items-start gap-3">
+            <Textarea
+              placeholder="[表面] [内在] [隐藏面]"
+              value={userTraits}
+              onChange={(e) => setUserTraits(e.target.value)}
+              className="min-h-[60px] resize-y text-sm flex-1"
+              disabled={aiInferTraits}
+            />
+            <label className="flex items-center gap-1.5 shrink-0 pt-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={aiInferTraits}
+                onChange={(e) => setAiInferTraits(e.target.checked)}
+                className="accent-[var(--jai-accent)] w-4 h-4"
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5">写几个核心性格词即可，AI 会展开推断</p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-jai-card-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">关系与动态 <span className="text-muted-foreground font-normal text-xs">— 非必填</span></CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <Textarea
+              placeholder="[与{{char}}：] [家庭：] [重要他人：]"
+              value={userRelations}
+              onChange={(e) => setUserRelations(e.target.value)}
+              className="min-h-[80px] resize-y text-sm flex-1"
+              disabled={aiInferRelations}
+            />
+            <label className="flex items-center gap-1.5 shrink-0 pt-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={aiInferRelations}
+                onChange={(e) => setAiInferRelations(e.target.checked)}
+                className="accent-[var(--jai-accent)] w-4 h-4"
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5">你与{'{{char}}'}是什么关系？家庭或社会关系？关系的张力是什么？</p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-jai-card-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">过往经历 <span className="text-muted-foreground font-normal text-xs">— 非必填</span></CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <Textarea
+              placeholder="[童年] [青年] [近期]"
+              value={userPast}
+              onChange={(e) => setUserPast(e.target.value)}
+              className="min-h-[80px] resize-y text-sm flex-1"
+              disabled={aiInferPast}
+            />
+            <label className="flex items-center gap-1.5 shrink-0 pt-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={aiInferPast}
+                onChange={(e) => setAiInferPast(e.target.checked)}
+                className="accent-[var(--jai-accent)] w-4 h-4"
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5">塑造你性格的关键事件？童年创伤？人生转折点？</p>
         </CardContent>
       </Card>
 

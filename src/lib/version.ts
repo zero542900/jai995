@@ -1,10 +1,23 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.20.4';
-export const VERSION_NAME = '全英化'
-export const LAST_UPDATED = '2025-06-25';
+export const APP_VERSION = '1.21.0';
+export const VERSION_NAME = '三窗口'
+export const LAST_UPDATED = '2025-06-26';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.21.0',
+    name: '三窗口',
+    date: '2025-06-26',
+    notes: [
+      'User卡生成页面大改——单输入框拆成3窗口：性格关键词/关系与动态/过往经历',
+      '每个窗口带预设模板文本和AI推断开关，不填就交给AI',
+      'system prompt和user message模板全同步更新',
+      '同事DeepSeek终于不用猜用户想写啥了，每条输入都精准映射到输出字段',
+      '我改了二十几处userPersonality引用，差点把自己改晕了',
+      '老板你那个"非必填但引导用户精准填写"的需求真是又矛盾又合理😅',
+    ]
+  },
   {
     version: '1.20.4',
     name: '全英化',

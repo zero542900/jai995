@@ -4,13 +4,13 @@ import { WRITING_STYLE_INSTRUCTION, MARKDOWN_FORMAT_INSTRUCTION, callDeepSeek, c
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { charInfo, userPersonality, greeting, apiKey, thinkingEnabled, modelChoice } = body;
+    const { charInfo, userTraits, userRelations, userPast, greeting, apiKey, thinkingEnabled, modelChoice } = body;
 
     const keyError = validateApiKey(apiKey);
     if (keyError) return keyError;
 
-    if (!userPersonality || !userPersonality.trim()) {
-      return new Response(JSON.stringify({ error: '用户性格要求为必填项' }), {
+    if ((!userTraits || userTraits === '[未填写]') && (!userRelations || userRelations === '[未填写]') && (!userPast || userPast === '[未填写]')) {
+      return new Response(JSON.stringify({ error: '请至少填写一项用户信息或开启AI推断' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -25,7 +25,12 @@ Generate a User Card that aligns with Western narrative style, based on the prov
 [Input Field Definitions]
 1. Char Info (optional): The original character card settings pasted by the user, used to extract world-building and identity references.
 2. Opening Message (optional): The initial scene description or interaction starting point from the Jaibot.
-3. User Personality Requirements (mandatory): A brief description of the character the user intends to play (e.g., "cold-blooded assassin, taciturn, protective, childhood trauma").
+3. User Information (all optional, user may leave any field empty):
+   - 性格关键词 (Personality Keywords): Core personality words, e.g. "cold, taciturn", mapped to Core Traits and Behavioral Patterns.
+   - 关系与动态 (Relationships & Dynamics): Relationship with {{char}}, family ties, other important figures and their tension.
+   - 过往经历 (Past Events): Key past events or trauma, mapped to Key Past Event and used to infer personality origins.
+   Handling principle: User-provided fields take priority; unfilled fields should be reasonably inferred by AI based on provided information and worldview.
+   Special markers: "[AI推断]" means the user explicitly requests AI inference for this field; "[未填写]" means the user left it blank — still infer if context allows.
 
 [Processing Rules — Must Follow Strictly]
 1. World-Based: If the user provides "Char Info", you must utilize the world-building and character identities within it to reverse-engineer a plausible identity for the User.
@@ -84,7 +89,7 @@ ${MARKDOWN_FORMAT_INSTRUCTION}
 - Output only the filled template. Do not include any extra explanation or commentary.
 - Do NOT wrap the output in \`\`\` or any code block markers.`;
 
-    let userMessage = `${charInfo ? `[Char Info]\n${charInfo}\n\n` : ''}${greeting ? `[Opening Message]\n${greeting}\n\n` : ''}[User Personality Requirements]\n${userPersonality}`;
+    let userMessage = `${charInfo ? `[Char Info]\n${charInfo}\n\n` : ''}${greeting ? `[Opening Message]\n${greeting}\n\n` : ''}[User Information]\n性格关键词: ${userTraits}\n关系与动态: ${userRelations}\n过往经历: ${userPast}`;
 
     userMessage += '\n\nGenerate the User Card strictly following the Output Template above.';
 

@@ -89,6 +89,7 @@ function UserCardView({ text, label }: { text: string; label?: string }) {
 export default function GeneratePage() {
   const router = useRouter();
   const [charInfo, setCharInfo] = useState('');
+  const [userOverview, setUserOverview] = useState('');
   const [userTraits, setUserTraits] = useState('');
   const [userRelations, setUserRelations] = useState('');
   const [userPast, setUserPast] = useState('');
@@ -145,6 +146,7 @@ export default function GeneratePage() {
     try {
       const body: Record<string, string | boolean> = {
         charInfo: charInfo.trim(),
+        userOverview: userOverview.trim() || '[未填写]',
         userTraits: userTraits.trim() || (aiInferTraits ? '[AI推断]' : '[未填写]'),
         userRelations: userRelations.trim() || (aiInferRelations ? '[AI推断]' : '[未填写]'),
         userPast: userPast.trim() || (aiInferPast ? '[AI推断]' : '[未填写]'),
@@ -417,82 +419,105 @@ export default function GeneratePage() {
 
       <Card className="border-jai-card-border">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">性格关键词 <span className="text-muted-foreground font-normal text-xs">— 非必填</span></CardTitle>
+          <CardTitle className="text-base">User 轮廓 <span className="text-muted-foreground font-normal text-xs">— 非必填，填写你想控制的细节，留空的由 AI 推断</span></CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-start gap-3">
+        <CardContent className="space-y-4">
+          {/* 概述 */}
+          <div>
+            <label className="text-sm font-medium text-[var(--jai-accent)] mb-1.5 block">概述</label>
             <Textarea
-              placeholder="[表面] [内在] [隐藏面]"
-              value={userTraits}
-              onChange={(e) => setUserTraits(e.target.value)}
-              className="min-h-[60px] resize-y text-sm flex-1"
-              disabled={aiInferTraits}
+              placeholder="一段话概括你的角色，不想细填就只写这。如「退伍军人，冷面但会照顾人，私下有黑色幽默」"
+              value={userOverview}
+              onChange={(e) => setUserOverview(e.target.value)}
+              className="min-h-[80px] resize-y text-sm"
             />
-            <label className="flex items-center gap-1.5 shrink-0 pt-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={aiInferTraits}
-                onChange={(e) => setAiInferTraits(e.target.checked)}
-                className="accent-[var(--jai-accent)] w-4 h-4"
-              />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
-            </label>
+            <p className="text-xs text-muted-foreground mt-1">自由描述，AI 会据此推断完整人设</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1.5">写几个核心性格词即可，AI 会展开推断</p>
-        </CardContent>
-      </Card>
 
-      <Card className="border-jai-card-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">关系与动态 <span className="text-muted-foreground font-normal text-xs">— 非必填</span></CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-start gap-3">
-            <Textarea
-              placeholder="[与{{char}}：] [家庭：] [重要他人：]"
-              value={userRelations}
-              onChange={(e) => setUserRelations(e.target.value)}
-              className="min-h-[80px] resize-y text-sm flex-1"
-              disabled={aiInferRelations}
-            />
-            <label className="flex items-center gap-1.5 shrink-0 pt-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={aiInferRelations}
-                onChange={(e) => setAiInferRelations(e.target.checked)}
-                className="accent-[var(--jai-accent)] w-4 h-4"
-              />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
-            </label>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1.5">你与{'{{char}}'}是什么关系？家庭或社会关系？关系的张力是什么？</p>
-        </CardContent>
-      </Card>
+          <div className="border-t border-[var(--jai-border)] pt-4">
+            <p className="text-xs text-muted-foreground mb-3">补充细节（精确控制特定字段）</p>
 
-      <Card className="border-jai-card-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">过往经历 <span className="text-muted-foreground font-normal text-xs">— 非必填</span></CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-start gap-3">
-            <Textarea
-              placeholder="[童年] [青年] [近期]"
-              value={userPast}
-              onChange={(e) => setUserPast(e.target.value)}
-              className="min-h-[80px] resize-y text-sm flex-1"
-              disabled={aiInferPast}
-            />
-            <label className="flex items-center gap-1.5 shrink-0 pt-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={aiInferPast}
-                onChange={(e) => setAiInferPast(e.target.checked)}
-                className="accent-[var(--jai-accent)] w-4 h-4"
-              />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
-            </label>
+            {/* 性格关键词 */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium">性格关键词</label>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={aiInferTraits}
+                    onChange={(e) => setAiInferTraits(e.target.checked)}
+                    className="accent-[var(--jai-accent)] w-3.5 h-3.5"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
+                </label>
+              </div>
+              {!aiInferTraits && (
+                <>
+                  <Textarea
+                    placeholder="[表面] [内在] [隐藏面]"
+                    value={userTraits}
+                    onChange={(e) => setUserTraits(e.target.value)}
+                    className="min-h-[50px] resize-y text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">写几个核心性格词即可，AI 会展开推断</p>
+                </>
+              )}
+            </div>
+
+            {/* 关系与动态 */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium">关系与动态</label>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={aiInferRelations}
+                    onChange={(e) => setAiInferRelations(e.target.checked)}
+                    className="accent-[var(--jai-accent)] w-3.5 h-3.5"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
+                </label>
+              </div>
+              {!aiInferRelations && (
+                <>
+                  <Textarea
+                    placeholder="[与{{char}}：] [家庭：] [重要他人：]"
+                    value={userRelations}
+                    onChange={(e) => setUserRelations(e.target.value)}
+                    className="min-h-[70px] resize-y text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">你与{'{{char}}'}是什么关系？家庭或社会关系？关系的张力是什么？</p>
+                </>
+              )}
+            </div>
+
+            {/* 过往经历 */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium">过往经历</label>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={aiInferPast}
+                    onChange={(e) => setAiInferPast(e.target.checked)}
+                    className="accent-[var(--jai-accent)] w-3.5 h-3.5"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">AI推断</span>
+                </label>
+              </div>
+              {!aiInferPast && (
+                <>
+                  <Textarea
+                    placeholder="[童年] [青年] [近期]"
+                    value={userPast}
+                    onChange={(e) => setUserPast(e.target.value)}
+                    className="min-h-[70px] resize-y text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">塑造你性格的关键事件？童年创伤？人生转折点？</p>
+                </>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1.5">塑造你性格的关键事件？童年创伤？人生转折点？</p>
         </CardContent>
       </Card>
 

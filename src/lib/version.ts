@@ -1,20 +1,19 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.21.0';
-export const VERSION_NAME = '三窗口'
+export const APP_VERSION = '1.22.0';
+export const VERSION_NAME = '轮廓'
 export const LAST_UPDATED = '2025-06-26';
 
 // 更新日志
 export const CHANGELOG = [
   {
-    version: '1.21.0',
-    name: '三窗口',
+    version: '1.22.0',
+    name: '轮廓',
     date: '2025-06-26',
     notes: [
-      'User卡生成页面大改——单输入框拆成3窗口：性格关键词/关系与动态/过往经历',
-      '每个窗口带预设模板文本和AI推断开关，不填就交给AI',
-      'system prompt和user message模板全同步更新',
-      '同事DeepSeek终于不用猜用户想写啥了，每条输入都精准映射到输出字段',
-      '我改了二十几处userPersonality引用，差点把自己改晕了',
+      'User卡生成页面重构——三个小窗口包在User轮廓大窗口里',
+      '大窗口加概述字段，不想细填一句话搞定',
+      'AI推断开关打开自动缩起小窗口，省空间',
+      '后端同步新增概述字段，概述给方向、细节字段优先级更高',
       '老板你那个"非必填但引导用户精准填写"的需求真是又矛盾又合理😅',
     ]
   },

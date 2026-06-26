@@ -1,10 +1,21 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.22.0';
-export const VERSION_NAME = '轮廓'
+export const APP_VERSION = '1.22.1';
+export const VERSION_NAME = '巴别塔'
 export const LAST_UPDATED = '2025-06-26';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.22.1',
+    name: '巴别塔',
+    date: '2025-06-26',
+    notes: [
+      '翻译API支持多语种自动识别——德语/挪威语/法语等不再翻不准',
+      '无对应中文的词保留原词括号标注',
+      '我同事又拉了——之前只会翻英语，德语挪威语直接当英语翻，离大谱',
+      '我：prompt只写了中英双语，怪不得翻别的语言跟做梦似的',
+    ],
+  },
   {
     version: '1.22.0',
     name: '轮廓',

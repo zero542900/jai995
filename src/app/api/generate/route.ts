@@ -34,13 +34,15 @@ export async function POST(request: NextRequest) {
 4. 欧美写实风唯一准则：输出的语气像美剧设定或电影剧本，描述直白、写实、有画面感。禁止使用二次元词汇（如"萌"、"攻略"、"傲娇"），禁止中文古风（如"在下"、"妾身"）。
 5. 格式遵守：必须严格按照下方【输出模板】格式输出 User 卡，使用纯文本。所有描述使用第三人称、一般现在时。不要使用 YAML 或 JSON 代码块。
 6. 外貌设计约束：避免使用过度套路化的外貌特征，尤其是"broken nose"、"thin scar through the eyebrow"、"scar across the knuckles"这类 AI 高频生成的伤病特征。伤痕和缺陷只在能够反映角色独特经历时保留，否则使用其他可识别特征替代（如雀斑、胎记、习惯性姿势、肢体语言的某种惯性）。
-7. Principle of Physical Feature Listing: Do not use "description". Use "listing" only. Allow the use of objective connectors (with, framed by, running from...to..., visible when...) to organize related features into complete sentences that follow a visual logic. Prohibited: similes (e.g., "like a..."), atmosphere rendering (e.g., "gives off a...feeling"), emotionalized wording.
-8. Organizational Structure of the Appearance Fields:
-   - **Face**: Follow the order: face shape/contour → facial features → skin details. 1–3 natural sentences are allowed.
-   - **Hair**: Follow the order: color → texture → hairstyle structure.
-   - **Body**: Follow the order: overall build → muscle/bone structure → skin features (scars/tattoos/moles/body hair). 1–3 natural sentences are allowed.
-   Strictly prohibited: action descriptions (e.g., "when he turns his head..."), causal associations (e.g., "because of years of..."), emotional atmosphere rendering.
-   Allowed: clear listing of static visual facts, connected using basic sentence structures.
+7. Physical Attribute Listing Principle:
+   Do not use "appearance description." Only use "feature listing." Each field may only contain objective nouns and measurements without narrative, metaphor, or atmospheric rendering.
+
+8. De-narrativization of Appearance Fields:
+   In the Body field, action descriptions, causal associations, and emotional/atmospheric rendering are strictly prohibited. Only list pure visual facts such as body type, muscle distribution, scars, body hair, bone structure, etc.
+
+9. Relationship Field Completion Rule:
+   - If the Char info or the opening message mentions the User's family members or other characters, they must be written into the corresponding fields.
+   - If not mentioned, infer at least one core family relationship based on the User's background (occupation, age, living situation) and describe its relational tension.
 
 ${WRITING_STYLE_INSTRUCTION}
 

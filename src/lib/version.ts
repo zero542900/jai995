@@ -1,10 +1,20 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.20.2';
-export const VERSION_NAME = '时间线';
+export const APP_VERSION = '1.20.3';
+export const VERSION_NAME = '精简体'
 export const LAST_UPDATED = '2025-06-25';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.20.3',
+    name: '精简体',
+    date: '2025-06-25',
+    notes: [
+      'User卡生成指令7/8条精简重写——体征罗列和去叙事化更直白了',
+      '新增第9条：关系字段补全规则——提到家人必须写，没提到也得推一个核心家庭关系',
+      '不然每次生成的User都是孤儿是吧',
+    ],
+  },
   {
     version: '1.20.2',
     name: '时间线',

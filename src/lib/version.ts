@@ -1,10 +1,21 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.22.1';
+export const APP_VERSION = '1.22.2';
 export const VERSION_NAME = '巴别塔'
 export const LAST_UPDATED = '2025-06-26';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.22.2',
+    name: '同声传译',
+    date: '2025-06-26',
+    notes: [
+      '翻译支持多语言混杂文本——叙述+对话各自语种独立翻译',
+      '非英语对话翻完标注语种，如"什么意思？（德语）"',
+      '对话结合上下文翻译，不再孤立翻丢代词指代',
+      '老板说德语对话不翻，我一看——好家伙，我同事把整段当英语处理了，活该',
+    ],
+  },
   {
     version: '1.22.1',
     name: '巴别塔',

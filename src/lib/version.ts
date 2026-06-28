@@ -1,10 +1,18 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.22.2';
+export const APP_VERSION = '1.22.3';
 export const VERSION_NAME = '巴别塔'
 export const LAST_UPDATED = '2025-06-26';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.22.3',
+    name: '旁白',
+    date: '2025-06-26',
+    notes: [
+      '扩写【】指令改为指引——影响风格节奏侧重点，不硬塞进扩写内容',
+    ],
+  },
   {
     version: '1.22.2',
     name: '同声传译',

@@ -62,7 +62,7 @@ Do NOT invent major events or new dialogue.
 Follow the user's outline strictly.
 Keep the output within 400-600 words. Do NOT cut off or truncate the ending — completing the scene naturally takes priority over staying within the word limit. If you need slightly more words to end properly, use them.
 
-The outline may contain instructions enclosed in 【】 brackets (e.g., 【add more sensory details】, 【make the tone darker】). These are REQUIREMENTS from the user — you MUST follow them when expanding. Do NOT ignore or skip any 【】 instruction.
+The outline may contain hints enclosed in 【】 brackets (e.g., 【add more sensory details】, 【make the tone darker】, 【they kiss here】). These are DIRECTIONAL GUIDANCE from the user — they influence your writing style, pacing, emphasis, or scene direction. Follow the spirit of these hints, but do NOT mechanically embed or parrot the 【】 content into the prose. The 【】 text is meta-instruction for you, not dialogue or narration to be copied.
 
 ${WRITING_STYLE_INSTRUCTION}
 

@@ -46,7 +46,12 @@ Generate a User Card that aligns with Western narrative style, based on the prov
 8. De-narrativization of Appearance Fields:
    In the Body field, action descriptions, causal associations, and emotional/atmospheric rendering are strictly prohibited. Only list pure visual facts such as body type, muscle distribution, scars, body hair, bone structure, etc.
 
-9. Relationship Field Completion Rule:
+9. Placeholder Understanding: In JanitorAI format, {{user}} and {{char}} are placeholders — NOT literal names.
+   - {{user}} refers to the character you are generating now (the User Card). You MUST give them a concrete, realistic name in the Name field. Never fill "user" or "{{user}}" as a name.
+   - {{char}} refers to the AI character from the provided Char info. In template fields like "Relationship to {{char}}", keep the {{char}} placeholder as-is (the platform replaces it at runtime).
+   - In narrative/descriptive content (e.g., Brief Bio, Personality), use the concrete names you assigned — never write the literal strings "user" or "char".
+
+10. Relationship Field Completion Rule:
    - If the Char info or the opening message mentions the User's family members or other characters, they must be written into the corresponding fields.
    - If not mentioned, infer at least one core family relationship based on the User's background (occupation, age, living situation) and describe its relational tension.
 

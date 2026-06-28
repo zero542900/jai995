@@ -1,10 +1,18 @@
 // 版本信息 - 每次发布时手动更新
-export const APP_VERSION = '1.22.4';
+export const APP_VERSION = '1.22.5';
 export const VERSION_NAME = '巴别塔'
 export const LAST_UPDATED = '2025-06-26';
 
 // 更新日志
 export const CHANGELOG = [
+  {
+    version: '1.22.5',
+    name: '保留占位符',
+    date: '2025-06-26',
+    notes: [
+      'User卡输出除了Name栏必须给具体名字，其他字段保留{{user}}/{{char}}占位符方便JanitorAI识别替换',
+    ],
+  },
   {
     version: '1.22.4',
     name: '占位符',

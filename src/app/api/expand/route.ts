@@ -57,12 +57,19 @@ ${brief}
 ${thinkingEnabled ? `REASONING DISCIPLINE: Keep your reasoning concise and efficient. Do not over-analyze — focus on key decisions about perspective, tone, and structure. Reserve the majority of your token budget for the actual expanded passage.
 
 ` : ``}INSTRUCTIONS:
+
+★★★ HIGHEST PRIORITY — 【】BRACKET RULE ★★★
+Text enclosed in 【】 brackets is the user TALKING DIRECTLY TO YOU (the AI), giving you suggestions, requests, or directions for how to write this scene. For example:
+- 【make it more intimate】→ user wants a warmer, closer tone — do NOT write the words "make it more intimate" into the story
+- 【they kiss here】→ user is telling you to include a kiss — write the kiss scene naturally, do NOT copy "they kiss here" verbatim
+- 【darker atmosphere, more tension】→ user wants the mood to shift — adjust your writing accordingly, do NOT narrate "the atmosphere became darker"
+【】 content is YOUR instruction, NOT story content. Never insert, paraphrase, or echo 【】 text into the narrative or dialogue. Follow the INTENT, not the words.
+★★★ END 【】BRACKET RULE ★★★
+
 Expand this brief outline into a polished, complete passage from the User's perspective.
 Do NOT invent major events or new dialogue.
 Follow the user's outline strictly.
 Keep the output within 400-600 words. Do NOT cut off or truncate the ending — completing the scene naturally takes priority over staying within the word limit. If you need slightly more words to end properly, use them.
-
-The outline may contain hints enclosed in 【】 brackets (e.g., 【add more sensory details】, 【make the tone darker】, 【they kiss here】). These are DIRECTIONAL GUIDANCE from the user — they influence your writing style, pacing, emphasis, or scene direction. Follow the spirit of these hints, but do NOT mechanically embed or parrot the 【】 content into the prose. The 【】 text is meta-instruction for you, not dialogue or narration to be copied.
 
 ${WRITING_STYLE_INSTRUCTION}
 
